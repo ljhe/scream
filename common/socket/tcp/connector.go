@@ -1,0 +1,60 @@
+package tcp
+
+import (
+	"common"
+	"common/iface"
+	"common/socket"
+	"fmt"
+	"log"
+	"net"
+	"sync"
+	"time"
+)
+
+type tcpConnector struct {
+	socket.NetServerNodeProperty
+	wg sync.WaitGroup
+}
+
+func (t *tcpConnector) Start() iface.INetNode {
+	go t.connect()
+	return t
+}
+
+func (t *tcpConnector) Stop() {
+	t.wg.Done()
+	log.Println("tcp connector stop success.")
+}
+
+func (t *tcpConnector) GetTyp() string {
+	return common.SocketTypTcpConnector
+}
+
+func init() {
+	socket.RegisterServerNode(func() iface.INetNode {
+		return &tcpConnector{}
+	})
+	log.Println("tcp connector register success.")
+}
+
+func (t *tcpConnector) connect() {
+	for {
+		conn, err := net.Dial("tcp", t.GetAddr())
+		if err != nil {
+			fmt.Printf("connect error:%v \n", err)
+			// 连接失败后 重连
+			select {
+			case <-time.After(time.Second * 3):
+				continue
+			}
+		}
+		fmt.Printf("connect success. addr:%v \n", t.GetAddr())
+		t.wg.Add(1)
+		_, err = conn.Write([]byte("这里是一条测试数据"))
+		if err != nil {
+			fmt.Println("send data error")
+			conn.Close()
+		}
+		t.wg.Wait()
+	}
+}
