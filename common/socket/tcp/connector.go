@@ -12,8 +12,9 @@ import (
 )
 
 type tcpConnector struct {
-	socket.NetServerNodeProperty
-	wg sync.WaitGroup
+	socket.NetRuntimeTag         // 节点运行状态相关
+	socket.NetServerNodeProperty // 节点配置属性相关
+	wg                           sync.WaitGroup
 }
 
 func (t *tcpConnector) Start() iface.INetNode {
@@ -38,10 +39,14 @@ func init() {
 }
 
 func (t *tcpConnector) connect() {
+	t.SetCloseFlag(true)
 	for {
 		conn, err := net.Dial("tcp", t.GetAddr())
 		if err != nil {
-			fmt.Printf("connect error:%v \n", err)
+			if t.GetCloseFlag() {
+				fmt.Printf("connect error:%v \n", err)
+				break
+			}
 			// 连接失败后 重连
 			select {
 			case <-time.After(time.Second * 3):

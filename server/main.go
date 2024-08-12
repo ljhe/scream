@@ -14,6 +14,7 @@ func main() {
 	node.Start()
 	log.Println("server start success")
 	service.WaitExitSignal()
+	log.Println("server stopping ...")
 	service.Stop(node)
 	log.Println("server close")
 }

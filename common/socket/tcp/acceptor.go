@@ -12,8 +12,9 @@ import (
 )
 
 type tcpAcceptor struct {
-	socket.NetServerNodeProperty
-	listener net.Listener
+	socket.NetRuntimeTag         // 节点运行状态相关
+	socket.NetServerNodeProperty // 节点配置属性相关
+	listener                     net.Listener
 }
 
 func (t *tcpAcceptor) Start() iface.INetNode {
@@ -42,6 +43,7 @@ func (t *tcpAcceptor) Start() iface.INetNode {
 }
 
 func (t *tcpAcceptor) Stop() {
+	t.SetCloseFlag(true)
 	t.listener.Close()
 	log.Println("tcp acceptor stop success.")
 }
@@ -60,12 +62,17 @@ func init() {
 func (t *tcpAcceptor) tcpAccept() {
 	for {
 		conn, err := t.listener.Accept()
+		// 判断节点是否关闭
+		if t.GetCloseFlag() {
+			break
+		}
 		if err != nil {
 			log.Println("tcp accept error:", err)
 			break
 		}
 		go t.deal(conn)
 	}
+	log.Println("tcp acceptor break.")
 }
 
 func (t *tcpAcceptor) deal(conn net.Conn) {
