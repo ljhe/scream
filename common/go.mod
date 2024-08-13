@@ -2,7 +2,10 @@ module common
 
 go 1.22.4
 
-require github.com/coreos/etcd v3.3.13+incompatible
+require (
+	github.com/coreos/etcd v3.3.13+incompatible
+	github.com/panjf2000/ants/v2 v2.10.0
+)
 
 require (
 	github.com/coreos/bbolt v1.3.5 // indirect
@@ -26,6 +29,7 @@ require (
 	github.com/xiang90/probing v0.0.0-20221125231312-a49e3df8f510 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/net v0.20.0 // indirect
+	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.6.0 // indirect

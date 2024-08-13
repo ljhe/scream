@@ -10,6 +10,7 @@ import (
 
 func main() {
 	log.Println("server starting ...")
+	service.GetMsgHandle(0)
 	node := socket.NewServerNode(common.SocketTypTcpAcceptor, "test", "0.0.0.0:2701")
 	node.Start()
 	log.Println("server start success")
