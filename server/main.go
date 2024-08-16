@@ -10,8 +10,9 @@ import (
 
 func main() {
 	log.Println("server starting ...")
-	service.GetMsgHandle(0)
+	msgHandle := service.GetMsgHandle(0)
 	node := socket.NewServerNode(common.SocketTypTcpAcceptor, "test", "0.0.0.0:2701")
+	node.(common.ProcessorRPCBundle).SetMsgHandle(msgHandle)
 	node.Start()
 	log.Println("server start success")
 	service.WaitExitSignal()

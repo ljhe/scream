@@ -53,7 +53,7 @@ func (t *tcpConnector) connect() {
 				continue
 			}
 		}
-		fmt.Printf("connect success. addr:%v \n", t.GetAddr())
+		fmt.Printf("connect success. addr:%v time:%d \n", t.GetAddr(), time.Now().Unix())
 		t.wg.Add(1)
 		_, err = conn.Write([]byte("这里是一条测试数据"))
 		if err != nil {
