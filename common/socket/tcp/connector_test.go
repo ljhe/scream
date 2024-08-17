@@ -4,14 +4,14 @@ import (
 	"common"
 	"common/service"
 	"common/socket"
-	"math/rand"
 	"testing"
-	"time"
 )
 
 func TestNewConnector(t *testing.T) {
 	node := socket.NewServerNode(common.SocketTypTcpConnector, "test", "0.0.0.0:2701")
-	rand.New(rand.NewSource(time.Now().UnixNano()))
+	msgHandle := service.GetMsgHandle(0)
+	node.(common.ProcessorRPCBundle).SetHooker(new(service.ServerEventHook))
+	node.(common.ProcessorRPCBundle).SetMsgHandle(msgHandle)
 	node.Start()
 	service.WaitExitSignal()
 }

@@ -3,6 +3,7 @@ package tcp
 import (
 	"common"
 	"common/iface"
+	"common/service"
 	"common/socket"
 	"fmt"
 	"log"
@@ -13,6 +14,7 @@ import (
 
 type tcpConnector struct {
 	socket.NetRuntimeTag         // 节点运行状态相关
+	socket.NetProcessorRPC       // 事件处理相关
 	socket.NetServerNodeProperty // 节点配置属性相关
 	wg                           sync.WaitGroup
 }
@@ -60,7 +62,9 @@ func (t *tcpConnector) connect() {
 			fmt.Println("send data error")
 			conn.Close()
 		}
-		go t.deal(conn)
+		// 连接事件
+		t.ProcEvent(&common.ReceiveMsgEvent{Message: &service.SessionConnected{}})
+		//go t.deal(conn)
 		t.wg.Wait()
 	}
 }
