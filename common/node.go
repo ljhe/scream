@@ -6,5 +6,6 @@ type ServerNodeProperty interface {
 }
 
 type ProcessorRPCBundle interface {
+	SetHooker(v EventHook)
 	SetMsgHandle(v IMsgHandle)
 }

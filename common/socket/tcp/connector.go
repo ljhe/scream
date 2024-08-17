@@ -55,11 +55,23 @@ func (t *tcpConnector) connect() {
 		}
 		fmt.Printf("connect success. addr:%v time:%d \n", t.GetAddr(), time.Now().Unix())
 		t.wg.Add(1)
-		_, err = conn.Write([]byte("这里是一条测试数据"))
+		_, err = conn.Write([]byte("handshakes req."))
 		if err != nil {
 			fmt.Println("send data error")
 			conn.Close()
 		}
+		go t.deal(conn)
 		t.wg.Wait()
+	}
+}
+
+func (t *tcpConnector) deal(conn net.Conn) {
+	buffer := make([]byte, 1024)
+	for {
+		n, err := conn.Read(buffer)
+		if err != nil {
+			break
+		}
+		fmt.Println("receive: ", string(buffer[:n]))
 	}
 }

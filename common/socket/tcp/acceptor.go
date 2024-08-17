@@ -3,6 +3,7 @@ package tcp
 import (
 	"common"
 	"common/iface"
+	"common/service"
 	"common/socket"
 	"context"
 	"fmt"
@@ -80,7 +81,7 @@ func (t *tcpAcceptor) tcpAccept() {
 			break
 		}
 		//go t.deal(conn)
-		t.ProcEvent(&common.ReceiveMsgEvent{Message: "这里是测试!!"})
+		t.ProcEvent(&common.ReceiveMsgEvent{Message: &service.SessionAccepted{}})
 	}
 	log.Println("tcp acceptor break.")
 }
@@ -92,6 +93,7 @@ func (t *tcpAcceptor) deal(conn net.Conn) {
 		if err != nil {
 			break
 		}
-		fmt.Println("收到消息: ", string(buffer[:n]))
+		fmt.Println("receive: ", string(buffer[:n]))
+		conn.Write([]byte("handshakes ack."))
 	}
 }
