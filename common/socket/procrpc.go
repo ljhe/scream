@@ -29,3 +29,10 @@ func (n *NetProcessorRPC) ProcEvent(e iface.IProcEvent) {
 		})
 	}
 }
+
+func (n *NetProcessorRPC) SendMsg(e iface.IProcEvent) error {
+	if n.Hooker != nil {
+		e = n.Hooker.OutEvent(e)
+	}
+	return nil
+}

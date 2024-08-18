@@ -13,9 +13,10 @@ import (
 )
 
 type tcpConnector struct {
-	socket.NetRuntimeTag         // 节点运行状态相关
-	socket.NetProcessorRPC       // 事件处理相关
-	socket.NetServerNodeProperty // 节点配置属性相关
+	socket.NetRuntimeTag                     // 节点运行状态相关
+	socket.NetProcessorRPC                   // 事件处理相关
+	socket.NetServerNodeProperty             // 节点配置属性相关
+	session                      *tcpSession // 连接会话
 	wg                           sync.WaitGroup
 }
 
@@ -57,11 +58,7 @@ func (t *tcpConnector) connect() {
 		}
 		fmt.Printf("connect success. addr:%v time:%d \n", t.GetAddr(), time.Now().Unix())
 		t.wg.Add(1)
-		_, err = conn.Write([]byte("handshakes req."))
-		if err != nil {
-			fmt.Println("send data error")
-			conn.Close()
-		}
+		t.session.SetConn(conn)
 		// 连接事件
 		t.ProcEvent(&common.ReceiveMsgEvent{Message: &service.SessionConnected{}})
 		//go t.deal(conn)
