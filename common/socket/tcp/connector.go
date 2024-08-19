@@ -14,6 +14,7 @@ import (
 
 type tcpConnector struct {
 	socket.NetRuntimeTag                     // 节点运行状态相关
+	socket.NetTCPSocketOption                // socket相关设置
 	socket.NetProcessorRPC                   // 事件处理相关
 	socket.NetServerNodeProperty             // 节点配置属性相关
 	session                      *tcpSession // 连接会话

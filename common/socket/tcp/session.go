@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"common/iface"
 	"common/socket"
 	"net"
 	"runtime/debug"
@@ -13,6 +14,7 @@ var sendQueueMaxLen = 2000
 
 type tcpSession struct {
 	*socket.NetProcessorRPC
+	node            iface.INetNode
 	conn            net.Conn
 	close           int64
 	sendQueue       chan interface{}
@@ -31,6 +33,10 @@ func (ts *tcpSession) GetConn() net.Conn {
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
 	return ts.conn
+}
+
+func (ts *tcpSession) Node() iface.INetNode {
+	return ts.node
 }
 
 func (ts *tcpSession) Start() {
@@ -88,6 +94,7 @@ func (ts *tcpSession) HeartBeat(msg interface{}) {
 				if atomic.LoadInt64(&ts.close) != 0 {
 					break
 				}
+				ts.Send(msg)
 			}
 		}
 	}()
@@ -100,6 +107,5 @@ func (ts *tcpSession) Send(msg interface{}) {
 	select {
 	case ts.sendQueue <- msg:
 	default:
-
 	}
 }
