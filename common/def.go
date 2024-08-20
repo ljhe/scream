@@ -11,17 +11,30 @@ type IMsgHandle interface {
 	PostCb(cb func())
 }
 
-type ReceiveMsgEvent struct {
+type RcvMsgEvent struct {
 	Sess    iface.ISession
 	Message interface{}
 }
 
-func (r *ReceiveMsgEvent) Session() iface.ISession {
-	return r.Sess
+func (re *RcvMsgEvent) Session() iface.ISession {
+	return re.Sess
 }
 
-func (r *ReceiveMsgEvent) Msg() interface{} {
-	return r.Message
+func (re *RcvMsgEvent) Msg() interface{} {
+	return re.Message
+}
+
+type SendMsgEvent struct {
+	Sess    iface.ISession
+	Message interface{}
+}
+
+func (se *SendMsgEvent) Session() iface.ISession {
+	return se.Sess
+}
+
+func (se *SendMsgEvent) Msg() interface{} {
+	return se.Message
 }
 
 type EventHook interface {

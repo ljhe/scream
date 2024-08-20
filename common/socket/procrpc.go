@@ -27,6 +27,10 @@ func (n *NetProcessorRPC) SetMsgHandle(v common.IMsgHandle) {
 	n.MsgHandle = v
 }
 
+func (n *NetProcessorRPC) GetRPC() *NetProcessorRPC {
+	return n
+}
+
 func (n *NetProcessorRPC) ProcEvent(e iface.IProcEvent) {
 	if n.Hooker != nil {
 		e = n.Hooker.InEvent(e)
@@ -43,7 +47,7 @@ func (n *NetProcessorRPC) SendMsg(e iface.IProcEvent) error {
 		e = n.Hooker.OutEvent(e)
 	}
 	if n.MsgRPC != nil {
-		return n.MsgRPC.OnSendMsg(nil, e.Msg())
+		return n.MsgRPC.OnSendMsg(e.Session(), e.Msg())
 	}
 	return nil
 }
@@ -52,7 +56,7 @@ type TCPMessageProcessor struct {
 }
 
 func (tp *TCPMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, msgSeqId uint32, err error) {
-
+	return nil, 0, err
 }
 
 func (tp *TCPMessageProcessor) OnSendMsg(s iface.ISession, msg interface{}) (err error) {

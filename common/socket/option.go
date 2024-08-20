@@ -7,10 +7,16 @@ import (
 
 type Option interface {
 	SocketWriteTimeout(c net.Conn, callback func())
+	CopyOpt(opt *NetTCPSocketOption)
 }
 
 type NetTCPSocketOption struct {
-	writeTimeout time.Duration
+	readBufferSize  int
+	writeBufferSize int
+	readTimeout     time.Duration
+	writeTimeout    time.Duration
+	noDelay         bool
+	maxMsgLen       int
 }
 
 func (no *NetTCPSocketOption) SocketWriteTimeout(c net.Conn, callback func()) {
@@ -21,4 +27,11 @@ func (no *NetTCPSocketOption) SocketWriteTimeout(c net.Conn, callback func()) {
 	} else {
 		callback()
 	}
+}
+
+func (no *NetTCPSocketOption) CopyOpt(opt *NetTCPSocketOption) {
+	opt.maxMsgLen = no.maxMsgLen
+	opt.noDelay = no.noDelay
+	opt.readBufferSize = no.readBufferSize
+	opt.writeBufferSize = no.writeBufferSize
 }

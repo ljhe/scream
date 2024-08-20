@@ -65,7 +65,7 @@ func init() {
 
 func (t *tcpAcceptor) tcpAccept() {
 	for {
-		_, err := t.listener.Accept()
+		conn, err := t.listener.Accept()
 		// 判断节点是否关闭
 		if t.GetCloseFlag() {
 			break
@@ -82,7 +82,12 @@ func (t *tcpAcceptor) tcpAccept() {
 			break
 		}
 		//go t.deal(conn)
-		t.ProcEvent(&common.ReceiveMsgEvent{Message: &service.SessionAccepted{}})
+		func() {
+			session := newTcpSession(conn, t)
+			session.Start()
+			// 通知上层主事件 (将回调放入队列中 防止多线程冲突)
+			t.ProcEvent(&common.RcvMsgEvent{Sess: session, Message: &service.SessionAccepted{}})
+		}()
 	}
 	log.Println("tcp acceptor break.")
 }

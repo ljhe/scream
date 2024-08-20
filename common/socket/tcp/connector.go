@@ -59,10 +59,9 @@ func (t *tcpConnector) connect() {
 		}
 		fmt.Printf("connect success. addr:%v time:%d \n", t.GetAddr(), time.Now().Unix())
 		t.wg.Add(1)
-		t.session.SetConn(conn)
 		// 连接事件
-		t.ProcEvent(&common.ReceiveMsgEvent{Message: &service.SessionConnected{}})
-		//go t.deal(conn)
+		t.ProcEvent(&common.RcvMsgEvent{Message: &service.SessionConnected{}})
+		go t.deal(conn)
 		t.wg.Wait()
 	}
 }

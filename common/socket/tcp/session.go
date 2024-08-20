@@ -1,8 +1,10 @@
 package tcp
 
 import (
+	"common"
 	"common/iface"
 	"common/socket"
+	"log"
 	"net"
 	"runtime/debug"
 	"sync"
@@ -13,14 +15,15 @@ import (
 var sendQueueMaxLen = 2000
 
 type tcpSession struct {
-	*socket.NetProcessorRPC
-	node            iface.INetNode
-	conn            net.Conn
-	close           int64
-	sendQueue       chan interface{}
-	sendQueueMaxLen int
-	exitWg          sync.WaitGroup
-	mu              sync.Mutex
+	*socket.NetProcessorRPC // 事件处理相关
+	node                    iface.INetNode
+	conn                    net.Conn
+	close                   int64
+	sendQueue               chan interface{}
+	sendQueueMaxLen         int
+	sessionOpt              socket.NetTCPSocketOption
+	exitWg                  sync.WaitGroup
+	mu                      sync.Mutex
 }
 
 func (ts *tcpSession) SetConn(c net.Conn) {
@@ -39,10 +42,21 @@ func (ts *tcpSession) Node() iface.INetNode {
 	return ts.node
 }
 
+func newTcpSession(c net.Conn, node iface.INetNode) *tcpSession {
+	sess := &tcpSession{
+		conn:            c,
+		sendQueueMaxLen: sendQueueMaxLen,
+		sendQueue:       make(chan interface{}, sendQueueMaxLen),
+		NetProcessorRPC: node.(interface {
+			GetRPC() *socket.NetProcessorRPC
+		}).GetRPC(),
+	}
+	node.(socket.Option).CopyOpt(&sess.sessionOpt)
+	return sess
+}
+
 func (ts *tcpSession) Start() {
 	atomic.StoreInt64(&ts.close, 0)
-	ts.sendQueueMaxLen = sendQueueMaxLen
-	ts.sendQueue = make(chan interface{}, ts.sendQueueMaxLen)
 	ts.exitWg.Add(2)
 	go func() {
 		ts.exitWg.Wait()
@@ -69,6 +83,12 @@ func (ts *tcpSession) RunSend() {
 		}
 		if data == nil {
 			continue
+		}
+		err := ts.SendMsg(&common.SendMsgEvent{Sess: ts, Message: data})
+		log.Println("send msg:", data)
+		if err != nil {
+			log.Println("send msg err:", err)
+			break
 		}
 	}
 
