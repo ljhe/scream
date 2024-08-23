@@ -45,6 +45,7 @@ func (ts *tcpSession) Node() iface.INetNode {
 func newTcpSession(c net.Conn, node iface.INetNode) *tcpSession {
 	sess := &tcpSession{
 		conn:            c,
+		node:            node,
 		sendQueueMaxLen: sendQueueMaxLen,
 		sendQueue:       make(chan interface{}, sendQueueMaxLen),
 		NetProcessorRPC: node.(interface {

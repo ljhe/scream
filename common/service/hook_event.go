@@ -11,7 +11,9 @@ type ServerEventHook struct {
 func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	switch msg := iv.Msg().(type) {
 	case *SessionAccepted:
-		// 服务器之间的心跳检测 (只能反应acceptor端的send和connector端的rcv是否正常)
+		// 服务器之间的心跳检测
+		// acceptor触发send connector触发rcv
+		// 所以这里只能反应acceptor端的send和connector端的rcv是否正常
 		iv.Session().HeartBeat("server ping req")
 		return nil
 	case *SessionConnected:
