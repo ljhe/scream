@@ -37,7 +37,7 @@ func (t *tcpAcceptor) Start() iface.INetNode {
 	}
 	ln, err := listenConfig.Listen(context.Background(), "tcp", t.GetAddr())
 	if err != nil {
-		log.Println("tcp listen error:", err)
+		log.Println(fmt.Sprintf("tcp listen error:%v. addr:%v", err, t.GetAddr()))
 		return nil
 	}
 	t.listener = ln

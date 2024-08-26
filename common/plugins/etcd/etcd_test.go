@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -56,4 +57,13 @@ func TestDiscoverServices(t *testing.T) {
 	case <-sig:
 		fmt.Println("Program terminated.")
 	}
+}
+
+func TestDelKey(t *testing.T) {
+	etcd, err := NewServiceDiscovery("127.0.0.1:2379")
+	if err != nil {
+		t.Error(err)
+	}
+	_, err = etcd.etcdKV.Delete(context.TODO(), "server/9999")
+	fmt.Println("etcd del key. err:", err)
 }

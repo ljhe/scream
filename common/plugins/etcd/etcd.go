@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"common/util"
 	"context"
 	"fmt"
 	"github.com/coreos/etcd/clientv3"
@@ -31,6 +32,18 @@ func NewServiceDiscovery(addr string) (*ServiceDiscovery, error) {
 	etcdDiscovery.etcdKV = clientv3.NewKV(cli)
 	etcdDiscovery.etcdCli = cli
 	return etcdDiscovery, nil
+}
+
+func InitServiceDiscovery(addr string) error {
+	if GetEtcdDiscovery() != nil {
+		return nil
+	}
+	_, err := NewServiceDiscovery(addr)
+	return err
+}
+
+func GetEtcdDiscovery() *ServiceDiscovery {
+	return etcdDiscovery
 }
 
 func (sd *ServiceDiscovery) RegisterService(key, val string) error {
@@ -72,23 +85,28 @@ func (sd *ServiceDiscovery) DiscoverService(key string) error {
 	return nil
 }
 
-func (sd *ServiceDiscovery) WatchServices(key string) error {
+func (sd *ServiceDiscovery) WatchServices(key string, value ETCDServiceDesc) {
 	watchChan := sd.etcdCli.Watch(context.TODO(), key, clientv3.WithPrefix())
-	for wr := range watchChan {
-		for _, event := range wr.Events {
-			switch event.Type {
-			case clientv3.EventTypePut:
-				fmt.Printf("etcd watch event put key=%v value=%v \n", string(event.Kv.Key), string(event.Kv.Value))
-			case clientv3.EventTypeDelete:
-				_, err := sd.etcdCli.Delete(context.TODO(), key)
-				if err != nil {
-					fmt.Println("etcd delete key error", err)
+	go func() {
+		for {
+			select {
+			case wr := <-watchChan:
+				for _, event := range wr.Events {
+					switch event.Type {
+					case clientv3.EventTypePut:
+						fmt.Printf("etcd watch event put key=%v value=%v \n", string(event.Kv.Key), string(event.Kv.Value))
+					case clientv3.EventTypeDelete:
+						// 网络恢复后得到自己被删除的通知 重新设置key租约
+						value.RegTime = util.GetTimeSeconds()
+						err := sd.RegisterService(key, value.String())
+						if err != nil {
+							fmt.Printf("etcd watch event del key=%v err=%v \n", string(event.Kv.Key), err)
+						}
+					}
 				}
-				fmt.Printf("etcd watch event del key=%v \n", string(event.Kv.Key))
 			}
 		}
-	}
-	return nil
+	}()
 }
 
 func (sd *ServiceDiscovery) Close() error {
