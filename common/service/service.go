@@ -52,6 +52,10 @@ func CreateConnector(param NetNodeParam) iface.INetNode {
 			msgHandle := GetMsgHandle(0)
 			node.(common.ProcessorRPCBundle).SetHooker(new(ServerEventHook))
 			node.(common.ProcessorRPCBundle).SetMsgHandle(msgHandle)
+
+			// 添加到服务发现的节点管理中
+			mn.AddNode(ed, node)
+
 			node.Start()
 		})
 	return nil

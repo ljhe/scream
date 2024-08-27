@@ -10,6 +10,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"log"
 	"strconv"
+	"strings"
 )
 
 var servicePrefixKey = "server/"
@@ -73,6 +74,11 @@ func DiscoveryService(serviceName string, zone int, nodeCreator func(MultiServer
 
 	// 连接同一个zone里的服务器节点
 	etcdKey := genDiscoveryServicePrefix(serviceName, zone)
+
+	// 监测目标节点的变化
+	var ch clientv3.WatchChan
+	ch = etcdDiscovery.etcdCli.Watch(context.TODO(), etcdKey, clientv3.WithPrefix())
+
 	go func() {
 		resp, err := etcdDiscovery.etcdKV.Get(context.TODO(), etcdKey, clientv3.WithPrefix())
 		if err != nil {
@@ -88,8 +94,44 @@ func DiscoveryService(serviceName string, zone int, nodeCreator func(MultiServer
 				log.Printf("etcd discovery unmarshal error:%v key:%v \n", err, data.Key)
 				continue
 			}
-			// TODO 先停止之前的连接 再执行新的连接
+			// 先停止之前的连接 再执行新的连接
+			if preNode := multiNode.GetNode(ed.Id); preNode != nil {
+				multiNode.DelNode(ed.Id)
+				preNode.Stop()
+			}
 			nodeCreator(multiNode, &ed)
+		}
+
+		for {
+			select {
+			case c := <-ch:
+				for _, ev := range c.Events {
+					switch ev.Type {
+					case clientv3.EventTypePut:
+						var ed ETCDServiceDesc
+						err = json.Unmarshal(ev.Kv.Value, &ed)
+						if err != nil {
+							log.Printf("etcd discovery unmarshal error:%v key:%v \n", err, ev.Kv.Key)
+							continue
+						}
+						log.Println("etcd discovery start connect:", string(ev.Kv.Key))
+						// 先停止之前的连接 再执行新的连接
+						if preNode := multiNode.GetNode(ed.Id); preNode != nil {
+							multiNode.DelNode(ed.Id)
+							preNode.Stop()
+							log.Println(fmt.Printf("del old node. id:%v", ed.Id))
+						}
+						nodeCreator(multiNode, &ed)
+					case clientv3.EventTypeDelete:
+						nodeID := getNodeId(string(ev.Kv.Key))
+						if preNode := multiNode.GetNode(nodeID); preNode != nil {
+							multiNode.DelNode(nodeID)
+							preNode.Stop()
+							log.Println(fmt.Printf("del node. id:%v", nodeID))
+						}
+					}
+				}
+			}
 		}
 	}()
 	return nil
@@ -143,4 +185,12 @@ func genDiscoveryServicePrefix(name string, zone int) string {
 		return servicePrefixKey + name + "#" + strconv.Itoa(zone)
 	}
 	return servicePrefixKey + name + "#"
+}
+
+func getNodeId(key string) string {
+	list := strings.Split(key, "/")
+	if len(list) >= 2 {
+		return list[1]
+	}
+	return ""
 }
