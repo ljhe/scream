@@ -27,5 +27,6 @@ func NewServerNode(serverTyp, serverName, addr string) iface.INetNode {
 	node := f()
 	nodeProperty := node.(common.ServerNodeProperty)
 	nodeProperty.SetAddr(addr)
+	nodeProperty.SetName(serverName)
 	return node
 }

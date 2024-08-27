@@ -3,7 +3,6 @@ package tcp
 import (
 	"common"
 	"common/iface"
-	"common/service"
 	"common/socket"
 	"fmt"
 	"log"
@@ -60,7 +59,7 @@ func (t *tcpConnector) connect() {
 		fmt.Printf("connect success. addr:%v time:%d \n", t.GetAddr(), time.Now().Unix())
 		t.wg.Add(1)
 		// 连接事件
-		t.ProcEvent(&common.RcvMsgEvent{Message: &service.SessionConnected{}})
+		t.ProcEvent(&common.RcvMsgEvent{Message: &common.SessionConnected{}})
 		go t.deal(conn)
 		t.wg.Wait()
 	}

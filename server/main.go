@@ -3,7 +3,6 @@ package main
 import (
 	"common"
 	"common/service"
-	_ "common/socket/tcp"
 	"log"
 )
 

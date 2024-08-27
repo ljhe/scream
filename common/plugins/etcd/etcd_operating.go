@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/coreos/etcd/clientv3"
 	"log"
 	"strconv"
 )
@@ -66,22 +67,32 @@ func ETCDRegister(node iface.INetNode) {
 	fmt.Println("etcd register success:", ed.Id)
 }
 
-func genServiceId(prop common.ServerNodeProperty) string {
-	return fmt.Sprintf("%s#%d@%d@%d",
-		prop.GetName(),
-		prop.GetZone(),
-		prop.GetServerTyp(),
-		prop.GetIndex(),
-	)
-}
+func DiscoveryService(serviceName string, zone int, nodeCreator func(MultiServerNode, *ETCDServiceDesc)) iface.INetNode {
+	// 如果已经存在 就停止之前正在运行的节点(注意不要配置成一样的节点信息 否则会关闭之前的连接)
+	multiNode := NewMultiServerNode()
 
-func genServicePrefix(name string, zone int) string {
-	//return servicePrefixKey + strconv.Itoa(zone) + "/" + name
-	return servicePrefixKey + name
-}
-
-func genServiceZonePrefix(zone int) string {
-	return servicePrefixKey + strconv.Itoa(zone)
+	// 连接同一个zone里的服务器节点
+	etcdKey := genDiscoveryServicePrefix(serviceName, zone)
+	go func() {
+		resp, err := etcdDiscovery.etcdKV.Get(context.TODO(), etcdKey, clientv3.WithPrefix())
+		if err != nil {
+			log.Println("etcd discovery error:", err)
+			return
+		}
+		log.Printf("service[%v] node find count:%v \n", etcdKey, resp.Count)
+		for _, data := range resp.Kvs {
+			log.Println("etcd discovery start connect:", string(data.Key))
+			var ed ETCDServiceDesc
+			err = json.Unmarshal(data.Value, &ed)
+			if err != nil {
+				log.Printf("etcd discovery unmarshal error:%v key:%v \n", err, data.Key)
+				continue
+			}
+			// TODO 先停止之前的连接 再执行新的连接
+			nodeCreator(multiNode, &ed)
+		}
+	}()
+	return nil
 }
 
 // setServiceStartupTime 设置服务器开服时间
@@ -107,4 +118,29 @@ func setServiceStartupTime(zone int) {
 		startupTime = t
 	}
 	fmt.Printf("etcd setServiceStartupTime success. startupKey:%v startupTime:%v\n", startupKey, startupTime)
+}
+
+func genServiceId(prop common.ServerNodeProperty) string {
+	return fmt.Sprintf("%s#%d@%d@%d",
+		prop.GetName(),
+		prop.GetZone(),
+		prop.GetServerTyp(),
+		prop.GetIndex(),
+	)
+}
+
+func genServicePrefix(name string, zone int) string {
+	//return servicePrefixKey + strconv.Itoa(zone) + "/" + name
+	return servicePrefixKey + name
+}
+
+func genServiceZonePrefix(zone int) string {
+	return servicePrefixKey + strconv.Itoa(zone)
+}
+
+func genDiscoveryServicePrefix(name string, zone int) string {
+	if zone > 0 {
+		return servicePrefixKey + name + "#" + strconv.Itoa(zone)
+	}
+	return servicePrefixKey + name + "#"
 }
