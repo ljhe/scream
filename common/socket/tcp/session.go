@@ -67,6 +67,17 @@ func (ts *tcpSession) Start() {
 	go ts.RunSend()
 }
 
+func (ts *tcpSession) Close() {
+	// 已经关闭
+	if ok := atomic.SwapInt64(&ts.close, 1); ok != 0 {
+		return
+	}
+	conn := ts.GetConn()
+	if conn != nil {
+		conn.Close()
+	}
+}
+
 func (ts *tcpSession) RunRcv() {
 
 }

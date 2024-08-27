@@ -7,5 +7,6 @@ type ISession interface {
 	GetConn() net.Conn
 	Node() INetNode
 	Send(msg interface{})
+	Close()
 	HeartBeat(msg interface{})
 }

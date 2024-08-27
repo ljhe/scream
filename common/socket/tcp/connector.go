@@ -27,6 +27,7 @@ func (t *tcpConnector) Start() iface.INetNode {
 
 func (t *tcpConnector) Stop() {
 	t.wg.Done()
+	t.session.Close()
 	log.Println("tcp connector stop success.")
 }
 
@@ -36,7 +37,9 @@ func (t *tcpConnector) GetTyp() string {
 
 func init() {
 	socket.RegisterServerNode(func() iface.INetNode {
-		return &tcpConnector{}
+		node := new(tcpConnector)
+		node.session = newTcpSession(nil, node)
+		return node
 	})
 	log.Println("tcp connector register success.")
 }
@@ -58,6 +61,7 @@ func (t *tcpConnector) connect() {
 		}
 		fmt.Printf("connect success. addr:%v time:%d \n", t.GetAddr(), time.Now().Unix())
 		t.wg.Add(1)
+		t.session.SetConn(conn)
 		// 连接事件
 		t.ProcEvent(&common.RcvMsgEvent{Message: &common.SessionConnected{}})
 		go t.deal(conn)

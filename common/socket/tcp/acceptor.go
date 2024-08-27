@@ -80,6 +80,7 @@ func (t *tcpAcceptor) tcpAccept() {
 			log.Println("tcp accept error:", err)
 			break
 		}
+		log.Println("tcp accept success. remoteAddr:", conn.RemoteAddr())
 		//go t.deal(conn)
 		func() {
 			session := newTcpSession(conn, t)
