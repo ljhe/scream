@@ -2,6 +2,7 @@ package service
 
 import (
 	"common"
+	plugins "common/plugins/etcd"
 	"testing"
 )
 
@@ -14,6 +15,6 @@ func TestCreateConnector(t *testing.T) {
 		Zone:                 9999,
 		Index:                1,
 		DiscoveryServiceName: "test",
-	})
+	}, plugins.NewMultiServerNode())
 	WaitExitSignal()
 }

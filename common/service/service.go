@@ -41,8 +41,8 @@ func CreateAcceptor(param NetNodeParam) iface.INetNode {
 }
 
 // CreateConnector 创建连接节点
-func CreateConnector(param NetNodeParam) iface.INetNode {
-	plugins.DiscoveryService(param.DiscoveryServiceName, param.Zone,
+func CreateConnector(param NetNodeParam, multiNode plugins.MultiServerNode) iface.INetNode {
+	plugins.DiscoveryService(multiNode, param.DiscoveryServiceName, param.Zone,
 		func(mn plugins.MultiServerNode, ed *plugins.ETCDServiceDesc) {
 			// 不连接自己
 			if ed.Typ == param.Typ && ed.Zone == param.Zone && ed.Index == param.Index {
@@ -54,7 +54,7 @@ func CreateConnector(param NetNodeParam) iface.INetNode {
 			node.(common.ProcessorRPCBundle).SetMsgHandle(msgHandle)
 
 			// 添加到服务发现的节点管理中
-			mn.AddNode(ed, node)
+			mn.AddNode(param.DiscoveryServiceName, ed, node)
 
 			node.Start()
 		})

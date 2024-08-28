@@ -21,13 +21,24 @@ type tcpConnector struct {
 }
 
 func (t *tcpConnector) Start() iface.INetNode {
+	// 正在停止的话 需要先等待
+	t.StopWg.Wait()
+	if t.GetRunState() {
+		return t
+	}
 	go t.connect()
 	return t
 }
 
 func (t *tcpConnector) Stop() {
-	t.wg.Done()
+	if !t.GetRunState() {
+		return
+	}
+	t.SetCloseFlag(true)
+	t.StopWg.Add(1)
 	t.session.Close()
+	t.wg.Done()
+	t.StopWg.Wait()
 	log.Println("tcp connector stop success.")
 }
 
@@ -45,7 +56,7 @@ func init() {
 }
 
 func (t *tcpConnector) connect() {
-	t.SetCloseFlag(true)
+	t.SetRunState(true)
 	for {
 		conn, err := net.Dial("tcp", t.GetAddr())
 		if err != nil {
@@ -66,7 +77,13 @@ func (t *tcpConnector) connect() {
 		t.ProcEvent(&common.RcvMsgEvent{Message: &common.SessionConnected{}})
 		go t.deal(conn)
 		t.wg.Wait()
+		if t.GetCloseFlag() {
+			break
+		}
 	}
+	t.SetRunState(false)
+	t.StopWg.Done()
+	log.Println("tcp connector close.")
 }
 
 func (t *tcpConnector) deal(conn net.Conn) {

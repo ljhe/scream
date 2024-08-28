@@ -68,10 +68,8 @@ func ETCDRegister(node iface.INetNode) {
 	fmt.Println("etcd register success:", ed.Id)
 }
 
-func DiscoveryService(serviceName string, zone int, nodeCreator func(MultiServerNode, *ETCDServiceDesc)) iface.INetNode {
+func DiscoveryService(multiNode MultiServerNode, serviceName string, zone int, nodeCreator func(MultiServerNode, *ETCDServiceDesc)) iface.INetNode {
 	// 如果已经存在 就停止之前正在运行的节点(注意不要配置成一样的节点信息 否则会关闭之前的连接)
-	multiNode := NewMultiServerNode()
-
 	// 连接同一个zone里的服务器节点
 	etcdKey := genDiscoveryServicePrefix(serviceName, zone)
 
@@ -96,7 +94,7 @@ func DiscoveryService(serviceName string, zone int, nodeCreator func(MultiServer
 			}
 			// 先停止之前的连接 再执行新的连接
 			if preNode := multiNode.GetNode(ed.Id); preNode != nil {
-				multiNode.DelNode(ed.Id)
+				multiNode.DelNode(ed.Id, serviceName)
 				preNode.Stop()
 			}
 			nodeCreator(multiNode, &ed)
@@ -117,7 +115,7 @@ func DiscoveryService(serviceName string, zone int, nodeCreator func(MultiServer
 						log.Println("etcd discovery start connect:", string(ev.Kv.Key))
 						// 先停止之前的连接 再执行新的连接
 						if preNode := multiNode.GetNode(ed.Id); preNode != nil {
-							multiNode.DelNode(ed.Id)
+							multiNode.DelNode(ed.Id, serviceName)
 							preNode.Stop()
 							log.Println(fmt.Printf("del old node. id:%v", ed.Id))
 						}
@@ -125,7 +123,7 @@ func DiscoveryService(serviceName string, zone int, nodeCreator func(MultiServer
 					case clientv3.EventTypeDelete:
 						nodeID := getNodeId(string(ev.Kv.Key))
 						if preNode := multiNode.GetNode(nodeID); preNode != nil {
-							multiNode.DelNode(nodeID)
+							multiNode.DelNode(nodeID, serviceName)
 							preNode.Stop()
 							log.Println(fmt.Printf("del node. id:%v", nodeID))
 						}
