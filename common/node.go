@@ -18,3 +18,9 @@ type ProcessorRPCBundle interface {
 	SetHooker(v EventHook)
 	SetMsgHandle(v IMsgHandle)
 }
+
+type ContextSet interface {
+	SetContextData(key, val interface{})
+	GetContextData(key interface{}) (interface{}, bool)
+	RawContextData(key interface{}, ptr interface{}) bool
+}

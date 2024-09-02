@@ -36,6 +36,8 @@ func CreateAcceptor(param NetNodeParam) iface.INetNode {
 	property.SetIndex(param.Index)
 
 	node.Start()
+
+	// 注册到服务发现etcd中
 	plugins.ETCDRegister(node)
 	return node
 }
@@ -52,7 +54,14 @@ func CreateConnector(param NetNodeParam, multiNode plugins.MultiServerNode) ifac
 			msgHandle := GetMsgHandle(0)
 			node.(common.ProcessorRPCBundle).SetHooker(new(ServerEventHook))
 			node.(common.ProcessorRPCBundle).SetMsgHandle(msgHandle)
+			
+			property := node.(common.ServerNodeProperty)
+			property.SetServerTyp(param.Typ)
+			property.SetZone(param.Zone)
+			property.SetIndex(param.Index)
 
+			// 将etcd信息保存在内存中
+			node.(common.ContextSet).SetContextData(ContextSetEtcdKey, ed)
 			// 添加到服务发现的节点管理中
 			mn.AddNode(param.DiscoveryServiceName, ed, node)
 

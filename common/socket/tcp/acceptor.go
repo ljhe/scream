@@ -17,6 +17,8 @@ type tcpAcceptor struct {
 	socket.NetTCPSocketOption    // socket相关设置
 	socket.NetProcessorRPC       // 事件处理相关
 	socket.NetServerNodeProperty // 节点配置属性相关
+	socket.NetContextSet         // 节点上下文相关
+	socket.SessionManager        // 会话管理
 	listener                     net.Listener
 }
 
@@ -72,7 +74,9 @@ func (t *tcpAcceptor) GetTyp() string {
 
 func init() {
 	socket.RegisterServerNode(func() iface.INetNode {
-		return &tcpAcceptor{}
+		return &tcpAcceptor{
+			SessionManager: socket.NewNetSessionManager(),
+		}
 	})
 	log.Println("tcp acceptor register success.")
 }

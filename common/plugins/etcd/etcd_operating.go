@@ -33,10 +33,10 @@ func (e *ETCDServiceDesc) String() string {
 	return string(data)
 }
 
-func ETCDRegister(node iface.INetNode) {
+func ETCDRegister(node iface.INetNode) *ETCDServiceDesc {
 	property := node.(common.ServerNodeProperty)
 	ed := &ETCDServiceDesc{
-		Id:    genServiceId(property),
+		Id:    util.GenServiceId(property),
 		Name:  property.GetName(),
 		Host:  property.GetAddr(),
 		Typ:   property.GetServerTyp(),
@@ -50,22 +50,23 @@ func ETCDRegister(node iface.INetNode) {
 	resp, err := etcdDiscovery.etcdKV.Get(context.TODO(), etcdKey)
 	if err != nil {
 		log.Println("etcd register error:", err)
-		return
+		return nil
 	}
 	if resp.Count > 0 {
 		fmt.Println("etcd register error: service already exist. etcdKey:", etcdKey)
-		return
+		return nil
 	}
 
 	// 注册
 	err = etcdDiscovery.RegisterService(etcdKey, ed.String())
 	if err != nil {
 		log.Println("etcd register error:", err)
-		return
+		return nil
 	}
 	etcdDiscovery.WatchServices(etcdKey, *ed)
 	setServiceStartupTime(property.GetZone())
 	fmt.Println("etcd register success:", ed.Id)
+	return ed
 }
 
 func DiscoveryService(multiNode MultiServerNode, serviceName string, zone int, nodeCreator func(MultiServerNode, *ETCDServiceDesc)) iface.INetNode {
@@ -158,15 +159,6 @@ func setServiceStartupTime(zone int) {
 		startupTime = t
 	}
 	fmt.Printf("etcd setServiceStartupTime success. startupKey:%v startupTime:%v\n", startupKey, startupTime)
-}
-
-func genServiceId(prop common.ServerNodeProperty) string {
-	return fmt.Sprintf("%s#%d@%d@%d",
-		prop.GetName(),
-		prop.GetZone(),
-		prop.GetServerTyp(),
-		prop.GetIndex(),
-	)
 }
 
 func genServicePrefix(name string, zone int) string {

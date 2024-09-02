@@ -23,6 +23,7 @@ type tcpSession struct {
 	sendQueueMaxLen         int
 	sessionOpt              socket.NetTCPSocketOption
 	exitWg                  sync.WaitGroup
+	id                      uint64
 	mu                      sync.Mutex
 }
 
@@ -36,6 +37,14 @@ func (ts *tcpSession) GetConn() net.Conn {
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
 	return ts.conn
+}
+
+func (ts *tcpSession) SetId(id uint64) {
+	ts.id = id
+}
+
+func (ts *tcpSession) GetId() uint64 {
+	return ts.id
 }
 
 func (ts *tcpSession) Node() iface.INetNode {
@@ -59,6 +68,8 @@ func newTcpSession(c net.Conn, node iface.INetNode) *tcpSession {
 func (ts *tcpSession) Start() {
 	atomic.StoreInt64(&ts.close, 0)
 	ts.exitWg.Add(2)
+	// 添加到session管理器中
+	ts.node.(socket.SessionManager).Add(ts)
 	go func() {
 		ts.exitWg.Wait()
 		close(ts.sendQueue)

@@ -16,6 +16,8 @@ type tcpConnector struct {
 	socket.NetTCPSocketOption                // socket相关设置
 	socket.NetProcessorRPC                   // 事件处理相关
 	socket.NetServerNodeProperty             // 节点配置属性相关
+	socket.NetContextSet                     // 节点上下文相关
+	socket.SessionManager                    // 会话管理
 	session                      *tcpSession // 连接会话
 	wg                           sync.WaitGroup
 }
@@ -49,6 +51,7 @@ func (t *tcpConnector) GetTyp() string {
 func init() {
 	socket.RegisterServerNode(func() iface.INetNode {
 		node := new(tcpConnector)
+		node.SessionManager = socket.NewNetSessionManager()
 		node.session = newTcpSession(nil, node)
 		return node
 	})
@@ -73,8 +76,9 @@ func (t *tcpConnector) connect() {
 		fmt.Printf("connect success. addr:%v time:%d \n", t.GetAddr(), time.Now().Unix())
 		t.wg.Add(1)
 		t.session.SetConn(conn)
+		t.session.Start()
 		// 连接事件
-		t.ProcEvent(&common.RcvMsgEvent{Message: &common.SessionConnected{}})
+		t.ProcEvent(&common.RcvMsgEvent{Sess: t.session, Message: &common.SessionConnected{}})
 		go t.deal(conn)
 		t.wg.Wait()
 		if t.GetCloseFlag() {
