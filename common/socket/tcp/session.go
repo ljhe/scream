@@ -100,7 +100,7 @@ func (ts *tcpSession) RunRcv() {
 	for {
 		msg, err := ts.ReadMsg(ts)
 		if err != nil {
-			log.Printf("RunRcv ReadMsg err:%v \n", err)
+			log.Printf("RunRcv ReadMsg err:%v sessionId:%d \n", err, ts.GetId())
 			break
 		}
 		ts.ProcEvent(&common.RcvMsgEvent{Sess: ts, Message: msg})
