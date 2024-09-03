@@ -10,7 +10,9 @@ import (
 
 type SessionManager interface {
 	Add(s iface.ISession)
+	Remove(s iface.ISession)
 	SetUuidCreateKey(genKey int)
+	CloseAllSession()
 }
 
 type NetSessionManager struct {
@@ -33,6 +35,17 @@ func (n *NetSessionManager) Add(s iface.ISession) {
 		log.Panic("session id already exists. id:", id)
 	}
 	n.sessionMap.Store(id, s)
+}
+
+func (n *NetSessionManager) Remove(s iface.ISession) {
+	n.sessionMap.Delete(s.GetId())
+}
+
+func (n *NetSessionManager) CloseAllSession() {
+	n.sessionMap.Range(func(key, value interface{}) bool {
+		value.(iface.ISession).Close()
+		return true
+	})
 }
 
 func (n *NetSessionManager) SetUuidCreateKey(genKey int) {

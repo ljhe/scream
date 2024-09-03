@@ -42,6 +42,13 @@ func (n *NetProcessorRPC) ProcEvent(e iface.IProcEvent) {
 	}
 }
 
+func (n *NetProcessorRPC) ReadMsg(s iface.ISession) (interface{}, error) {
+	if n.MsgRPC != nil {
+		return n.MsgRPC.OnRcvMsg(s)
+	}
+	return nil, fmt.Errorf("msg rpc is nil")
+}
+
 func (n *NetProcessorRPC) SendMsg(e iface.IProcEvent) error {
 	if n.Hooker != nil {
 		e = n.Hooker.OutEvent(e)
@@ -55,8 +62,17 @@ func (n *NetProcessorRPC) SendMsg(e iface.IProcEvent) error {
 type TCPMessageProcessor struct {
 }
 
-func (tp *TCPMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, msgSeqId uint32, err error) {
-	return nil, 0, err
+func (tp *TCPMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, err error) {
+	reader, ok := s.GetConn().(io.Reader)
+	if !ok || reader == nil {
+		log.Println("conn is not io.Reader")
+		return nil, fmt.Errorf("conn is not io.Reader")
+	}
+	opt := s.Node().(Option)
+	opt.SocketReadTimeout(reader.(net.Conn), func() {
+		msg, err = common.ReadMessage(reader, 1024)
+	})
+	return
 }
 
 func (tp *TCPMessageProcessor) OnSendMsg(s iface.ISession, msg interface{}) (err error) {
@@ -67,7 +83,7 @@ func (tp *TCPMessageProcessor) OnSendMsg(s iface.ISession, msg interface{}) (err
 	}
 	opt := s.Node().(Option)
 	opt.SocketWriteTimeout(w.(net.Conn), func() {
-		err = SendMessage(w, msg)
+		err = common.SendMessage(w, msg)
 	})
 	return err
 }

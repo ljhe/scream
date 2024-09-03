@@ -44,6 +44,6 @@ type EventHook interface {
 
 // MessageProcessor 消息处理
 type MessageProcessor interface {
-	OnRcvMsg(s iface.ISession) (interface{}, uint32, error)
+	OnRcvMsg(s iface.ISession) (interface{}, error)
 	OnSendMsg(s iface.ISession, msg interface{}) error
 }

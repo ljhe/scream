@@ -54,7 +54,8 @@ func CreateConnector(param NetNodeParam, multiNode plugins.MultiServerNode) ifac
 			msgHandle := GetMsgHandle(0)
 			node.(common.ProcessorRPCBundle).SetHooker(new(ServerEventHook))
 			node.(common.ProcessorRPCBundle).SetMsgHandle(msgHandle)
-			
+			node.(common.ProcessorRPCBundle).SetMessageProc(new(socket.TCPMessageProcessor))
+
 			property := node.(common.ServerNodeProperty)
 			property.SetServerTyp(param.Typ)
 			property.SetZone(param.Zone)

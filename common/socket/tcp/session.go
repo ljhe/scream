@@ -73,6 +73,7 @@ func (ts *tcpSession) Start() {
 	go func() {
 		ts.exitWg.Wait()
 		close(ts.sendQueue)
+		ts.node.(socket.SessionManager).Remove(ts)
 	}()
 	go ts.RunRcv()
 	go ts.RunSend()
@@ -90,7 +91,21 @@ func (ts *tcpSession) Close() {
 }
 
 func (ts *tcpSession) RunRcv() {
+	defer func() {
+		if err := recover(); err != nil {
+			debug.PrintStack()
+		}
+	}()
 
+	for {
+		msg, err := ts.ReadMsg(ts)
+		if err != nil {
+			log.Printf("RunRcv ReadMsg err:%v \n", err)
+			break
+		}
+		ts.ProcEvent(&common.RcvMsgEvent{Sess: ts, Message: msg})
+	}
+	ts.exitWg.Done()
 }
 
 func (ts *tcpSession) RunSend() {
@@ -108,7 +123,7 @@ func (ts *tcpSession) RunSend() {
 			continue
 		}
 		err := ts.SendMsg(&common.SendMsgEvent{Sess: ts, Message: data})
-		log.Println("send msg:", data)
+		log.Printf("send msg: %v \n", data)
 		if err != nil {
 			log.Println("send msg err:", err)
 			break

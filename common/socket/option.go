@@ -6,6 +6,7 @@ import (
 )
 
 type Option interface {
+	SocketReadTimeout(c net.Conn, callback func())
 	SocketWriteTimeout(c net.Conn, callback func())
 	CopyOpt(opt *NetTCPSocketOption)
 }
@@ -17,6 +18,16 @@ type NetTCPSocketOption struct {
 	writeTimeout    time.Duration
 	noDelay         bool
 	maxMsgLen       int
+}
+
+func (no *NetTCPSocketOption) SocketReadTimeout(c net.Conn, callback func()) {
+	if no.readTimeout > 0 {
+		c.SetReadDeadline(time.Now().Add(no.readTimeout))
+		callback()
+		c.SetReadDeadline(time.Time{})
+	} else {
+		callback()
+	}
 }
 
 func (no *NetTCPSocketOption) SocketWriteTimeout(c net.Conn, callback func()) {

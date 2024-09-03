@@ -63,6 +63,7 @@ func (t *tcpAcceptor) Stop() {
 	// 设置结束标签
 	t.SetCloseFlag(true)
 	t.listener.Close()
+	t.CloseAllSession()
 	// 等待协程结束
 	t.StopWg.Wait()
 	log.Println("tcp acceptor stop success.")
