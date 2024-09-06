@@ -9,8 +9,11 @@ import (
 )
 
 const (
-	msgMaxLen = 2 // body大小 2个字节
-	msgIdLen  = 2 // 包id大小 2个字节
+	msgBodyLen  = 2         // body大小 2个字节
+	msgIdLen    = 2         // 包id大小 2个字节
+	chunkNumLen = 2         // 分片数量大小 2个字节
+	chunkIdLen  = 2         // 分片id大小 2个字节
+	MaxMsgLen   = 1024 * 40 // 40k(发送和接受字节最大数量)
 )
 
 var (
@@ -54,22 +57,79 @@ func SendMessage(writer io.Writer, msg interface{}) (err error) {
 		return err
 	}
 
-	// body's len
 	msgLen := len(msgData)
 	msgId := uint16(msgInfo.MsgId)
+	// 计算分片数量
+	chunkNum := msgLen/MaxMsgLen + 1
+	sendBytes := 0
+	chunkId := 1
 
-	// 拼接head
-	data := make([]byte, msgMaxLen+msgIdLen+msgLen)
-	// msgMaxLen
-	binary.BigEndian.PutUint16(data, uint16(msgLen))
-	// msgIdLen
-	binary.BigEndian.PutUint16(data[msgMaxLen:], msgId)
+	for sendBytes < msgLen {
+		remaining := msgLen - sendBytes
+		chunkSize := MaxMsgLen
+		if remaining < chunkSize {
+			chunkSize = remaining
+		}
 
-	// 拼接body
-	if msgLen > 0 {
-		copy(data[msgMaxLen+msgIdLen:], msgData)
+		data := make([]byte, msgBodyLen+msgIdLen+chunkNumLen+chunkIdLen+chunkSize)
+		// msgBodyLen
+		binary.BigEndian.PutUint16(data, uint16(msgLen))
+		// msgIdLen
+		binary.BigEndian.PutUint16(data[msgBodyLen:], msgId)
+		// chunkNumLen
+		binary.BigEndian.PutUint16(data[msgBodyLen+msgIdLen:], uint16(chunkNum))
+		// chunkIdLen
+		binary.BigEndian.PutUint16(data[msgBodyLen+msgIdLen+chunkNumLen:], uint16(chunkId))
+		// msgBody
+		copy(data[msgBodyLen+msgIdLen+chunkNumLen+chunkIdLen:], msgData[sendBytes:sendBytes+chunkSize])
+		err = WriteFull(writer, data)
+		if err != nil {
+			return err
+		}
+		sendBytes += chunkSize
+		chunkId++
 	}
-	return WriteFull(writer, data)
+	return nil
+}
+
+// RcvPackageData 获取原始包数据
+func RcvPackageData(reader io.Reader) ([]byte, uint16, error) {
+	var bufMsg = []byte{}
+	msgId := uint16(0)
+	receivedBytes := uint16(0)
+	for {
+		// msgBodyLen
+		msgLen, err := readUint16(reader, msgBodyLen)
+		// msgId
+		msgId, err = readUint16(reader, msgIdLen)
+		// chunkNum
+		bufChunkNumUint16, err := readUint16(reader, chunkNumLen)
+		// chunkId
+		bufChunkIdUint16, err := readUint16(reader, chunkIdLen)
+
+		if len(bufMsg) == 0 {
+			bufMsg = make([]byte, msgLen)
+		}
+		remaining := msgLen - receivedBytes
+		chunkSize := MaxMsgLen
+		if remaining < uint16(chunkSize) {
+			chunkSize = int(remaining)
+		}
+
+		buf := make([]byte, chunkSize)
+		_, err = io.ReadFull(reader, buf)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		copy(bufMsg[receivedBytes:], buf)
+		receivedBytes += uint16(chunkSize)
+		if bufChunkIdUint16 >= bufChunkNumUint16 {
+			break
+		}
+	}
+
+	return bufMsg, msgId, nil
 }
 
 func WriteFull(writer io.Writer, buf []byte) error {
@@ -124,39 +184,12 @@ func DecodeMessage(msgId int, msg []byte) (interface{}, error) {
 	return msgObj, nil
 }
 
-// RcvPackageData 获取原始包数据
-func RcvPackageData(reader io.Reader) ([]byte, uint16, error) {
-	// msgLen
-	bufMsgLen := make([]byte, msgMaxLen)
-	_, err := io.ReadFull(reader, bufMsgLen)
+func readUint16(reader io.Reader, byteLen int) (uint16, error) {
+	bt := make([]byte, byteLen)
+	_, err := io.ReadFull(reader, bt)
 	if err != nil {
-		return nil, 0, err
+		return 0, err
 	}
-	if len(bufMsgLen) < msgMaxLen {
-		return nil, 0, fmt.Errorf("msg too short. len:%v", len(bufMsgLen))
-	}
-	msgLen := binary.BigEndian.Uint16(bufMsgLen)
-
-	// msgId
-	bufIdLen := make([]byte, msgIdLen)
-	_, err = io.ReadFull(reader, bufIdLen)
-	if err != nil {
-		return nil, 0, err
-	}
-	if len(bufIdLen) < msgIdLen {
-		return nil, 0, fmt.Errorf("msg too short. len:%v", len(bufIdLen))
-	}
-	msgId := binary.BigEndian.Uint16(bufIdLen)
-
-	bufMsg := make([]byte, msgLen)
-	if msgLen > 0 {
-		_, err = io.ReadFull(reader, bufMsg)
-		if err != nil {
-			return nil, 0, err
-		}
-		if len(bufMsg) < int(msgLen) {
-			return nil, 0, fmt.Errorf("msg too short. len:%v", len(bufMsg))
-		}
-	}
-	return bufMsg, msgId, nil
+	btUint16 := binary.BigEndian.Uint16(bt)
+	return btUint16, nil
 }
