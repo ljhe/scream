@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"reflect"
 )
 
@@ -60,20 +61,22 @@ func SendMessage(writer io.Writer, msg interface{}) (err error) {
 	msgId := uint16(msgInfo.MsgId)
 	// 计算分片数量
 	chunkNum := msgLen/MsgMaxLen + 1
+	//chunkNum := msgLen/50 + 1
 	sendBytes := 0
 	chunkId := 1
 
 	for sendBytes < msgLen {
 		remaining := msgLen - sendBytes
 		chunkSize := MsgMaxLen
+		//chunkSize := 50
 		if remaining < chunkSize {
 			chunkSize = remaining
 		}
 
-		data := make([]byte, msgBodyLen+msgIdLen+msgChunkNumLen+msgChunkIdLen+chunkSize)
-		// todo 这里如果使用内存池的话 会导致每次发送的包里都会有空数据 包体会变大 而且在接收方需要去除空数据
+		//data := make([]byte, msgBodyLen+msgIdLen+msgChunkNumLen+msgChunkIdLen+chunkSize)
 		// 使用内存池
-		//data := MemoryPoolObj.Get(msgBodyLen + msgIdLen + msgChunkNumLen + msgChunkIdLen + chunkSize)
+		actualDataLen := msgBodyLen + msgIdLen + msgChunkNumLen + msgChunkIdLen + chunkSize
+		data := MemoryPoolObj.Get(actualDataLen)
 		// msgBodyLen
 		binary.BigEndian.PutUint16(data, uint16(msgLen))
 		// msgIdLen
@@ -84,13 +87,14 @@ func SendMessage(writer io.Writer, msg interface{}) (err error) {
 		binary.BigEndian.PutUint16(data[msgBodyLen+msgIdLen+msgChunkNumLen:], uint16(chunkId))
 		// msgBody
 		copy(data[msgBodyLen+msgIdLen+msgChunkNumLen+msgChunkIdLen:], msgData[sendBytes:sendBytes+chunkSize])
-		err = WriteFull(writer, data)
+		// 使用内存池 会导致每次发送的包里都会有空数据 所以写入的时候只写入有效数据的部分
+		err = WriteFull(writer, data[:actualDataLen])
 		if err != nil {
 			return err
 		}
 		sendBytes += chunkSize
 		chunkId++
-		//MemoryPoolObj.Put(data)
+		MemoryPoolObj.Put(data)
 	}
 	return nil
 }
@@ -98,7 +102,6 @@ func SendMessage(writer io.Writer, msg interface{}) (err error) {
 // RcvPackageData 获取原始包数据
 func RcvPackageData(reader io.Reader) ([]byte, uint16, error) {
 	var bufMsg = []byte{}
-	bufMsgLen := len(bufMsg)
 	msgId := uint16(0)
 	fId := uint16(0) // chunkId=1时的msgId
 	receivedBytes := uint16(0)
@@ -127,23 +130,25 @@ func RcvPackageData(reader io.Reader) ([]byte, uint16, error) {
 			fId = msgId
 		}
 
-		if bufMsgLen == 0 {
+		if len(bufMsg) == 0 {
 			bufMsg = make([]byte, msgLen)
 		}
 		remaining := msgLen - receivedBytes
 		chunkSize := MsgMaxLen
+		//chunkSize := 50
 		if remaining < uint16(chunkSize) {
 			chunkSize = int(remaining)
 		}
 
-		buf := make([]byte, chunkSize)
+		//buf := make([]byte, chunkSize)
 		// 使用内存池
-		//buf := MemoryPoolObj.Get(chunkSize)
-		_, err = io.ReadFull(reader, buf)
+		buf := MemoryPoolObj.Get(chunkSize)
+		// 使用内存池  分配的buf内存可能会大于实际数据长度 所以这里只读取有效数据的长度
+		_, err = io.ReadFull(reader, buf[:chunkSize])
 		if err != nil {
+			log.Printf("readFull err:%v \n", err)
 			return nil, 0, err
 		}
-
 		copy(bufMsg[receivedBytes:], buf)
 		receivedBytes += uint16(chunkSize)
 		if bufChunkIdUint16 >= bufChunkNumUint16 {
@@ -154,9 +159,9 @@ func RcvPackageData(reader io.Reader) ([]byte, uint16, error) {
 		}
 	}
 
-	//if bufMsgLen != 0 {
-	//	MemoryPoolObj.Put(bufMsg)
-	//}
+	if len(bufMsg) != 0 {
+		MemoryPoolObj.Put(bufMsg)
+	}
 	return bufMsg, msgId, nil
 }
 
