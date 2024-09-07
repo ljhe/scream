@@ -1,13 +1,9 @@
-package common
+package mpool
 
 import (
 	"log"
 	"sync"
 )
-
-var memPoolSize = []int{32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, MsgMaxLen}
-var memPoolSizeMaxCount = []int{10, 10, 10, 10, 10, 10, 10, 4, 4, 4, 4, 4}
-var MemoryPoolObj *MemoryPool
 
 type MemoryPoolItem struct {
 	pool     sync.Pool
@@ -21,22 +17,22 @@ type MemoryPool struct {
 	sizes []int
 }
 
-func NewMemoryPool() *MemoryPool {
+func NewMemoryPool(mps, mpc []int) *MemoryPool {
 	pools := make(map[int]*MemoryPoolItem)
-	for k, size := range memPoolSize {
+	for k, size := range mps {
 		pools[size] = &MemoryPoolItem{
 			pool: sync.Pool{
 				New: func() interface{} {
 					return make([]byte, size)
 				},
 			},
-			maxCount: memPoolSizeMaxCount[k],
+			maxCount: mpc[k],
 		}
-		log.Printf("Allocating new memory of size: %d maxCount:%d \n", size, memPoolSizeMaxCount[k])
+		log.Printf("Allocating new memory of size: %d maxCount:%d \n", size, mpc[k])
 	}
 	return &MemoryPool{
 		pools: pools,
-		sizes: memPoolSize,
+		sizes: mps,
 	}
 }
 

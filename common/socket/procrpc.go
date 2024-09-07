@@ -70,7 +70,7 @@ func (tp *TCPMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, err 
 	}
 	opt := s.Node().(Option)
 	opt.SocketReadTimeout(reader.(net.Conn), func() {
-		msg, err = common.ReadMessage(reader, 1024)
+		msg, err = ReadMessage(reader, 1024)
 	})
 	return
 }
@@ -83,7 +83,7 @@ func (tp *TCPMessageProcessor) OnSendMsg(s iface.ISession, msg interface{}) (err
 	}
 	opt := s.Node().(Option)
 	opt.SocketWriteTimeout(w.(net.Conn), func() {
-		err = common.SendMessage(w, msg)
+		err = SendMessage(w, msg)
 	})
 	return err
 }

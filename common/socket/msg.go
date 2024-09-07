@@ -1,6 +1,8 @@
-package common
+package socket
 
 import (
+	"common"
+	"common/plugins/mpool"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -60,14 +62,14 @@ func SendMessage(writer io.Writer, msg interface{}) (err error) {
 	msgLen := len(msgData)
 	msgId := uint16(msgInfo.MsgId)
 	// 计算分片数量
-	chunkNum := msgLen/MsgMaxLen + 1
+	chunkNum := msgLen/common.MsgMaxLen + 1
 	//chunkNum := msgLen/50 + 1
 	sendBytes := 0
 	chunkId := 1
 
 	for sendBytes < msgLen {
 		remaining := msgLen - sendBytes
-		chunkSize := MsgMaxLen
+		chunkSize := common.MsgMaxLen
 		//chunkSize := 50
 		if remaining < chunkSize {
 			chunkSize = remaining
@@ -76,7 +78,7 @@ func SendMessage(writer io.Writer, msg interface{}) (err error) {
 		//data := make([]byte, msgBodyLen+msgIdLen+msgChunkNumLen+msgChunkIdLen+chunkSize)
 		// 使用内存池
 		actualDataLen := msgBodyLen + msgIdLen + msgChunkNumLen + msgChunkIdLen + chunkSize
-		data := MemoryPoolObj.Get(actualDataLen)
+		data := mpool.GetMemoryPool(mpool.TCPMemoryPoolKey).Get(actualDataLen)
 		// msgBodyLen
 		binary.BigEndian.PutUint16(data, uint16(msgLen))
 		// msgIdLen
@@ -94,7 +96,7 @@ func SendMessage(writer io.Writer, msg interface{}) (err error) {
 		}
 		sendBytes += chunkSize
 		chunkId++
-		MemoryPoolObj.Put(data)
+		mpool.GetMemoryPool(mpool.TCPMemoryPoolKey).Put(data)
 	}
 	return nil
 }
@@ -134,7 +136,7 @@ func RcvPackageData(reader io.Reader) ([]byte, uint16, error) {
 			bufMsg = make([]byte, msgLen)
 		}
 		remaining := msgLen - receivedBytes
-		chunkSize := MsgMaxLen
+		chunkSize := common.MsgMaxLen
 		//chunkSize := 50
 		if remaining < uint16(chunkSize) {
 			chunkSize = int(remaining)
@@ -142,7 +144,7 @@ func RcvPackageData(reader io.Reader) ([]byte, uint16, error) {
 
 		//buf := make([]byte, chunkSize)
 		// 使用内存池
-		buf := MemoryPoolObj.Get(chunkSize)
+		buf := mpool.GetMemoryPool(mpool.TCPMemoryPoolKey).Get(chunkSize)
 		// 使用内存池  分配的buf内存可能会大于实际数据长度 所以这里只读取有效数据的长度
 		_, err = io.ReadFull(reader, buf[:chunkSize])
 		if err != nil {
@@ -160,7 +162,7 @@ func RcvPackageData(reader io.Reader) ([]byte, uint16, error) {
 	}
 
 	if len(bufMsg) != 0 {
-		MemoryPoolObj.Put(bufMsg)
+		mpool.GetMemoryPool(mpool.TCPMemoryPoolKey).Put(bufMsg)
 	}
 	return bufMsg, msgId, nil
 }

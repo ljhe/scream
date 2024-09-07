@@ -4,6 +4,7 @@ import (
 	"common"
 	"common/iface"
 	plugins "common/plugins/etcd"
+	"common/plugins/mpool"
 	"common/socket"
 	_ "common/socket/tcp"
 	"log"
@@ -73,7 +74,7 @@ func CreateConnector(param NetNodeParam, multiNode plugins.MultiServerNode) ifac
 
 func Init() {
 	// 初始化内存池
-	common.MemoryPoolObj = common.NewMemoryPool()
+	mpool.MemoryPoolInit()
 	// 初始化服务发现
 	err := plugins.InitServiceDiscovery("127.0.0.1:2379")
 	if err != nil {
