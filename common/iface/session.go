@@ -11,4 +11,6 @@ type ISession interface {
 	SetId(id uint64)
 	GetId() uint64
 	HeartBeat(msg interface{})
+	IncRcvPingNum(inc int)
+	RcvPingNum() int
 }

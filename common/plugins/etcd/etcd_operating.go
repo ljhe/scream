@@ -184,3 +184,31 @@ func getNodeId(key string) string {
 	}
 	return ""
 }
+
+func ParseServiceId(sid string) (typ, zone, idx int, err error) {
+	str := strings.Split(sid, "#")
+	if len(str) < 2 {
+		err = fmt.Errorf("ParseServiceId sid invalid. sid:" + sid)
+		return
+	} else {
+		strProp := strings.Split(str[1], "@")
+		if len(strProp) < 3 {
+			err = fmt.Errorf("ParseServiceId sid invalid. sid:" + sid)
+			return
+		} else {
+			zone, err = util.StrToInt(strProp[0])
+			if err != nil {
+				return
+			}
+			typ, err = util.StrToInt(strProp[1])
+			if err != nil {
+				return
+			}
+			idx, err = util.StrToInt(strProp[2])
+			if err != nil {
+				return
+			}
+		}
+	}
+	return
+}

@@ -182,7 +182,7 @@ func (mb *msgBase) Marshal(msgData []byte) []byte {
 	mb.actualDataLen = int(MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen+MsgOptions.MsgChunkNumLen+MsgOptions.MsgChunkIdLen) + mb.chunkSize
 	data := mb.Container()
 	// msgBodyLen
-	binary.BigEndian.PutUint16(data, uint16(mb.msgLen))
+	binary.BigEndian.PutUint16(data, mb.msgLen)
 	// msgIdLen
 	binary.BigEndian.PutUint16(data[MsgOptions.MsgBodyLen:], mb.msgId)
 	// chunkNumLen
@@ -262,7 +262,6 @@ func (mb *msgBase) Container() []byte {
 
 func (mb *msgBase) Release(data []byte) {
 	if MsgOptions.Pool {
-		data = []byte{}
 		mpool.GetMemoryPool(mpool.TCPMemoryPoolKey).Put(data)
 	}
 }

@@ -63,7 +63,7 @@ func CreateConnector(param NetNodeParam, multiNode plugins.MultiServerNode) ifac
 			property.SetIndex(param.Index)
 
 			// 将etcd信息保存在内存中
-			node.(common.ContextSet).SetContextData(ContextSetEtcdKey, ed)
+			node.(common.ContextSet).SetContextData(common.ContextSetEtcdKey, ed)
 			// 添加到服务发现的节点管理中
 			mn.AddNode(param.DiscoveryServiceName, ed, node)
 

@@ -66,6 +66,6 @@ func (mp *MemoryPool) Put(buf []byte) {
 		item.pool.Put(buf)
 	} else {
 		// 超过最大缓存数量的块直接丢弃
-		log.Printf("Discarding memory block of size: %d, as pool is full\n", closestSize)
+		//log.Printf("Discarding memory block of size: %d, as pool is full\n", closestSize)
 	}
 }

@@ -20,7 +20,13 @@ type ServiceIdentifyACK struct {
 	ServerStartTime uint64 // 当前服务器启动时间
 }
 
+// PingReq 心跳包
+type PingReq struct {
+	NeedAck bool
+}
+
 func init() {
 	RegisterSystemMsg(&SystemMsg{MsgId: 1, typ: reflect.TypeOf((*ServiceIdentifyACK)(nil)).Elem()})
+	RegisterSystemMsg(&SystemMsg{MsgId: 2, typ: reflect.TypeOf((*PingReq)(nil)).Elem()})
 	log.Println("operation init success")
 }

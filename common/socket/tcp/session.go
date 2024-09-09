@@ -16,6 +16,7 @@ var sendQueueMaxLen = 2000
 
 type tcpSession struct {
 	*socket.NetProcessorRPC // 事件处理相关
+	socket.NetContextSet    // 记录session绑定信息
 	node                    iface.INetNode
 	conn                    net.Conn
 	close                   int64
@@ -24,6 +25,7 @@ type tcpSession struct {
 	sessionOpt              socket.NetTCPSocketOption
 	exitWg                  sync.WaitGroup
 	id                      uint64
+	rcvPingNum              int
 	mu                      sync.Mutex
 }
 
@@ -49,6 +51,18 @@ func (ts *tcpSession) GetId() uint64 {
 
 func (ts *tcpSession) Node() iface.INetNode {
 	return ts.node
+}
+
+func (ts *tcpSession) IncRcvPingNum(inc int) {
+	if inc <= 0 {
+		ts.rcvPingNum = inc
+		return
+	}
+	ts.rcvPingNum += inc
+}
+
+func (ts *tcpSession) RcvPingNum() int {
+	return ts.rcvPingNum
 }
 
 func newTcpSession(c net.Conn, node iface.INetNode) *tcpSession {
@@ -93,6 +107,7 @@ func (ts *tcpSession) Close() {
 func (ts *tcpSession) RunRcv() {
 	defer func() {
 		if err := recover(); err != nil {
+			log.Printf("Stack---::%v\n %s\n", err, string(debug.Stack()))
 			debug.PrintStack()
 		}
 	}()
@@ -111,7 +126,7 @@ func (ts *tcpSession) RunRcv() {
 func (ts *tcpSession) RunSend() {
 	defer func() {
 		if err := recover(); err != nil {
-			debug.PrintStack()
+			log.Printf("Stack---::%v\n %s\n", err, string(debug.Stack()))
 		}
 	}()
 
@@ -123,7 +138,6 @@ func (ts *tcpSession) RunSend() {
 			continue
 		}
 		err := ts.SendMsg(&common.SendMsgEvent{Sess: ts, Message: data})
-		log.Printf("send msg: %v \n", data)
 		if err != nil {
 			log.Println("send msg err:", err)
 			break
