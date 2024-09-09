@@ -5,18 +5,27 @@ import (
 	"common/plugins/mpool"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-	"log"
 	"reflect"
 )
 
-const (
-	msgBodyLen     = 2 // body大小 2个字节
-	msgIdLen       = 2 // 包id大小 2个字节
-	msgChunkNumLen = 2 // 分片数量大小 2个字节
-	msgChunkIdLen  = 2 // 分片id大小 2个字节
-)
+var ErrMsgIdNotFound = errors.New("msgId not found")
+
+var MsgOptions = struct {
+	MsgBodyLen     uint16 // body大小 2个字节
+	MsgIdLen       uint16 // 包id大小 2个字节
+	MsgChunkNumLen uint16 // 分片数量大小 2个字节
+	MsgChunkIdLen  uint16 // 分片id大小 2个字节
+	Pool           bool   // 是否使用内存池
+}{
+	MsgBodyLen:     2,
+	MsgIdLen:       2,
+	MsgChunkNumLen: 2,
+	MsgChunkIdLen:  2,
+	Pool:           true,
+}
 
 var (
 	systemMsgById  = map[int]*SystemMsg{}
@@ -27,6 +36,17 @@ type SystemMsg struct {
 	MsgId int
 	Msg   []byte
 	typ   reflect.Type
+}
+
+type msgBase struct {
+	msgLen        uint16
+	msgId         uint16
+	chunkNum      uint16
+	chunkId       uint16
+	sendBytes     int
+	actualDataLen int
+	chunkSize     int
+	receivedBytes uint16
 }
 
 func RegisterSystemMsg(sys *SystemMsg) {
@@ -60,111 +80,35 @@ func SendMessage(writer io.Writer, msg interface{}) (err error) {
 	}
 
 	msgLen := len(msgData)
-	msgId := uint16(msgInfo.MsgId)
-	// 计算分片数量
-	chunkNum := msgLen/common.MsgMaxLen + 1
-	//chunkNum := msgLen/50 + 1
-	sendBytes := 0
-	chunkId := 1
+	mb := &msgBase{
+		msgLen:    uint16(len(msgData)),
+		msgId:     uint16(msgInfo.MsgId),
+		chunkNum:  uint16(msgLen/common.MsgMaxLen + 1), // 计算分片数量
+		chunkId:   1,
+		sendBytes: 0,
+	}
 
-	for sendBytes < msgLen {
-		remaining := msgLen - sendBytes
-		chunkSize := common.MsgMaxLen
-		//chunkSize := 50
-		if remaining < chunkSize {
-			chunkSize = remaining
-		}
-
-		//data := make([]byte, msgBodyLen+msgIdLen+msgChunkNumLen+msgChunkIdLen+chunkSize)
-		// 使用内存池
-		actualDataLen := msgBodyLen + msgIdLen + msgChunkNumLen + msgChunkIdLen + chunkSize
-		data := mpool.GetMemoryPool(mpool.TCPMemoryPoolKey).Get(actualDataLen)
-		// msgBodyLen
-		binary.BigEndian.PutUint16(data, uint16(msgLen))
-		// msgIdLen
-		binary.BigEndian.PutUint16(data[msgBodyLen:], msgId)
-		// chunkNumLen
-		binary.BigEndian.PutUint16(data[msgBodyLen+msgIdLen:], uint16(chunkNum))
-		// chunkIdLen
-		binary.BigEndian.PutUint16(data[msgBodyLen+msgIdLen+msgChunkNumLen:], uint16(chunkId))
-		// msgBody
-		copy(data[msgBodyLen+msgIdLen+msgChunkNumLen+msgChunkIdLen:], msgData[sendBytes:sendBytes+chunkSize])
-		// 使用内存池 会导致每次发送的包里都会有空数据 所以写入的时候只写入有效数据的部分
-		err = WriteFull(writer, data[:actualDataLen])
+	for mb.sendBytes < int(mb.msgLen) {
+		data := mb.Marshal(msgData)
+		// 如果使用内存池 会导致每次发送的包里都会有空数据 所以写入的时候只写入有效数据的部分
+		err = WriteFull(writer, data[:mb.actualDataLen])
 		if err != nil {
 			return err
 		}
-		sendBytes += chunkSize
-		chunkId++
+		mb.sendBytes += mb.chunkSize
+		mb.chunkId++
 		mpool.GetMemoryPool(mpool.TCPMemoryPoolKey).Put(data)
+		mb.Release(data)
 	}
 	return nil
 }
 
 // RcvPackageData 获取原始包数据
 func RcvPackageData(reader io.Reader) ([]byte, uint16, error) {
-	var bufMsg = []byte{}
-	msgId := uint16(0)
-	fId := uint16(0) // chunkId=1时的msgId
-	receivedBytes := uint16(0)
-	for {
-		// msgBodyLen
-		msgLen, err := readUint16(reader, msgBodyLen)
-		if err != nil {
-			return nil, 0, err
-		}
-		// msgId
-		msgId, err = readUint16(reader, msgIdLen)
-		if err != nil {
-			return nil, 0, err
-		}
-		// chunkNum
-		bufChunkNumUint16, err := readUint16(reader, msgChunkNumLen)
-		if err != nil {
-			return nil, 0, err
-		}
-		// chunkId
-		bufChunkIdUint16, err := readUint16(reader, msgChunkIdLen)
-		if err != nil {
-			return nil, 0, err
-		}
-		if bufChunkIdUint16 == 1 {
-			fId = msgId
-		}
-
-		if len(bufMsg) == 0 {
-			bufMsg = make([]byte, msgLen)
-		}
-		remaining := msgLen - receivedBytes
-		chunkSize := common.MsgMaxLen
-		//chunkSize := 50
-		if remaining < uint16(chunkSize) {
-			chunkSize = int(remaining)
-		}
-
-		//buf := make([]byte, chunkSize)
-		// 使用内存池
-		buf := mpool.GetMemoryPool(mpool.TCPMemoryPoolKey).Get(chunkSize)
-		// 使用内存池  分配的buf内存可能会大于实际数据长度 所以这里只读取有效数据的长度
-		_, err = io.ReadFull(reader, buf[:chunkSize])
-		if err != nil {
-			log.Printf("readFull err:%v \n", err)
-			return nil, 0, err
-		}
-		copy(bufMsg[receivedBytes:], buf)
-		receivedBytes += uint16(chunkSize)
-		if bufChunkIdUint16 >= bufChunkNumUint16 {
-			break
-		}
-		if msgId != fId {
-			break
-		}
-	}
-
-	if len(bufMsg) != 0 {
-		mpool.GetMemoryPool(mpool.TCPMemoryPoolKey).Put(bufMsg)
-	}
-	return bufMsg, msgId, nil
+	mb := &msgBase{}
+	bufMsg, err := mb.Unmarshal(reader)
+	mb.Release(bufMsg)
+	return bufMsg, mb.msgId, err
 }
 
 func WriteFull(writer io.Writer, buf []byte) error {
@@ -196,7 +140,7 @@ func ReadMessage(reader io.Reader, maxMsgLen int) (interface{}, error) {
 func EncodeMessage(msg interface{}) ([]byte, *SystemMsg, error) {
 	info := MessageInfoByMsg(msg)
 	if info == nil {
-		return nil, nil, fmt.Errorf("msg not registered. msg: %v", msg)
+		return nil, nil, ErrMsgIdNotFound
 	}
 	bt, err := json.Marshal(msg)
 	if err != nil {
@@ -219,7 +163,7 @@ func DecodeMessage(msgId int, msg []byte) (interface{}, error) {
 	return msgObj, nil
 }
 
-func readUint16(reader io.Reader, byteLen int) (uint16, error) {
+func readUint16(reader io.Reader, byteLen uint16) (uint16, error) {
 	bt := make([]byte, byteLen)
 	_, err := io.ReadFull(reader, bt)
 	if err != nil {
@@ -227,4 +171,98 @@ func readUint16(reader io.Reader, byteLen int) (uint16, error) {
 	}
 	btUint16 := binary.BigEndian.Uint16(bt)
 	return btUint16, nil
+}
+
+func (mb *msgBase) Marshal(msgData []byte) []byte {
+	remaining := int(mb.msgLen) - mb.sendBytes
+	mb.chunkSize = common.MsgMaxLen
+	if remaining < mb.chunkSize {
+		mb.chunkSize = remaining
+	}
+	mb.actualDataLen = int(MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen+MsgOptions.MsgChunkNumLen+MsgOptions.MsgChunkIdLen) + mb.chunkSize
+	data := mb.Container()
+	// msgBodyLen
+	binary.BigEndian.PutUint16(data, uint16(mb.msgLen))
+	// msgIdLen
+	binary.BigEndian.PutUint16(data[MsgOptions.MsgBodyLen:], mb.msgId)
+	// chunkNumLen
+	binary.BigEndian.PutUint16(data[MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen:], mb.chunkNum)
+	// chunkIdLen
+	binary.BigEndian.PutUint16(data[MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen+MsgOptions.MsgChunkNumLen:], mb.chunkId)
+	// msgBody
+	copy(data[MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen+MsgOptions.MsgChunkNumLen+MsgOptions.MsgChunkIdLen:],
+		msgData[mb.sendBytes:mb.sendBytes+mb.chunkSize])
+	return data
+}
+
+func (mb *msgBase) Unmarshal(reader io.Reader) ([]byte, error) {
+	var bufMsg = []byte{}
+	var err error
+	var fId uint16 // chunkId=1时的msgId
+	for {
+		// msgBodyLen
+		mb.msgLen, err = readUint16(reader, MsgOptions.MsgBodyLen)
+		if err != nil {
+			return nil, err
+		}
+		// msgId
+		mb.msgId, err = readUint16(reader, MsgOptions.MsgIdLen)
+		if err != nil {
+			return nil, err
+		}
+		// chunkNum
+		mb.chunkNum, err = readUint16(reader, MsgOptions.MsgChunkNumLen)
+		if err != nil {
+			return nil, err
+		}
+		// chunkId
+		mb.chunkId, err = readUint16(reader, MsgOptions.MsgChunkIdLen)
+		if err != nil {
+			return nil, err
+		}
+		if mb.chunkId == 1 {
+			fId = mb.msgId
+		}
+
+		if len(bufMsg) == 0 {
+			bufMsg = make([]byte, mb.msgLen)
+		}
+		remaining := mb.msgLen - mb.receivedBytes
+		mb.chunkSize = common.MsgMaxLen
+		if remaining < uint16(mb.chunkSize) {
+			mb.chunkSize = int(remaining)
+		}
+
+		mb.actualDataLen = mb.chunkSize
+		buf := mb.Container()
+		// 如果使用内存池  分配的buf内存可能会大于实际数据长度 所以这里只读取有效数据的长度
+		_, err = io.ReadFull(reader, buf[:mb.chunkSize])
+		if err != nil {
+			return nil, err
+		}
+		copy(bufMsg[mb.receivedBytes:], buf)
+		mb.receivedBytes += uint16(mb.chunkSize)
+		if mb.chunkId >= mb.chunkNum {
+			break
+		}
+		if mb.msgId != fId {
+			break
+		}
+	}
+	return bufMsg, err
+}
+
+func (mb *msgBase) Container() []byte {
+	// 使用内存池
+	if MsgOptions.Pool {
+		return mpool.GetMemoryPool(mpool.TCPMemoryPoolKey).Get(mb.actualDataLen)
+	}
+	return make([]byte, mb.actualDataLen)
+}
+
+func (mb *msgBase) Release(data []byte) {
+	if MsgOptions.Pool {
+		data = []byte{}
+		mpool.GetMemoryPool(mpool.TCPMemoryPoolKey).Put(data)
+	}
 }
