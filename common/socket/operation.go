@@ -28,6 +28,10 @@ type PingReq struct {
 type PingAck struct {
 }
 
+// SessionClosed 连接关闭事件
+type SessionClosed struct {
+}
+
 func init() {
 	RegisterSystemMsg(&SystemMsg{MsgId: 1, typ: reflect.TypeOf((*ServiceIdentifyACK)(nil)).Elem()})
 	RegisterSystemMsg(&SystemMsg{MsgId: 2, typ: reflect.TypeOf((*PingReq)(nil)).Elem()})

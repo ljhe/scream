@@ -34,6 +34,24 @@ func AddServiceNode(session iface.ISession, sid, name string, from string) {
 	return
 }
 
+func RemoveServiceNode(session iface.ISession) string {
+	sid := ""
+	if session == nil {
+		return sid
+	}
+
+	ed := SessionContextEtcd(session)
+	if ed == nil {
+		return sid
+	}
+	serviceNode.Lock()
+	defer serviceNode.Unlock()
+	delete(serviceConnBySid, ed.Id)
+	sid = ed.Id
+	log.Printf("remove service node success. sessionId:%v sid:%v \n", session.GetId(), ed.Id)
+	return sid
+}
+
 // GetServiceNode 通过sid获取服务器节点连接的session
 func GetServiceNode(sid string) iface.ISession {
 	serviceNode.RLock()
@@ -41,6 +59,13 @@ func GetServiceNode(sid string) iface.ISession {
 
 	if sess, ok := serviceConnBySid[sid]; ok {
 		return sess
+	}
+	return nil
+}
+
+func SessionContextEtcd(session iface.ISession) *plugins.ETCDServiceDesc {
+	if ed, ok := session.(common.ContextSet).GetContextData(common.ContextSetCtxKey); ok {
+		return ed.(*plugins.ETCDServiceDesc)
 	}
 	return nil
 }

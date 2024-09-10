@@ -77,6 +77,10 @@ func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 			}
 		}
 		return nil
+	case *socket.SessionClosed:
+		sid := baseserver.RemoveServiceNode(iv.Session())
+		log.Printf("SessionClosed sessionId=%v sid=%v \n", iv.Session().GetId(), sid)
+		return nil
 	default:
 		log.Printf("receive unknown msg %v msgT:%v ivM %v \n", msg, reflect.TypeOf(msg), iv.Msg())
 	}

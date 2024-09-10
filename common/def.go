@@ -14,6 +14,7 @@ type IMsgHandle interface {
 type RcvMsgEvent struct {
 	Sess    iface.ISession
 	Message interface{}
+	Err     error
 }
 
 func (re *RcvMsgEvent) Session() iface.ISession {

@@ -116,6 +116,16 @@ func (ts *tcpSession) RunRcv() {
 		msg, err := ts.ReadMsg(ts)
 		if err != nil {
 			log.Printf("RunRcv ReadMsg err:%v sessionId:%d \n", err, ts.GetId())
+			// 做关闭处理 发送数据时已经无法发送
+			atomic.StoreInt64(&ts.close, 1)
+			select {
+			case ts.sendQueue <- nil:
+			default:
+				log.Printf("RunRcv sendQueue block len:%d sessionId:%d \n", len(ts.sendQueue), ts.GetId())
+			}
+
+			// 抛出关闭事件
+			ts.ProcEvent(&common.RcvMsgEvent{Sess: ts, Message: &socket.SessionClosed{}, Err: err})
 			break
 		}
 		ts.ProcEvent(&common.RcvMsgEvent{Sess: ts, Message: msg})
