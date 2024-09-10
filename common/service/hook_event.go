@@ -50,7 +50,7 @@ func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 			// 服务器之间的心跳检测
 			// acceptor触发send connector触发rcv
 			// 所以这里只能反应acceptor端的send和connector端的rcv是否正常
-			iv.Session().HeartBeat(&socket.PingReq{NeedAck: true})
+			iv.Session().HeartBeat(&socket.PingReq{})
 		}
 		return nil
 	case *socket.PingReq:
@@ -64,8 +64,17 @@ func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 				log.Printf("receive PingReq from [%v] session=%v \n", ed.Id, iv.Session().GetId())
 			}
 		}
-		if msg.NeedAck {
-			iv.Session().Send(&socket.PingReq{NeedAck: false})
+		iv.Session().Send(&socket.PingAck{})
+		return nil
+	case *socket.PingAck:
+		ctx := iv.Session().(common.ContextSet)
+		var ed *plugins.ETCDServiceDesc
+		iv.Session().IncRcvPingNum(1)
+		if iv.Session().RcvPingNum() >= 10 {
+			iv.Session().IncRcvPingNum(-1)
+			if ctx.RawContextData(common.ContextSetCtxKey, &ed) {
+				log.Printf("receive PingAck from [%v] session=%v \n", ed.Id, iv.Session().GetId())
+			}
 		}
 		return nil
 	default:

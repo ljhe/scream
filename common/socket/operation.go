@@ -22,11 +22,15 @@ type ServiceIdentifyACK struct {
 
 // PingReq 心跳包
 type PingReq struct {
-	NeedAck bool
+}
+
+// PingAck 心跳包回复
+type PingAck struct {
 }
 
 func init() {
 	RegisterSystemMsg(&SystemMsg{MsgId: 1, typ: reflect.TypeOf((*ServiceIdentifyACK)(nil)).Elem()})
 	RegisterSystemMsg(&SystemMsg{MsgId: 2, typ: reflect.TypeOf((*PingReq)(nil)).Elem()})
+	RegisterSystemMsg(&SystemMsg{MsgId: 3, typ: reflect.TypeOf((*PingAck)(nil)).Elem()})
 	log.Println("operation init success")
 }

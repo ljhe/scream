@@ -6,7 +6,7 @@ const (
 )
 
 const (
-	ContextSetEtcdKey = "etcd_data"
+	ContextSetEtcdKey = "etcd_node"
 	ContextSetCtxKey  = "ctx"
 )
 
