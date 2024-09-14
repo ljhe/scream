@@ -2,10 +2,8 @@ package util
 
 import "time"
 
-const DateFormat = "2006-01-02 15:04:05"
-
 func GetNowDate() string {
-	return time.Now().Format(DateFormat)
+	return time.Now().Format(time.DateTime)
 }
 
 func GetLoc() *time.Location {
