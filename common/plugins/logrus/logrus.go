@@ -2,14 +2,16 @@ package logrus
 
 import (
 	"bytes"
-	"common/util"
+	"fmt"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
-	"log"
 	"os"
+	"time"
 )
 
 var logger = logrus.New()
+var entry *logrus.Entry
 
 func Init() {
 	// 设置日志级别
@@ -21,18 +23,20 @@ func Init() {
 	// but is between 20 and 40% in recent tests with 1.6 and 1.7
 	logger.SetReportCaller(true)
 
-	// 重定向输出
-	file, err := os.OpenFile("log.txt", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
-	if err != nil {
-		log.Fatalf("create file failed: %v", err)
-	}
-	logger.SetOutput(io.MultiWriter(&bytes.Buffer{}, os.Stdout, file))
+	// 配置日志切割
+	logger.SetOutput(io.MultiWriter(&bytes.Buffer{}, os.Stdout, &lumberjack.Logger{
+		Filename:   fmt.Sprintf("test-%v.log", time.Now().Format(DateTime)),
+		MaxSize:    512, // 每个日志文件的最大大小(MB)
+		MaxBackups: 100,
+		MaxAge:     10, // 日志文件的最大保留天数
+		LocalTime:  true,
+	}))
 
 	// 设置日志格式
-	logger.SetFormatter(&ValueOnlyFormatter{})
+	logger.SetFormatter(&SelfFormatter{})
 
 	// 自定义默认的输出字段
-	logger.WithFields(logrus.Fields{
-		"ip": util.GetIPv4(),
+	entry = logger.WithFields(logrus.Fields{
+		"IP": "127.0.0.1",
 	})
 }
