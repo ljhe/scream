@@ -2,12 +2,12 @@ package main
 
 import (
 	"common"
+	"common/plugins/logrus"
 	"common/service"
-	"log"
 )
 
 func main() {
-	log.Println("server starting ...")
+	logrus.Log(logrus.LogsSystem).Info("server starting ...")
 	service.Init()
 	node := service.CreateAcceptor(service.NetNodeParam{
 		ServerTyp:  common.SocketTypTcpAcceptor,
@@ -17,9 +17,9 @@ func main() {
 		Zone:       9999,
 		Index:      1,
 	})
-	log.Println("server start success")
+	logrus.Log(logrus.LogsSystem).Info("server start success")
 	service.WaitExitSignal()
-	log.Println("server stopping ...")
+	logrus.Log(logrus.LogsSystem).Info("server stopping ...")
 	service.Stop(node)
-	log.Println("server close")
+	logrus.Log(logrus.LogsSystem).Info("server close")
 }

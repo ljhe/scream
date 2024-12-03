@@ -11,9 +11,8 @@ import (
 )
 
 var logger = logrus.New()
-var entry *logrus.Entry
 
-func Init() {
+func logrusInit() {
 	// 设置日志级别
 	logger.SetLevel(logrus.TraceLevel)
 
@@ -34,9 +33,4 @@ func Init() {
 
 	// 设置日志格式
 	logger.SetFormatter(&SelfFormatter{})
-
-	// 自定义默认的输出字段
-	entry = logger.WithFields(logrus.Fields{
-		"IP": "127.0.0.1",
-	})
 }
