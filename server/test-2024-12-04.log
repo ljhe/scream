@@ -1,0 +1,31 @@
+[info] 2024-12-04 16:31:39.044 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/custom.go:22 logrus init success
+[info] 2024-12-04 16:31:39.046 type:系统级 D:/WorkSpace/scream/server/main.go:10 server starting ...
+[error] 2024-12-04 16:31:42.049 type:系统级 D:/WorkSpace/scream/common/service/service.go:81 InitServiceDiscovery err:dial tcp 127.0.0.1:2379: connectex: No connection could be made because the target machine actively refused it.
+[error] 2024-12-04 16:31:42.049 type:系统级 D:/WorkSpace/scream/server/main.go:13 server starting fail:dial tcp 127.0.0.1:2379: connectex: No connection could be made because the target machine actively refused it.
+[info] 2024-12-04 16:31:50.135 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/custom.go:22 logrus init success
+[info] 2024-12-04 16:31:50.136 type:系统级 D:/WorkSpace/scream/server/main.go:10 server starting ...
+[error] 2024-12-04 16:31:53.142 type:系统级 D:/WorkSpace/scream/common/service/service.go:81 InitServiceDiscovery err:dial tcp 127.0.0.1:2379: connectex: No connection could be made because the target machine actively refused it.
+[error] 2024-12-04 16:31:53.142 type:系统级 D:/WorkSpace/scream/server/main.go:13 server starting fail:dial tcp 127.0.0.1:2379: connectex: No connection could be made because the target machine actively refused it.
+[info] 2024-12-04 16:48:08.472 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/custom.go:22 logrus init success
+[info] 2024-12-04 16:48:08.480 type:系统级 D:/WorkSpace/scream/server/main.go:10 server starting ...
+[error] 2024-12-04 16:48:11.486 type:系统级 D:/WorkSpace/scream/common/service/service.go:81 InitServiceDiscovery err:dial tcp 127.0.0.1:2379: connectex: No connection could be made because the target machine actively refused it.
+[error] 2024-12-04 16:48:11.486 type:系统级 D:/WorkSpace/scream/server/main.go:13 server starting fail:dial tcp 127.0.0.1:2379: connectex: No connection could be made because the target machine actively refused it.
+[info] 2024-12-04 16:50:11.434 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/custom.go:22 logrus init success
+[info] 2024-12-04 16:50:11.436 type:系统级 D:/WorkSpace/scream/server/main.go:10 server starting ...
+[error] 2024-12-04 16:50:14.440 type:系统级 D:/WorkSpace/scream/common/service/service.go:81 InitServiceDiscovery err:dial tcp 127.0.0.1:2379: connectex: No connection could be made because the target machine actively refused it.
+[error] 2024-12-04 16:50:14.440 type:系统级 D:/WorkSpace/scream/server/main.go:13 server starting fail:dial tcp 127.0.0.1:2379: connectex: No connection could be made because the target machine actively refused it.
+[info] 2024-12-04 16:52:33.624 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/custom.go:22 logrus init success
+[info] 2024-12-04 16:52:33.626 type:系统级 D:/WorkSpace/scream/server/main.go:10 server starting ...
+[info] 2024-12-04 16:52:33.642 type:系统级 D:/WorkSpace/scream/server/main.go:24 server start success
+[info] 2024-12-04 16:56:11.557 type:系统级 D:/WorkSpace/scream/server/main.go:26 server stopping ...
+[info] 2024-12-04 16:56:11.558 type:系统级 D:/WorkSpace/scream/server/main.go:28 server close
+[info] 2024-12-04 16:56:16.460 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/custom.go:22 logrus init success
+[info] 2024-12-04 16:56:16.462 type:系统级 D:/WorkSpace/scream/server/main.go:10 server starting ...
+[info] 2024-12-04 16:56:16.473 type:系统级 D:/WorkSpace/scream/common/plugins/etcd/etcd.go:65 etcd register ok. key=server/test#9999@1@1 clusterid=14841639068965178418 leaseid=7587883197612328975 etcdaddr={[127.0.0.1:2379] 0s 3s 0s 0s 0 0 <nil>   false [] <nil>} 
+
+[info] 2024-12-04 16:56:16.479 type:系统级 D:/WorkSpace/scream/common/plugins/etcd/etcd.go:65 etcd register ok. key=server/9999 clusterid=14841639068965178418 leaseid=7587883197612328979 etcdaddr={[127.0.0.1:2379] 0s 3s 0s 0s 0 0 <nil>   false [] <nil>} 
+
+[info] 2024-12-04 16:56:16.479 type:系统级 D:/WorkSpace/scream/common/plugins/etcd/etcd_operating.go:162 etcd setServiceStartupTime success. startupKey:server/9999 startupTime:1733302576475
+
+[info] 2024-12-04 16:56:16.479 type:系统级 D:/WorkSpace/scream/common/plugins/etcd/etcd_operating.go:69 etcd register success:test#9999@1@1
+[info] 2024-12-04 16:56:16.479 type:系统级 D:/WorkSpace/scream/server/main.go:24 server start success

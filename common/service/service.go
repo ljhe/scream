@@ -4,10 +4,10 @@ import (
 	"common"
 	"common/iface"
 	plugins "common/plugins/etcd"
+	"common/plugins/logrus"
 	"common/plugins/mpool"
 	"common/socket"
 	_ "common/socket/tcp"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -72,15 +72,16 @@ func CreateConnector(param NetNodeParam, multiNode plugins.MultiServerNode) ifac
 	return nil
 }
 
-func Init() {
+func Init() error {
 	// 初始化内存池
 	mpool.MemoryPoolInit()
 	// 初始化服务发现
 	err := plugins.InitServiceDiscovery("127.0.0.1:2379")
 	if err != nil {
-		log.Println("InitServiceDiscovery err:", err)
-		return
+		logrus.Log(logrus.LogsSystem).Errorf("InitServiceDiscovery err:%v", err)
+		return err
 	}
+	return nil
 }
 
 func WaitExitSignal() {

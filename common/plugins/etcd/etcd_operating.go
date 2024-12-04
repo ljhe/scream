@@ -3,6 +3,7 @@ package plugins
 import (
 	"common"
 	"common/iface"
+	"common/plugins/logrus"
 	"common/util"
 	"context"
 	"encoding/json"
@@ -65,7 +66,7 @@ func ETCDRegister(node iface.INetNode) *ETCDServiceDesc {
 	}
 	etcdDiscovery.WatchServices(etcdKey, *ed)
 	setServiceStartupTime(property.GetZone())
-	fmt.Println("etcd register success:", ed.Id)
+	logrus.Log(logrus.LogsSystem).Info("etcd register success:", ed.Id)
 	return ed
 }
 
@@ -153,12 +154,12 @@ func setServiceStartupTime(zone int) {
 		val := strconv.FormatUint(t, 10)
 		err = etcdDiscovery.RegisterService(startupKey, val)
 		if err != nil {
-			log.Println("etcd setServiceStartupTime error:", err)
+			logrus.Log(logrus.LogsSystem).Errorf("etcd setServiceStartupTime error:%v", err)
 			return
 		}
 		startupTime = t
 	}
-	fmt.Printf("etcd setServiceStartupTime success. startupKey:%v startupTime:%v\n", startupKey, startupTime)
+	logrus.Log(logrus.LogsSystem).Infof("etcd setServiceStartupTime success. startupKey:%v startupTime:%v\n", startupKey, startupTime)
 }
 
 func genServicePrefix(name string, zone int) string {

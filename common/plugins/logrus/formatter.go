@@ -6,7 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const DateTime = "2006-01-02T15-04-05.000"
+const DateTime = "2006-01-02"
 const DateTimeMS = "2006-01-02 15:04:05.000"
 
 type SelfFormatter struct {

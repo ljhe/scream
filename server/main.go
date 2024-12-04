@@ -8,7 +8,11 @@ import (
 
 func main() {
 	logrus.Log(logrus.LogsSystem).Info("server starting ...")
-	service.Init()
+	err := service.Init()
+	if err != nil {
+		logrus.Log(logrus.LogsSystem).Errorf("server starting fail:%v", err)
+		return
+	}
 	node := service.CreateAcceptor(service.NetNodeParam{
 		ServerTyp:  common.SocketTypTcpAcceptor,
 		ServerName: "test",
