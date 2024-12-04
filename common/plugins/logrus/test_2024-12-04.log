@@ -1,0 +1,22 @@
+[info] 2024-12-04 17:59:25.125 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/custom.go:27 logrus init success
+[info] 2024-12-04 17:59:25.125 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:0
+[info] 2024-12-04 17:59:25.125 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:1
+[info] 2024-12-04 17:59:25.125 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:2
+[info] 2024-12-04 17:59:25.125 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:3
+[info] 2024-12-04 17:59:25.125 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:4
+[info] 2024-12-04 17:59:25.133 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:5
+[info] 2024-12-04 17:59:25.133 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:6
+[info] 2024-12-04 17:59:25.133 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:7
+[info] 2024-12-04 17:59:25.133 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:8
+[info] 2024-12-04 17:59:25.133 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:9
+[info] 2024-12-04 18:12:51.933 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/custom.go:27 logrus init success
+[info] 2024-12-04 18:12:51.933 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:0
+[info] 2024-12-04 18:12:51.933 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:1
+[info] 2024-12-04 18:12:51.933 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:2
+[info] 2024-12-04 18:12:51.933 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:3
+[info] 2024-12-04 18:12:51.933 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:4
+[info] 2024-12-04 18:12:51.933 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:5
+[info] 2024-12-04 18:12:51.933 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:6
+[info] 2024-12-04 18:12:51.933 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:7
+[info] 2024-12-04 18:12:51.933 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:8
+[info] 2024-12-04 18:12:51.933 type:系统级 D:/WorkSpace/scream/common/plugins/logrus/logrus_test.go:9 this is a test. i:9
