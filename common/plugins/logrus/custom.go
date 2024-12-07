@@ -8,7 +8,7 @@ import (
 )
 
 var logs logsEntry
-var conf config
+var conf logConf
 
 type logsEntry struct {
 	entry map[string]*logrus.Entry
@@ -19,12 +19,12 @@ const (
 	LogsSystem = "系统级"
 )
 
-func init() {
-	loadConfig()
+func Init(filepath string) {
+	loadConfig(filepath)
 	logrusInit()
 	logs.entry = make(map[string]*logrus.Entry)
 	logs.initSystem()
-	Log(LogsSystem).Info("logrus init success")
+	Log(LogsSystem).Infof("logrus init success. filepath:%v", filepath)
 }
 
 // 初始化系统级日志
@@ -43,10 +43,13 @@ func Log(typ string) *logrus.Entry {
 }
 
 // 加载配置文件
-func loadConfig() {
-	yamlFile, err := os.ReadFile("config.yaml")
+func loadConfig(filepath string) {
+	if filepath == "" {
+		filepath = "./config.yaml"
+	}
+	yamlFile, err := os.ReadFile(filepath)
 	if err != nil {
-		log.Fatalf("logrus load config readFile err:%v", err)
+		log.Fatalf("logrus load config readFile err:%v filepath:%v", err, filepath)
 	}
 	err = yaml.Unmarshal(yamlFile, &conf)
 	if err != nil {

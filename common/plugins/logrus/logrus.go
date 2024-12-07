@@ -25,7 +25,7 @@ func logrusInit() {
 
 	// 配置日志切割
 	logger.SetOutput(io.MultiWriter(&bytes.Buffer{}, os.Stdout, &lumberjack.Logger{
-		Filename:   fmt.Sprintf("%v_%v.log", conf.Log.LogName, time.Now().Format(DateTime)),
+		Filename:   fmt.Sprintf("%v/%v_%v.log", conf.Log.SavePath, conf.Log.LogName, time.Now().Format(DateTime)),
 		MaxSize:    conf.Log.MaxSize,    // 每个日志文件的最大大小(MB)
 		MaxBackups: conf.Log.MaxBackups, // 保留日志文件的最大数量(maxAge可能仍然会导致它们丢失)
 		MaxAge:     conf.Log.MaxAge,     // 日志文件的最大保留天数

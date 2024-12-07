@@ -5,4 +5,3 @@ log:
   maxBackups: 100   # 保留日志文件的最大数量(maxAge可能仍然会导致它们丢失)
   maxAge: 10        # 日志文件的最大保留天数
   savePath: ./      # 日志保存路径
-  config: ./        # 日志配置文件路径

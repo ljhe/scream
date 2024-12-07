@@ -2,6 +2,7 @@ package service
 
 import (
 	"common"
+	"common/config"
 	"common/iface"
 	plugins "common/plugins/etcd"
 	"common/plugins/logrus"
@@ -73,6 +74,10 @@ func CreateConnector(param NetNodeParam, multiNode plugins.MultiServerNode) ifac
 }
 
 func Init() error {
+	// 加载系统配置文件
+	config.Init()
+	// 初始化日志模块
+	logrus.Init(config.ServerConfigPath)
 	// 初始化内存池
 	mpool.MemoryPoolInit()
 	// 初始化服务发现

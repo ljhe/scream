@@ -5,6 +5,7 @@ import (
 )
 
 func TestTestLog(t *testing.T) {
+	Init("")
 	for i := 0; i < 10; i++ {
 		Log(LogsSystem).Infof("this is a test. i:%d", i)
 	}
