@@ -25,17 +25,17 @@ type NetNodeParam struct {
 }
 
 // CreateAcceptor 创建监听节点
-func CreateAcceptor(param NetNodeParam) iface.INetNode {
-	node := socket.NewServerNode(param.ServerTyp, param.ServerName, param.Addr)
+func CreateAcceptor(serverTyp string) iface.INetNode {
+	node := socket.NewServerNode(serverTyp, config.SConf.Node.Name, config.SConf.Node.Addr)
 	node.(common.ProcessorRPCBundle).SetMessageProc(new(socket.TCPMessageProcessor))
 	node.(common.ProcessorRPCBundle).SetHooker(new(ServerEventHook))
 	msgHandle := GetMsgHandle(0)
 	node.(common.ProcessorRPCBundle).SetMsgHandle(msgHandle)
 
 	property := node.(common.ServerNodeProperty)
-	property.SetServerTyp(param.Typ)
-	property.SetZone(param.Zone)
-	property.SetIndex(param.Index)
+	property.SetServerTyp(config.SConf.Node.Typ)
+	property.SetZone(config.SConf.Node.Zone)
+	property.SetIndex(config.SConf.Node.Index)
 
 	node.Start()
 
@@ -45,28 +45,28 @@ func CreateAcceptor(param NetNodeParam) iface.INetNode {
 }
 
 // CreateConnector 创建连接节点
-func CreateConnector(param NetNodeParam, multiNode plugins.MultiServerNode) iface.INetNode {
-	plugins.DiscoveryService(multiNode, param.DiscoveryServiceName, param.Zone,
+func CreateConnector(serverTyp string, multiNode plugins.MultiServerNode) iface.INetNode {
+	plugins.DiscoveryService(multiNode, config.SConf.Node.DiscoveryServiceName, config.SConf.Node.Zone,
 		func(mn plugins.MultiServerNode, ed *plugins.ETCDServiceDesc) {
 			// 不连接自己
-			if ed.Typ == param.Typ && ed.Zone == param.Zone && ed.Index == param.Index {
+			if ed.Typ == config.SConf.Node.Typ && ed.Zone == config.SConf.Node.Zone && ed.Index == config.SConf.Node.Index {
 				return
 			}
-			node := socket.NewServerNode(param.ServerTyp, param.ServerName, ed.Host)
+			node := socket.NewServerNode(serverTyp, config.SConf.Node.Name, ed.Host)
 			msgHandle := GetMsgHandle(0)
 			node.(common.ProcessorRPCBundle).SetHooker(new(ServerEventHook))
 			node.(common.ProcessorRPCBundle).SetMsgHandle(msgHandle)
 			node.(common.ProcessorRPCBundle).SetMessageProc(new(socket.TCPMessageProcessor))
 
 			property := node.(common.ServerNodeProperty)
-			property.SetServerTyp(param.Typ)
-			property.SetZone(param.Zone)
-			property.SetIndex(param.Index)
+			property.SetServerTyp(config.SConf.Node.Typ)
+			property.SetZone(config.SConf.Node.Zone)
+			property.SetIndex(config.SConf.Node.Index)
 
 			// 将etcd信息保存在内存中
 			node.(common.ContextSet).SetContextData(common.ContextSetEtcdKey, ed)
 			// 添加到服务发现的节点管理中
-			mn.AddNode(param.DiscoveryServiceName, ed, node)
+			mn.AddNode(config.SConf.Node.DiscoveryServiceName, ed, node)
 
 			node.Start()
 		})
@@ -77,7 +77,7 @@ func Init() error {
 	// 加载系统配置文件
 	config.Init()
 	// 初始化日志模块
-	logrus.Init(config.ServerConfigPath)
+	logrus.Init(*config.ServerConfigPath)
 	// 初始化内存池
 	mpool.MemoryPoolInit()
 	// 初始化服务发现

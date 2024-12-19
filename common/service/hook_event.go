@@ -5,9 +5,9 @@ import (
 	"common/baseserver"
 	"common/iface"
 	plugins "common/plugins/etcd"
+	"common/plugins/logrus"
 	"common/socket"
 	"common/util"
-	"log"
 	"reflect"
 )
 
@@ -17,7 +17,7 @@ type ServerEventHook struct {
 func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	switch msg := iv.Msg().(type) {
 	case *socket.SessionAccepted:
-		log.Printf("receive SessionAccepted success. session:%d \n", iv.Session().GetId())
+		logrus.Log(logrus.LogsSystem).Printf("receive SessionAccepted success. session:%d \n", iv.Session().GetId())
 		return nil
 	case *socket.SessionConnected:
 		// 从内存中的etcd获取服务器信息
@@ -33,15 +33,15 @@ func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 			})
 			// 添加远程的服务器节点信息到本地
 			baseserver.AddServiceNode(iv.Session(), ed.Id, ed.Name, "local")
-			log.Printf("send ServiceIdentifyACK [%v]->[%v] sessionId=%v \n",
+			logrus.Log(logrus.LogsSystem).Printf("send ServiceIdentifyACK [%v]->[%v] sessionId=%v \n",
 				util.GenServiceId(prop), ed.Id, iv.Session().GetId())
 		} else {
-			log.Println("connector connect err. etcd not exist", msg)
+			logrus.Log(logrus.LogsSystem).Println("connector connect err. etcd not exist", msg)
 		}
 		return nil
 	case *socket.ServiceIdentifyACK:
 		// 来自其他服务器的连接确认信息
-		log.Printf("receive ServiceIdentifyACK from [%v]  sessionId:%v \n", msg.ServiceId, iv.Session().GetId())
+		logrus.Log(logrus.LogsSystem).Printf("receive ServiceIdentifyACK from [%v]  sessionId:%v \n", msg.ServiceId, iv.Session().GetId())
 		// 重连时会有问题 重连上来时 但是上一个连接还未移除(正在移除中) 导致重连失败(想连接的没连接上 该移除的正在移除)
 		// 通过PingReq超时断开连接 来触发断线重连
 		if serviceNode := baseserver.GetServiceNode(msg.ServiceId); serviceNode == nil {
@@ -61,7 +61,7 @@ func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		if iv.Session().RcvPingNum() >= 10 {
 			iv.Session().IncRcvPingNum(-1)
 			if ctx.RawContextData(common.ContextSetCtxKey, &ed) {
-				log.Printf("receive PingReq from [%v] session=%v \n", ed.Id, iv.Session().GetId())
+				logrus.Log(logrus.LogsSystem).Printf("receive PingReq from [%v] session=%v \n", ed.Id, iv.Session().GetId())
 			}
 		}
 		iv.Session().Send(&socket.PingAck{})
@@ -73,16 +73,16 @@ func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		if iv.Session().RcvPingNum() >= 10 {
 			iv.Session().IncRcvPingNum(-1)
 			if ctx.RawContextData(common.ContextSetCtxKey, &ed) {
-				log.Printf("receive PingAck from [%v] session=%v \n", ed.Id, iv.Session().GetId())
+				logrus.Log(logrus.LogsSystem).Printf("receive PingAck from [%v] session=%v \n", ed.Id, iv.Session().GetId())
 			}
 		}
 		return nil
 	case *socket.SessionClosed:
 		sid := baseserver.RemoveServiceNode(iv.Session())
-		log.Printf("SessionClosed sessionId=%v sid=%v \n", iv.Session().GetId(), sid)
+		logrus.Log(logrus.LogsSystem).Printf("SessionClosed sessionId=%v sid=%v \n", iv.Session().GetId(), sid)
 		return nil
 	default:
-		log.Printf("receive unknown msg %v msgT:%v ivM %v \n", msg, reflect.TypeOf(msg), iv.Msg())
+		logrus.Log(logrus.LogsSystem).Printf("receive unknown msg %v msgT:%v ivM %v \n", msg, reflect.TypeOf(msg), iv.Msg())
 	}
 	return iv
 }
