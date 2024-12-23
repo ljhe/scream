@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Client</title>
+</head>
+<body>
+<h1>WebSocket Client</h1>
+<input type="text" id="messageInput" placeholder="Enter message">
+<button onclick="sendMessage()">Send</button>
+<div id="output"></div>
+
+<script>
+    const socket = new WebSocket("ws://localhost:3101/ws");
+    const outputDiv = document.getElementById("output");
+
+    socket.onopen = () => {
+        outputDiv.innerHTML += "<div>Connected to WebSocket server!</div>";
+    };
+
+    socket.onmessage = (event) => {
+        outputDiv.innerHTML += `<div>Received: ${event.data}</div>`;
+    };
+
+    socket.onclose = () => {
+        outputDiv.innerHTML += "<div>Connection closed!</div>";
+    };
+
+    socket.onerror = (error) => {
+        outputDiv.innerHTML += `<div>Error: ${error}</div>`;
+    };
+
+    function sendMessage() {
+        const message = document.getElementById("messageInput").value;
+        socket.send(message);
+        outputDiv.innerHTML += `<div>Sent: ${message}</div>`;
+        document.getElementById("messageInput").value = "";  //清空输入框
+    }
+</script>
+</body>
+</html>

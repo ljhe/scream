@@ -1,0 +1,128 @@
+package websocket
+
+import (
+	"common"
+	"common/iface"
+	"common/plugins/logrus"
+	"common/socket"
+	"context"
+	"github.com/gorilla/websocket"
+	"log"
+	"net"
+	"net/http"
+	"syscall"
+)
+
+type tcpWebSocketAcceptor struct {
+	socket.NetRuntimeTag      // 运行状态
+	socket.NetTCPSocketOption // socket相关设置
+	socket.NetProcessorRPC    // 事件处理相关
+	socket.SessionManager     // 会话管理
+	socket.NetServerNodeProperty
+	socket.NetContextSet
+
+	listener net.Listener // 保存端口
+	upgrader *websocket.Upgrader
+	server   *http.Server
+}
+
+func (ws *tcpWebSocketAcceptor) Start() iface.INetNode {
+	// 正在停止的话 需要先等待
+	ws.StopWg.Wait()
+	// 防止重入导致错误
+	if ws.GetRunState() {
+		return ws
+	}
+
+	var listenCfg = net.ListenConfig{
+		Control: func(network, address string, c syscall.RawConn) error {
+			var controlErr error
+			err := c.Control(func(fd uintptr) {
+				controlErr = syscall.SetsockoptInt(syscall.Handle(fd), syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
+				return
+			})
+			if err != nil {
+				return err
+			}
+			return controlErr
+		},
+	}
+	ln, err := listenCfg.Listen(context.Background(), "tcp", ws.GetAddr())
+	if err != nil {
+		log.Panicf("webSocketAcceptor listen fail. err:%v", err)
+	}
+	ws.listener = ln
+	logrus.Log(logrus.LogsSystem).Infof("ws listen success ip:%v", ws.GetAddr())
+
+	// 是否正在结束中
+	if ws.GetCloseFlag() {
+		return ws
+	}
+	ws.SetRunState(true)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", ws.handleConnTest)
+
+	ws.server = &http.Server{Addr: ws.GetAddr(), Handler: mux}
+	go func() {
+		err = ws.server.Serve(ws.listener)
+		if err != nil {
+			logrus.Log(logrus.LogsSystem).Errorf("ws listen field err:%v", err)
+		}
+	}()
+	return nil
+}
+
+func (ws *tcpWebSocketAcceptor) Stop() {
+
+}
+
+func (ws *tcpWebSocketAcceptor) GetTyp() string {
+	return common.SocketTypTcpWSAcceptor
+}
+
+func (ws *tcpWebSocketAcceptor) handleConnTest(w http.ResponseWriter, r *http.Request) {
+	// todo 使用 gorilla/handlers 来获取客户端IP
+	conn, err := ws.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		logrus.Log(logrus.LogsSystem).Errorf("ws acceptor err:%v ip:%v", err, ws.GetAddr())
+		return
+	}
+
+	// 读取消息
+	for {
+		msg, i, err := conn.ReadMessage()
+		if err != nil {
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
+				logrus.Log(logrus.LogsSystem).Infof("ws client closed connection. remoteAddr:%v", r.RemoteAddr)
+				return
+			}
+			logrus.Log(logrus.LogsSystem).Errorf("ws acceptor read message err:%v ip:%v", err, ws.GetAddr())
+			return
+		}
+
+		// 打印客户端发送的数据
+		logrus.Log(logrus.LogsSystem).Infof("ws acceptor receive msg:%v", string(i))
+		// 回复客户端
+		if err := conn.WriteMessage(msg, i); err != nil {
+			return
+		}
+	}
+}
+
+func init() {
+	socket.RegisterServerNode(func() iface.INetNode {
+		node := &tcpWebSocketAcceptor{
+			SessionManager: socket.NewNetSessionManager(),
+			upgrader: &websocket.Upgrader{
+				CheckOrigin: func(r *http.Request) bool {
+					// 允许所有跨域请求 实际使用时需要谨慎设置
+					return true
+				},
+			},
+		}
+		node.NetTCPSocketOption.Init()
+		return node
+	})
+	log.Println("ws acceptor register success.")
+}

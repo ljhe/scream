@@ -1,10 +1,8 @@
 package iface
 
-import "net"
-
 type ISession interface {
-	SetConn(c net.Conn)
-	GetConn() net.Conn
+	Raw() interface{} // 获得conn
+
 	Node() INetNode
 	Send(msg interface{})
 	Close()

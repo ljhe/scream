@@ -63,7 +63,7 @@ type TCPMessageProcessor struct {
 }
 
 func (tp *TCPMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, err error) {
-	reader, ok := s.GetConn().(io.Reader)
+	reader, ok := s.Raw().(io.Reader)
 	if !ok || reader == nil {
 		log.Println("conn is not io.Reader")
 		return nil, fmt.Errorf("conn is not io.Reader")
@@ -76,7 +76,7 @@ func (tp *TCPMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, err 
 }
 
 func (tp *TCPMessageProcessor) OnSendMsg(s iface.ISession, msg interface{}) (err error) {
-	w, ok := s.GetConn().(io.Writer)
+	w, ok := s.Raw().(io.Writer)
 	if !ok || w == nil {
 		log.Println("conn is not io.Writer")
 		return fmt.Errorf("conn is not io.Writer")

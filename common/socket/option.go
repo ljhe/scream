@@ -1,6 +1,8 @@
 package socket
 
 import (
+	"common"
+	"github.com/gorilla/websocket"
 	"net"
 	"time"
 )
@@ -18,6 +20,19 @@ type NetTCPSocketOption struct {
 	writeTimeout    time.Duration
 	noDelay         bool
 	maxMsgLen       int
+}
+
+func (no *NetTCPSocketOption) Init() {
+	no.maxMsgLen = common.MsgMaxLen
+}
+
+// SocketOptWebSocket 拷贝监听socket的配置信息
+func (no *NetTCPSocketOption) SocketOptWebSocket(c *websocket.Conn) {
+	if conn, ok := c.UnderlyingConn().(*net.TCPConn); ok {
+		conn.SetNoDelay(no.noDelay)
+		conn.SetReadBuffer(no.readBufferSize)
+		conn.SetWriteBuffer(no.writeBufferSize)
+	}
 }
 
 func (no *NetTCPSocketOption) SocketReadTimeout(c net.Conn, callback func()) {

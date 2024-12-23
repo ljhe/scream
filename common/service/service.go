@@ -9,6 +9,7 @@ import (
 	"common/plugins/mpool"
 	"common/socket"
 	_ "common/socket/tcp"
+	_ "common/socket/websocket"
 	"os"
 	"os/signal"
 	"syscall"
@@ -71,6 +72,27 @@ func CreateConnector(serverTyp string, multiNode plugins.MultiServerNode) iface.
 			node.Start()
 		})
 	return nil
+}
+
+// CreateWebSocketAcceptor 创建监听节点
+func CreateWebSocketAcceptor(serverTyp string) iface.INetNode {
+	node := socket.NewServerNode(serverTyp, config.SConf.Node.Name, config.SConf.Node.Addr)
+	//不需要消息处理队列 没有具体的消息处理逻辑
+	//node.(common.ProcessorRPCBundle).SetMessageProc(new(socket.TCPMessageProcessor))
+	node.(common.ProcessorRPCBundle).SetHooker(new(ServerEventHook))
+	msgHandle := GetMsgHandle(0)
+	node.(common.ProcessorRPCBundle).SetMsgHandle(msgHandle)
+
+	property := node.(common.ServerNodeProperty)
+	property.SetServerTyp(config.SConf.Node.Typ)
+	property.SetZone(config.SConf.Node.Zone)
+	property.SetIndex(config.SConf.Node.Index)
+
+	node.Start()
+
+	// 注册到服务发现etcd中
+	plugins.ETCDRegister(node)
+	return node
 }
 
 func Init() error {

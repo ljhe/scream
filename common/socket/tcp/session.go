@@ -3,6 +3,7 @@ package tcp
 import (
 	"common"
 	"common/iface"
+	"common/plugins/logrus"
 	"common/socket"
 	"log"
 	"net"
@@ -47,6 +48,10 @@ func (ts *tcpSession) SetId(id uint64) {
 
 func (ts *tcpSession) GetId() uint64 {
 	return ts.id
+}
+
+func (ts *tcpSession) Raw() interface{} {
+	return ts.GetConn()
 }
 
 func (ts *tcpSession) Node() iface.INetNode {
@@ -107,7 +112,7 @@ func (ts *tcpSession) Close() {
 func (ts *tcpSession) RunRcv() {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Printf("Stack---::%v\n %s\n", err, string(debug.Stack()))
+			logrus.Log(logrus.LogsSystem).Errorf("tcpSession Stack---::%v\n %s\n", err, string(debug.Stack()))
 			debug.PrintStack()
 		}
 	}()
@@ -115,13 +120,13 @@ func (ts *tcpSession) RunRcv() {
 	for {
 		msg, err := ts.ReadMsg(ts)
 		if err != nil {
-			log.Printf("RunRcv ReadMsg err:%v sessionId:%d \n", err, ts.GetId())
+			logrus.Log(logrus.LogsSystem).Errorf("RunRcv ReadMsg err:%v sessionId:%d \n", err, ts.GetId())
 			// 做关闭处理 发送数据时已经无法发送
 			atomic.StoreInt64(&ts.close, 1)
 			select {
 			case ts.sendQueue <- nil:
 			default:
-				log.Printf("RunRcv sendQueue block len:%d sessionId:%d \n", len(ts.sendQueue), ts.GetId())
+				logrus.Log(logrus.LogsSystem).Errorf("RunRcv sendQueue block len:%d sessionId:%d \n", len(ts.sendQueue), ts.GetId())
 			}
 
 			// 抛出关闭事件
