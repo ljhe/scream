@@ -75,13 +75,12 @@ func CreateConnector(serverTyp string, multiNode plugins.MultiServerNode) iface.
 }
 
 // CreateWebSocketAcceptor 创建监听节点
-func CreateWebSocketAcceptor(serverTyp string) iface.INetNode {
+func CreateWebSocketAcceptor(serverTyp string, opts ...iface.Option) iface.INetNode {
 	node := socket.NewServerNode(serverTyp, config.SConf.Node.Name, config.SConf.Node.Addr)
-	//不需要消息处理队列 没有具体的消息处理逻辑
-	//node.(common.ProcessorRPCBundle).SetMessageProc(new(socket.TCPMessageProcessor))
-	node.(common.ProcessorRPCBundle).SetHooker(new(ServerEventHook))
-	msgHandle := GetMsgHandle(0)
-	node.(common.ProcessorRPCBundle).SetMsgHandle(msgHandle)
+
+	for _, opt := range opts {
+		opt(node)
+	}
 
 	property := node.(common.ServerNodeProperty)
 	property.SetServerTyp(config.SConf.Node.Typ)

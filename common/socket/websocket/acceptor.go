@@ -5,6 +5,7 @@ import (
 	"common/iface"
 	"common/plugins/logrus"
 	"common/socket"
+	"common/util"
 	"context"
 	"github.com/gorilla/websocket"
 	"log"
@@ -61,7 +62,7 @@ func (ws *tcpWebSocketAcceptor) Start() iface.INetNode {
 	ws.SetRunState(true)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", ws.handleConnTest)
+	mux.HandleFunc("/", ws.handleConn)
 
 	ws.server = &http.Server{Addr: ws.GetAddr(), Handler: mux}
 	go func() {
@@ -69,8 +70,12 @@ func (ws *tcpWebSocketAcceptor) Start() iface.INetNode {
 		if err != nil {
 			logrus.Log(logrus.LogsSystem).Errorf("ws listen field err:%v", err)
 		}
+
+		ws.SetRunState(false)
+		ws.SetCloseFlag(false)
+		ws.StopWg.Done()
 	}()
-	return nil
+	return ws
 }
 
 func (ws *tcpWebSocketAcceptor) Stop() {
@@ -81,20 +86,21 @@ func (ws *tcpWebSocketAcceptor) GetTyp() string {
 	return common.SocketTypTcpWSAcceptor
 }
 
+// handleConnTest 测试websocket连接
 func (ws *tcpWebSocketAcceptor) handleConnTest(w http.ResponseWriter, r *http.Request) {
-	// todo 使用 gorilla/handlers 来获取客户端IP
 	conn, err := ws.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		logrus.Log(logrus.LogsSystem).Errorf("ws acceptor err:%v ip:%v", err, ws.GetAddr())
 		return
 	}
 
+	ip, _ := util.GetClientRealIP(r)
 	// 读取消息
 	for {
-		msg, i, err := conn.ReadMessage()
+		typ, msg, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
-				logrus.Log(logrus.LogsSystem).Infof("ws client closed connection. remoteAddr:%v", r.RemoteAddr)
+				logrus.Log(logrus.LogsSystem).Infof("ws client closed connection. remoteAddr:%v ip:%v", r.RemoteAddr, ip)
 				return
 			}
 			logrus.Log(logrus.LogsSystem).Errorf("ws acceptor read message err:%v ip:%v", err, ws.GetAddr())
@@ -102,12 +108,27 @@ func (ws *tcpWebSocketAcceptor) handleConnTest(w http.ResponseWriter, r *http.Re
 		}
 
 		// 打印客户端发送的数据
-		logrus.Log(logrus.LogsSystem).Infof("ws acceptor receive msg:%v", string(i))
+		logrus.Log(logrus.LogsSystem).Infof("ws acceptor receive msg:%v", string(msg))
 		// 回复客户端
-		if err := conn.WriteMessage(msg, i); err != nil {
+		if err := conn.WriteMessage(typ, msg); err != nil {
 			return
 		}
 	}
+}
+
+func (ws *tcpWebSocketAcceptor) handleConn(w http.ResponseWriter, r *http.Request) {
+	conn, err := ws.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		logrus.Log(logrus.LogsSystem).Errorf("ws acceptor err:%v ip:%v", err, ws.GetAddr())
+		return
+	}
+
+	ws.SocketOptWebSocket(conn)
+	session := newWebSocketSession(conn, ws, nil)
+	session.SetContextData("request", r)
+	session.start()
+	// 通知上层事件(这边的回调要放到队列中，否则会有多线程冲突)
+	ws.ProcEvent(&common.RcvMsgEvent{Sess: session, Message: &socket.SessionAccepted{}})
 }
 
 func init() {

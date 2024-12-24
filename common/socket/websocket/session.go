@@ -1,9 +1,12 @@
 package websocket
 
 import (
+	"common"
 	"common/iface"
+	"common/plugins/logrus"
 	"common/socket"
 	"github.com/gorilla/websocket"
+	"runtime/debug"
 	"sync"
 	"sync/atomic"
 )
@@ -18,8 +21,9 @@ type wsSession struct {
 	conn                    *websocket.Conn
 
 	exitWg      sync.WaitGroup
+	id          uint64
 	endCallback func()
-	closeInt    int64
+	close       int64
 
 	sessionOpt socket.NetTCPSocketOption
 
@@ -48,38 +52,49 @@ func (s *wsSession) Node() iface.INetNode {
 }
 
 func (s *wsSession) Send(msg interface{}) {
-	//TODO implement me
-	panic("implement me")
+	if atomic.LoadInt64(&s.close) != 0 {
+		return
+	}
+	select {
+	case s.sendQueue <- msg:
+	default:
+		logrus.Log(logrus.LogsSystem).Errorf("SendLen-sendQueue block len=%d sessionId=%d addr=%v", len(s.sendQueue), s.GetId(), s.conn.LocalAddr())
+	}
 }
 
 func (s *wsSession) Close() {
-	//TODO implement me
-	panic("implement me")
+	//已经关闭
+	if ok := atomic.SwapInt64(&s.close, 1); ok != 0 {
+		return
+	}
+
+	conn := s.GetConn()
+	if conn != nil {
+		//conn.Close()
+		//关闭读
+		conn.Close()
+		conn.CloseHandler()
+	}
 }
 
 func (s *wsSession) SetId(id uint64) {
-	//TODO implement me
-	panic("implement me")
+	s.id = id
 }
 
 func (s *wsSession) GetId() uint64 {
-	//TODO implement me
-	panic("implement me")
+	return s.id
 }
 
 func (s *wsSession) HeartBeat(msg interface{}) {
-	//TODO implement me
-	panic("implement me")
+
 }
 
 func (s *wsSession) IncRcvPingNum(inc int) {
-	//TODO implement me
-	panic("implement me")
+
 }
 
 func (s *wsSession) RcvPingNum() int {
-	//TODO implement me
-	panic("implement me")
+	return 0
 }
 
 func (s *wsSession) setConn(c *websocket.Conn) {
@@ -89,7 +104,7 @@ func (s *wsSession) setConn(c *websocket.Conn) {
 }
 
 func (s *wsSession) start() {
-	atomic.StoreInt64(&s.closeInt, 0)
+	atomic.StoreInt64(&s.close, 0)
 	// 重置发送队列
 	s.sendQueueMaxLen = sendQueueMaxLen
 	// todo 暂时默认发送队列长度2000
@@ -114,7 +129,37 @@ func (s *wsSession) start() {
 }
 
 func (s *wsSession) RunRcv() {
+	defer func() {
+		//打印堆栈信息
+		if err := recover(); err != nil {
+			logrus.Log(logrus.LogsSystem).Errorf("wsSession Stack---::%v\n %s\n", err, string(debug.Stack()))
+			debug.PrintStack()
+		}
+	}()
 
+	for {
+		msg, err := s.ReadMsg(s)
+		if err != nil {
+			logrus.Log(logrus.LogsSystem).Errorf("RunRcv ReadMsg err:%v sessionId:%d \n", err, s.GetId())
+			// 做关闭处理 发送数据时已经无法发送
+			atomic.StoreInt64(&s.close, 1)
+			select {
+			case s.sendQueue <- nil:
+			default:
+				logrus.Log(logrus.LogsSystem).Errorf("RunRcv sendQueue block len:%d sessionId:%d \n", len(s.sendQueue), s.GetId())
+			}
+
+			// 抛出关闭事件
+			s.ProcEvent(&common.RcvMsgEvent{Sess: s, Message: &socket.SessionClosed{}, Err: err})
+			break
+		}
+
+		// 接收数据事件放到队列中(需要放到队列中，否则会有线程冲突)
+		s.ProcEvent(&common.RcvMsgEvent{Sess: s, Message: msg, Err: nil})
+	}
+
+	logrus.Log(logrus.LogsSystem).Infof("wsSession exit addr:%v", s.conn.LocalAddr())
+	s.exitWg.Done()
 }
 
 func (s *wsSession) RunSend() {
