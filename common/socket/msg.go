@@ -2,11 +2,14 @@ package socket
 
 import (
 	"common"
+	"common/iface"
+	"common/plugins/logrus"
 	"common/plugins/mpool"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"io"
 	"reflect"
 )
@@ -49,6 +52,12 @@ type msgBase struct {
 	receivedBytes uint16
 }
 
+type TcpDataPacket struct {
+}
+
+type WsDataPacket struct {
+}
+
 func RegisterSystemMsg(sys *SystemMsg) {
 	if _, ok := systemMsgById[sys.MsgId]; ok {
 		panic(fmt.Sprintf("msgId already registered. msgId: %d", sys.MsgId))
@@ -73,7 +82,28 @@ func MessageInfoByMsg(msg interface{}) *SystemMsg {
 	return systemMsgByTyp[typ]
 }
 
-func SendMessage(writer io.Writer, msg interface{}) (err error) {
+func (t *TcpDataPacket) ReadMessage(s iface.ISession) (interface{}, error) {
+	reader, ok := s.Raw().(io.Reader)
+	if !ok || reader == nil {
+		return nil, fmt.Errorf("TcpDataPacket ReadMessage get io.Reader err")
+	}
+	msg, msgId, err := RcvPackageData(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	bt, err := DecodeMessage(int(msgId), msg)
+	if err != nil {
+		return nil, err
+	}
+	return bt, nil
+}
+
+func (t *TcpDataPacket) SendMessage(s iface.ISession, msg interface{}) (err error) {
+	writer, ok := s.Raw().(io.Writer)
+	if !ok || writer == nil {
+		return fmt.Errorf("TcpDataPacket SendMessage get io.Writer err")
+	}
 	msgData, msgInfo, err := EncodeMessage(msg)
 	if err != nil {
 		return err
@@ -103,6 +133,28 @@ func SendMessage(writer io.Writer, msg interface{}) (err error) {
 	return nil
 }
 
+func (w *WsDataPacket) ReadMessage(s iface.ISession) (interface{}, error) {
+	conn, ok := s.Raw().(*websocket.Conn)
+	if !ok || conn == nil {
+		return nil, fmt.Errorf("WsDataPacket ReadMessage get websocket.Conn err")
+	}
+	typ, bt, err := conn.ReadMessage()
+	if err != nil {
+		return nil, fmt.Errorf("WsDataPacket ReadMessage ReadMessage err:%v", err)
+	}
+	// 打印客户端发送的数据
+	logrus.Log(logrus.LogsSystem).Infof("ws acceptor receive msg:%v", string(bt))
+	// 回复客户端
+	if err = conn.WriteMessage(typ, bt); err != nil {
+		return nil, err
+	}
+	return bt, nil
+}
+
+func (w *WsDataPacket) SendMessage(s iface.ISession, msg interface{}) (err error) {
+	return nil
+}
+
 // RcvPackageData 获取原始包数据
 func RcvPackageData(reader io.Reader) ([]byte, uint16, error) {
 	mb := &msgBase{}
@@ -121,19 +173,6 @@ func WriteFull(writer io.Writer, buf []byte) error {
 		pos += n
 	}
 	return nil
-}
-
-func ReadMessage(reader io.Reader, maxMsgLen int) (interface{}, error) {
-	msg, msgId, err := RcvPackageData(reader)
-	if err != nil {
-		return nil, err
-	}
-
-	bt, err := DecodeMessage(int(msgId), msg)
-	if err != nil {
-		return nil, err
-	}
-	return bt, nil
 }
 
 // EncodeMessage 消息序列化

@@ -1,6 +1,8 @@
 package common
 
-import "common/iface"
+import (
+	"common/iface"
+)
 
 // IMsgHandle 事件处理队列
 type IMsgHandle interface {
@@ -47,4 +49,10 @@ type EventHook interface {
 type MessageProcessor interface {
 	OnRcvMsg(s iface.ISession) (interface{}, error)
 	OnSendMsg(s iface.ISession, msg interface{}) error
+}
+
+// DataPacket 收发数据
+type DataPacket interface {
+	ReadMessage(s iface.ISession) (interface{}, error)
+	SendMessage(s iface.ISession, msg interface{}) (err error)
 }

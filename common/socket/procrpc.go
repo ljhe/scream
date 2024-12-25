@@ -3,11 +3,7 @@ package socket
 import (
 	"common"
 	"common/iface"
-	"common/plugins/logrus"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"io"
-	"log"
 	"net"
 )
 
@@ -65,27 +61,19 @@ type TCPMessageProcessor struct {
 }
 
 func (tp *TCPMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, err error) {
-	reader, ok := s.Raw().(io.Reader)
-	if !ok || reader == nil {
-		log.Println("[TCPMessageProcessor] OnRcvMsg err")
-		return nil, fmt.Errorf("[TCPMessageProcessor] OnRcvMsg err")
-	}
 	opt := s.Node().(Option)
-	opt.SocketReadTimeout(reader.(net.Conn), func() {
-		msg, err = ReadMessage(reader, 1024)
+	opt.SocketReadTimeout(s.Raw().(net.Conn), func() {
+		p := TcpDataPacket{}
+		msg, err = p.ReadMessage(s)
 	})
 	return
 }
 
 func (tp *TCPMessageProcessor) OnSendMsg(s iface.ISession, msg interface{}) (err error) {
-	w, ok := s.Raw().(io.Writer)
-	if !ok || w == nil {
-		logrus.Log(logrus.LogsSystem).Errorf("[TCPMessageProcessor] OnSendMsg err")
-		return fmt.Errorf("[TCPMessageProcessor] OnSendMsg err")
-	}
 	opt := s.Node().(Option)
-	opt.SocketWriteTimeout(w.(net.Conn), func() {
-		err = SendMessage(w, msg)
+	opt.SocketWriteTimeout(s.Raw().(net.Conn), func() {
+		p := TcpDataPacket{}
+		err = p.SendMessage(s, msg)
 	})
 	return err
 }
@@ -94,22 +82,8 @@ type WSMessageProcessor struct {
 }
 
 func (tp *WSMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, err error) {
-	conn, ok := s.Raw().(*websocket.Conn)
-	if !ok || conn == nil {
-		logrus.Log(logrus.LogsSystem).Errorf("[WSMessageProcessor] OnRcvMsg err")
-		return nil, nil
-	}
-	typ, byte, err := conn.ReadMessage()
-	if err != nil {
-		return
-	}
-
-	// 打印客户端发送的数据
-	logrus.Log(logrus.LogsSystem).Infof("ws acceptor receive msg:%v", string(byte))
-	// 回复客户端
-	if err = conn.WriteMessage(typ, byte); err != nil {
-		return
-	}
+	p := WsDataPacket{}
+	msg, err = p.ReadMessage(s)
 	return
 }
 
