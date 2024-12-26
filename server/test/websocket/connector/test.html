@@ -18,7 +18,19 @@
     };
 
     socket.onmessage = (event) => {
-        outputDiv.innerHTML += `<div>Received: ${event.data}</div>`;
+        // 创建一个 FileReader 实例
+        const reader = new FileReader();
+
+        // 当读取完成时触发 onload 事件
+        var resultString = ""
+        reader.onload = function(event) {
+            // event.target.result 包含读取到的字符串
+            resultString = event.target.result;
+            outputDiv.innerHTML += `<div>Received: ${resultString}</div>`;
+        };
+
+        // 读取 Blob 为字符串（默认使用 UTF-8 编码）
+        reader.readAsText(event.data);
     };
 
     socket.onclose = () => {
@@ -30,9 +42,39 @@
     };
 
     function sendMessage() {
-        const message = document.getElementById("messageInput").value;
-        socket.send(message);
-        outputDiv.innerHTML += `<div>Sent: ${message}</div>`;
+        const messageContent = document.getElementById("messageInput").value;
+
+        const encoder = new TextEncoder();
+        const messageData = encoder.encode(messageContent);
+
+        // 计算消息的长度（2 字节）
+        const messageLength = messageData.length;
+
+        // 选择消息类型（2 字节）
+        const messageId = 1;
+
+        // 加密方式（2 字节）
+        const flagId = 1;
+
+        // 组装消息包：2 字节长度 + 2 字节类型 + 2 字节加密方式
+        const messageHeader = new ArrayBuffer(6);
+        const headerView = new DataView(messageHeader);
+
+        // 设置消息长度（2 字节）
+        headerView.setUint16(0, messageLength, false); // 大端字节序
+        // 设置消息类型（2 字节）
+        headerView.setUint16(2, messageId);
+        // 设置加密方式（2 字节）
+        headerView.setUint16(4, messageId);
+
+        // 将消息头和消息内容合并成一个完整的消息包
+        const fullMessage = new Uint8Array(6 + messageLength);
+        fullMessage.set(new Uint8Array(messageHeader), 0); // 消息头
+        fullMessage.set(messageData, 6); // 消息内容
+        // 发送包含消息头和消息内容的二进制数据
+        socket.send(fullMessage);
+
+        outputDiv.innerHTML += `<div>Sent: ${messageContent}</div>`;
         document.getElementById("messageInput").value = "";  //清空输入框
     }
 </script>

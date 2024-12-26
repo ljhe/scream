@@ -22,12 +22,14 @@ var MsgOptions = struct {
 	MsgChunkNumLen uint16 // 分片数量大小 2个字节
 	MsgChunkIdLen  uint16 // 分片id大小 2个字节
 	Pool           bool   // 是否使用内存池
+	FlagIdLen      uint16 // 加密方式
 }{
 	MsgBodyLen:     2,
 	MsgIdLen:       2,
 	MsgChunkNumLen: 2,
 	MsgChunkIdLen:  2,
 	Pool:           true,
+	FlagIdLen:      2,
 }
 
 var (
@@ -50,6 +52,7 @@ type msgBase struct {
 	actualDataLen int
 	chunkSize     int
 	receivedBytes uint16
+	flagId        uint16
 }
 
 type TcpDataPacket struct {
@@ -142,13 +145,23 @@ func (w *WsDataPacket) ReadMessage(s iface.ISession) (interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("WsDataPacket ReadMessage ReadMessage err:%v", err)
 	}
-	// 打印客户端发送的数据
-	logrus.Log(logrus.LogsSystem).Infof("ws acceptor receive msg:%v", string(bt))
-	// 回复客户端
-	if err = conn.WriteMessage(typ, bt); err != nil {
-		return nil, err
+
+	switch typ {
+	case websocket.BinaryMessage:
+		msg, _, err := RcvPackageDataByByte(bt)
+
+		// 打印客户端发送的数据
+		logrus.Log(logrus.LogsSystem).Infof("ws acceptor receive msg:%v stringM:%v", msg, string(msg))
+		// 回复客户端
+		if err = conn.WriteMessage(typ, msg); err != nil {
+			return nil, err
+		}
+
+		return msg, err
+	default:
+		return nil, fmt.Errorf("WsDataPacket ReadMessage type not binary message. typ:%v", typ)
 	}
-	return bt, nil
+
 }
 
 func (w *WsDataPacket) SendMessage(s iface.ISession, msg interface{}) (err error) {
@@ -160,6 +173,13 @@ func RcvPackageData(reader io.Reader) ([]byte, uint16, error) {
 	mb := &msgBase{}
 	bufMsg, err := mb.Unmarshal(reader)
 	mb.Release(bufMsg)
+	return bufMsg, mb.msgId, err
+}
+
+// RcvPackageDataByByte 通过 []byte 获取原始包数据
+func RcvPackageDataByByte(bt []byte) ([]byte, uint16, error) {
+	mb := &msgBase{}
+	bufMsg, err := mb.UnmarshalBytes(bt)
 	return bufMsg, mb.msgId, err
 }
 
@@ -289,6 +309,34 @@ func (mb *msgBase) Unmarshal(reader io.Reader) ([]byte, error) {
 		}
 	}
 	return bufMsg, err
+}
+
+func (mb *msgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
+	// 数据格式 package = MsgBodyLen + MsgIdLen + FlagIdLen + msgData
+	var msgBodyLen uint16 // 请求长度
+
+	if len(bytes) < int(MsgOptions.MsgBodyLen) {
+		logrus.Log(logrus.LogsSystem).Errorf("msgBase UnmarshalBytes MsgBodyLen err. bytes'len: %d", len(bytes))
+		return
+	}
+	msgBodyLen = binary.BigEndian.Uint16(bytes)
+	bytes = bytes[MsgOptions.MsgBodyLen:]
+	if msgBodyLen > 0 {
+		if len(bytes) < int(MsgOptions.MsgIdLen) {
+			logrus.Log(logrus.LogsSystem).Errorf("msgBase UnmarshalBytes MsgIdLen err. bytes'len: %d", len(bytes))
+			return
+		}
+		mb.msgId = binary.BigEndian.Uint16(bytes)
+		bytes = bytes[MsgOptions.MsgIdLen:]
+
+		if len(bytes) < int(MsgOptions.FlagIdLen) {
+			logrus.Log(logrus.LogsSystem).Errorf("msgBase UnmarshalBytes FlagIdLen err. bytes'len: %d", len(bytes))
+			return
+		}
+		mb.flagId = binary.BigEndian.Uint16(bytes)
+		msgData = bytes[MsgOptions.FlagIdLen:]
+	}
+	return msgData, nil
 }
 
 func (mb *msgBase) Container() []byte {
