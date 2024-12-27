@@ -18,19 +18,31 @@
     };
 
     socket.onmessage = (event) => {
-        // 创建一个 FileReader 实例
-        const reader = new FileReader();
+        // event.data 是原始的 WebSocket 数据，可能是文本或二进制（Blob 或 ArrayBuffer）
+        const data = event.data;
 
-        // 当读取完成时触发 onload 事件
-        var resultString = ""
+        // 创建一个FileReader对象
+        var reader = new FileReader();
+
+        // 设置FileReader的onload事件处理程序，以便在读取操作完成后处理结果
         reader.onload = function(event) {
-            // event.target.result 包含读取到的字符串
-            resultString = event.target.result;
-            outputDiv.innerHTML += `<div>Received: ${resultString}</div>`;
+            // 获取 ArrayBuffer
+            const arrayBuffer = event.target.result;
+
+            // 从第 6 字节开始 前几字节属于请求头
+            const startByte = 6;
+            const slicedBuffer = arrayBuffer.slice(startByte);
+            // 打印提取的 ArrayBuffer 数据
+            console.log(slicedBuffer);
+
+            // 转化为文本
+            var text = arrayBufferToText(slicedBuffer)
+            console.log(text);
+            outputDiv.innerHTML += `<div>Received: ${text}</div>`;
         };
 
-        // 读取 Blob 为字符串（默认使用 UTF-8 编码）
-        reader.readAsText(event.data);
+        // 使用FileReader的readAsText方法读取Blob
+        reader.readAsArrayBuffer(data);
     };
 
     socket.onclose = () => {
@@ -76,6 +88,12 @@
 
         outputDiv.innerHTML += `<div>Sent: ${messageContent}</div>`;
         document.getElementById("messageInput").value = "";  //清空输入框
+    }
+
+    // 将 ArrayBuffer 转换为文本（假设是 UTF-8 编码）
+    function arrayBufferToText(arrayBuffer) {
+        const decoder = new TextDecoder('utf-8');
+        return decoder.decode(arrayBuffer);
     }
 </script>
 </body>

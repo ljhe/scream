@@ -150,13 +150,8 @@ func (w *WsDataPacket) ReadMessage(s iface.ISession) (interface{}, error) {
 	case websocket.BinaryMessage:
 		msg, _, err := RcvPackageDataByByte(bt)
 
-		// 打印客户端发送的数据
-		logrus.Log(logrus.LogsSystem).Infof("ws acceptor receive msg:%v stringM:%v", msg, string(msg))
-		// 回复客户端
-		if err = conn.WriteMessage(typ, msg); err != nil {
-			return nil, err
-		}
-
+		// 测试 直接返回数据
+		err = w.SendMessage(s, msg)
 		return msg, err
 	default:
 		return nil, fmt.Errorf("WsDataPacket ReadMessage type not binary message. typ:%v", typ)
@@ -165,7 +160,14 @@ func (w *WsDataPacket) ReadMessage(s iface.ISession) (interface{}, error) {
 }
 
 func (w *WsDataPacket) SendMessage(s iface.ISession, msg interface{}) (err error) {
-	return nil
+	conn, ok := s.Raw().(*websocket.Conn)
+	if !ok || conn == nil {
+		return fmt.Errorf("WsDataPacket SendMessage get websocket.Conn err")
+	}
+	mb := &msgBase{}
+	buf := mb.MarshalBytes(msg.([]byte))
+	err = conn.WriteMessage(websocket.BinaryMessage, buf)
+	return err
 }
 
 // RcvPackageData 获取原始包数据
@@ -311,8 +313,28 @@ func (mb *msgBase) Unmarshal(reader io.Reader) ([]byte, error) {
 	return bufMsg, err
 }
 
+// MarshalBytes 数据格式 package = MsgBodyLen + MsgIdLen + FlagIdLen + msgData
+func (mb *msgBase) MarshalBytes(msgData []byte) []byte {
+	msgDataLen := len(msgData)
+	data := make([]byte, MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen+MsgOptions.FlagIdLen+uint16(msgDataLen))
+
+	// header
+	// MsgBodyLen
+	binary.BigEndian.PutUint16(data, uint16(msgDataLen))
+	// MsgIdLen
+	binary.BigEndian.PutUint16(data[MsgOptions.MsgBodyLen:], mb.msgId)
+	// FlagIdLen
+	binary.BigEndian.PutUint16(data[MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen:], mb.flagId)
+
+	// body
+	if msgDataLen > 0 {
+		copy(data[MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen+MsgOptions.FlagIdLen:], msgData)
+	}
+	return data
+}
+
+// UnmarshalBytes 数据格式 package = MsgBodyLen + MsgIdLen + FlagIdLen + msgData
 func (mb *msgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
-	// 数据格式 package = MsgBodyLen + MsgIdLen + FlagIdLen + msgData
 	var msgBodyLen uint16 // 请求长度
 
 	if len(bytes) < int(MsgOptions.MsgBodyLen) {
