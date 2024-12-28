@@ -53,6 +53,7 @@ func init() {
 		node := new(tcpConnector)
 		node.SessionManager = socket.NewNetSessionManager()
 		node.session = newTcpSession(nil, node)
+		node.NetTCPSocketOption.Init()
 		return node
 	})
 	log.Println("tcp connector register success.")

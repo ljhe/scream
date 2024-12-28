@@ -75,9 +75,11 @@ func (t *tcpAcceptor) GetTyp() string {
 
 func init() {
 	socket.RegisterServerNode(func() iface.INetNode {
-		return &tcpAcceptor{
+		node := &tcpAcceptor{
 			SessionManager: socket.NewNetSessionManager(),
 		}
+		node.NetTCPSocketOption.Init()
+		return node
 	})
 	log.Println("tcp acceptor register success.")
 }

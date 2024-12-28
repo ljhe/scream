@@ -8,6 +8,7 @@ import (
 )
 
 type Option interface {
+	MaxMsgLen() int
 	SocketReadTimeout(c net.Conn, callback func())
 	SocketWriteTimeout(c net.Conn, callback func())
 	CopyOpt(opt *NetTCPSocketOption)
@@ -33,6 +34,10 @@ func (no *NetTCPSocketOption) SocketOptWebSocket(c *websocket.Conn) {
 		conn.SetReadBuffer(no.readBufferSize)
 		conn.SetWriteBuffer(no.writeBufferSize)
 	}
+}
+
+func (no *NetTCPSocketOption) MaxMsgLen() int {
+	return no.maxMsgLen
 }
 
 func (no *NetTCPSocketOption) SocketReadTimeout(c net.Conn, callback func()) {

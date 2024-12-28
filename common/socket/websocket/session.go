@@ -173,7 +173,7 @@ func newWebSocketSession(conn *websocket.Conn, node iface.INetNode, endCallback 
 		endCallback: endCallback,
 		NetProcessorRPC: node.(interface {
 			GetRPC() *socket.NetProcessorRPC
-		}).GetRPC(), //使用外层node的RPC处理接口
+		}).GetRPC(), // 使用外层node的RPC处理接口
 	}
 	node.(socket.Option).CopyOpt(&session.sessionOpt)
 	return session

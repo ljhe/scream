@@ -164,8 +164,15 @@ func (w *WsDataPacket) SendMessage(s iface.ISession, msg interface{}) (err error
 	if !ok || conn == nil {
 		return fmt.Errorf("WsDataPacket SendMessage get websocket.Conn err")
 	}
+	msgData := msg.([]byte)
+	msgDataLen := len(msgData)
+	// todo 注意上层发包不要超过最大值 之后这里可以改成如果超过最大值 就分片发送
+	opt := s.Node().(Option)
+	if msgDataLen > opt.MaxMsgLen() {
+		return fmt.Errorf("ws sendMessage too big. msgId=%v msglen=%v maxlen=%v", 1, msgDataLen, opt.MaxMsgLen())
+	}
 	mb := &msgBase{}
-	buf := mb.MarshalBytes(msg.([]byte))
+	buf := mb.MarshalBytes(msgData)
 	err = conn.WriteMessage(websocket.BinaryMessage, buf)
 	return err
 }
