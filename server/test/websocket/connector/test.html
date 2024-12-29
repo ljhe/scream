@@ -15,6 +15,8 @@
 
     socket.onopen = () => {
         outputDiv.innerHTML += "<div>Connected to WebSocket server!</div>";
+        // 发送ping消息
+        ping()
     };
 
     socket.onmessage = (event) => {
@@ -28,17 +30,28 @@
         reader.onload = function(event) {
             // 获取 ArrayBuffer
             const arrayBuffer = event.target.result;
+            console.log("arrayBuffer:", arrayBuffer)
+
+            // 读取信息
+            const dataView = new DataView(arrayBuffer)
+            const messageLength = dataView.getUint16(0)
+            const messageId = dataView.getUint16(2)
+            const flagId = dataView.getUint16(4)
 
             // 从第 6 字节开始 前几字节属于请求头
             const startByte = 6;
             const slicedBuffer = arrayBuffer.slice(startByte);
-            // 打印提取的 ArrayBuffer 数据
-            console.log(slicedBuffer);
 
             // 转化为文本
             var text = arrayBufferToText(slicedBuffer)
-            console.log(text);
-            outputDiv.innerHTML += `<div>Received: ${text}</div>`;
+            // 打印提取的 ArrayBuffer 数据
+            console.log("messageInfo messageLength:", messageLength, " messageId:", messageId, " flagId:", flagId, " text:", text)
+
+            if (messageId === 5) {
+                console.log("SCPingAck")
+            } else {
+                outputDiv.innerHTML += `<div>Received: ${text}</div>`;
+            }
         };
 
         // 使用FileReader的readAsText方法读取Blob
@@ -56,6 +69,18 @@
     function sendMessage() {
         const messageContent = document.getElementById("messageInput").value;
 
+        var fullMessage = marshal(messageContent, 1)
+        console.log("fullMessage:", fullMessage)
+
+        // 发送包含消息头和消息内容的二进制数据
+        socket.send(fullMessage);
+
+        outputDiv.innerHTML += `<div>Sent: ${messageContent}</div>`;
+        document.getElementById("messageInput").value = "";  //清空输入框
+    }
+
+    // msgId 由后端定义
+    function marshal(messageContent, msgId) {
         const encoder = new TextEncoder();
         const messageData = encoder.encode(messageContent);
 
@@ -63,7 +88,7 @@
         const messageLength = messageData.length;
 
         // 选择消息类型（2 字节）
-        const messageId = 1;
+        const messageId = msgId;
 
         // 加密方式（2 字节）
         const flagId = 1;
@@ -77,23 +102,26 @@
         // 设置消息类型（2 字节）
         headerView.setUint16(2, messageId);
         // 设置加密方式（2 字节）
-        headerView.setUint16(4, messageId);
+        headerView.setUint16(4, flagId);
 
         // 将消息头和消息内容合并成一个完整的消息包
-        const fullMessage = new Uint8Array(6 + messageLength);
+        var fullMessage = new Uint8Array(6 + messageLength);
         fullMessage.set(new Uint8Array(messageHeader), 0); // 消息头
         fullMessage.set(messageData, 6); // 消息内容
-        // 发送包含消息头和消息内容的二进制数据
-        socket.send(fullMessage);
-
-        outputDiv.innerHTML += `<div>Sent: ${messageContent}</div>`;
-        document.getElementById("messageInput").value = "";  //清空输入框
+        return fullMessage
     }
 
     // 将 ArrayBuffer 转换为文本（假设是 UTF-8 编码）
     function arrayBufferToText(arrayBuffer) {
         const decoder = new TextDecoder('utf-8');
         return decoder.decode(arrayBuffer);
+    }
+
+    function ping() {
+        let emptyJsonString = "{}";
+        var msg = marshal(emptyJsonString, 4)
+        console.log("CSPingReq:", msg)
+        socket.send(msg)
     }
 </script>
 </body>

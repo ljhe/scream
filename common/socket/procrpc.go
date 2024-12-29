@@ -88,10 +88,7 @@ func (tp *WSMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, err e
 }
 
 func (tp *WSMessageProcessor) OnSendMsg(s iface.ISession, msg interface{}) (err error) {
-	opt := s.Node().(Option)
-	opt.SocketWriteTimeout(s.Raw().(net.Conn), func() {
-		p := WsDataPacket{}
-		err = p.SendMessage(s, msg)
-	})
+	p := WsDataPacket{}
+	err = p.SendMessage(s, msg)
 	return err
 }

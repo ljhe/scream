@@ -33,12 +33,12 @@ var MsgOptions = struct {
 }
 
 var (
-	systemMsgById  = map[int]*SystemMsg{}
+	systemMsgById  = map[uint16]*SystemMsg{}
 	systemMsgByTyp = map[reflect.Type]*SystemMsg{}
 )
 
 type SystemMsg struct {
-	MsgId int
+	MsgId uint16
 	Msg   []byte
 	typ   reflect.Type
 }
@@ -73,7 +73,7 @@ func RegisterSystemMsg(sys *SystemMsg) {
 	systemMsgByTyp[sys.typ] = sys
 }
 
-func MessageInfoById(msgId int) *SystemMsg {
+func MessageInfoById(msgId uint16) *SystemMsg {
 	return systemMsgById[msgId]
 }
 
@@ -95,7 +95,7 @@ func (t *TcpDataPacket) ReadMessage(s iface.ISession) (interface{}, error) {
 		return nil, err
 	}
 
-	bt, err := DecodeMessage(int(msgId), msg)
+	bt, err := DecodeMessage(msgId, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (t *TcpDataPacket) SendMessage(s iface.ISession, msg interface{}) (err erro
 	msgLen := len(msgData)
 	mb := &msgBase{
 		msgLen:    uint16(len(msgData)),
-		msgId:     uint16(msgInfo.MsgId),
+		msgId:     msgInfo.MsgId,
 		chunkNum:  uint16(msgLen/common.MsgMaxLen + 1), // 计算分片数量
 		chunkId:   1,
 		sendBytes: 0,
@@ -148,11 +148,15 @@ func (w *WsDataPacket) ReadMessage(s iface.ISession) (interface{}, error) {
 
 	switch typ {
 	case websocket.BinaryMessage:
-		msg, _, err := RcvPackageDataByByte(bt)
-
-		// 测试 直接返回数据
-		err = w.SendMessage(s, msg)
-		return msg, err
+		msg, msgId, err := RcvPackageDataByByte(bt)
+		if err != nil {
+			return nil, err
+		}
+		bt, err := DecodeMessage(msgId, msg)
+		if err != nil {
+			return nil, err
+		}
+		return bt, nil
 	default:
 		return nil, fmt.Errorf("WsDataPacket ReadMessage type not binary message. typ:%v", typ)
 	}
@@ -164,14 +168,20 @@ func (w *WsDataPacket) SendMessage(s iface.ISession, msg interface{}) (err error
 	if !ok || conn == nil {
 		return fmt.Errorf("WsDataPacket SendMessage get websocket.Conn err")
 	}
-	msgData := msg.([]byte)
+	msgData, msgInfo, err := EncodeMessage(msg)
+	if err != nil {
+		return err
+	}
 	msgDataLen := len(msgData)
 	// todo 注意上层发包不要超过最大值 之后这里可以改成如果超过最大值 就分片发送
 	opt := s.Node().(Option)
 	if msgDataLen > opt.MaxMsgLen() {
 		return fmt.Errorf("ws sendMessage too big. msgId=%v msglen=%v maxlen=%v", 1, msgDataLen, opt.MaxMsgLen())
 	}
-	mb := &msgBase{}
+	mb := &msgBase{
+		msgId:  msgInfo.MsgId,
+		flagId: 1,
+	}
 	buf := mb.MarshalBytes(msgData)
 	err = conn.WriteMessage(websocket.BinaryMessage, buf)
 	return err
@@ -218,7 +228,7 @@ func EncodeMessage(msg interface{}) ([]byte, *SystemMsg, error) {
 }
 
 // DecodeMessage 消息反序列化
-func DecodeMessage(msgId int, msg []byte) (interface{}, error) {
+func DecodeMessage(msgId uint16, msg []byte) (interface{}, error) {
 	sys := MessageInfoById(msgId)
 	if sys == nil {
 		return nil, fmt.Errorf("msgId not found. msgId: %d msg:%v", msgId, msg)
@@ -343,28 +353,28 @@ func (mb *msgBase) MarshalBytes(msgData []byte) []byte {
 // UnmarshalBytes 数据格式 package = MsgBodyLen + MsgIdLen + FlagIdLen + msgData
 func (mb *msgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
 	var msgBodyLen uint16 // 请求长度
-
 	if len(bytes) < int(MsgOptions.MsgBodyLen) {
 		logrus.Log(logrus.LogsSystem).Errorf("msgBase UnmarshalBytes MsgBodyLen err. bytes'len: %d", len(bytes))
 		return
 	}
 	msgBodyLen = binary.BigEndian.Uint16(bytes)
+	mb.actualDataLen = int(msgBodyLen)
 	bytes = bytes[MsgOptions.MsgBodyLen:]
-	if msgBodyLen > 0 {
-		if len(bytes) < int(MsgOptions.MsgIdLen) {
-			logrus.Log(logrus.LogsSystem).Errorf("msgBase UnmarshalBytes MsgIdLen err. bytes'len: %d", len(bytes))
-			return
-		}
-		mb.msgId = binary.BigEndian.Uint16(bytes)
-		bytes = bytes[MsgOptions.MsgIdLen:]
 
-		if len(bytes) < int(MsgOptions.FlagIdLen) {
-			logrus.Log(logrus.LogsSystem).Errorf("msgBase UnmarshalBytes FlagIdLen err. bytes'len: %d", len(bytes))
-			return
-		}
-		mb.flagId = binary.BigEndian.Uint16(bytes)
-		msgData = bytes[MsgOptions.FlagIdLen:]
+	if len(bytes) < int(MsgOptions.MsgIdLen) {
+		logrus.Log(logrus.LogsSystem).Errorf("msgBase UnmarshalBytes MsgIdLen err. bytes'len: %d", len(bytes))
+		return
 	}
+	mb.msgId = binary.BigEndian.Uint16(bytes)
+	bytes = bytes[MsgOptions.MsgIdLen:]
+
+	if len(bytes) < int(MsgOptions.FlagIdLen) {
+		logrus.Log(logrus.LogsSystem).Errorf("msgBase UnmarshalBytes FlagIdLen err. bytes'len: %d", len(bytes))
+		return
+	}
+	mb.flagId = binary.BigEndian.Uint16(bytes)
+	msgData = bytes[MsgOptions.FlagIdLen:]
+
 	return msgData, nil
 }
 

@@ -90,3 +90,21 @@ func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 func (eh *ServerEventHook) OutEvent(ov iface.IProcEvent) iface.IProcEvent {
 	return ov
 }
+
+type WsEventHook struct {
+}
+
+func (wh *WsEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
+	switch msg := iv.Msg().(type) {
+	case *socket.CSPingReq:
+		iv.Session().Send(&socket.SCPingAck{})
+		return nil
+	default:
+		logrus.Log(logrus.LogsSystem).Printf("receive unknown msg %v msgT:%v ivM %v \n", msg, reflect.TypeOf(msg), iv.Msg())
+	}
+	return iv
+}
+
+func (wh *WsEventHook) OutEvent(ov iface.IProcEvent) iface.IProcEvent {
+	return ov
+}

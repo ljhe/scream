@@ -32,9 +32,17 @@ type PingAck struct {
 type SessionClosed struct {
 }
 
+// CSPingReq 客户端连接后 发送ping消息
+type CSPingReq struct{}
+
+// SCPingAck 服务端收到客户端的ping消息后返回
+type SCPingAck struct{}
+
 func init() {
 	RegisterSystemMsg(&SystemMsg{MsgId: 1, typ: reflect.TypeOf((*ServiceIdentifyACK)(nil)).Elem()})
 	RegisterSystemMsg(&SystemMsg{MsgId: 2, typ: reflect.TypeOf((*PingReq)(nil)).Elem()})
 	RegisterSystemMsg(&SystemMsg{MsgId: 3, typ: reflect.TypeOf((*PingAck)(nil)).Elem()})
+	RegisterSystemMsg(&SystemMsg{MsgId: 4, typ: reflect.TypeOf((*CSPingReq)(nil)).Elem()})
+	RegisterSystemMsg(&SystemMsg{MsgId: 5, typ: reflect.TypeOf((*SCPingAck)(nil)).Elem()})
 	log.Println("operation init success")
 }

@@ -19,7 +19,7 @@ func GateWsFrontEndOpt() []iface.Option {
 		bundle, ok := s.(common.ProcessorRPCBundle)
 		if ok {
 			bundle.SetMessageProc(new(socket.WSMessageProcessor)) //socket 收发数据处理
-			bundle.(common.ProcessorRPCBundle).SetHooker(new(service.ServerEventHook))
+			bundle.(common.ProcessorRPCBundle).SetHooker(new(service.WsEventHook))
 			msgHandle := service.GetMsgHandle(0)
 			bundle.(common.ProcessorRPCBundle).SetMsgHandle(msgHandle)
 		}

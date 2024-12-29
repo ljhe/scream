@@ -130,7 +130,7 @@ func (s *wsSession) start() {
 
 func (s *wsSession) RunRcv() {
 	defer func() {
-		//打印堆栈信息
+		// 打印堆栈信息
 		if err := recover(); err != nil {
 			logrus.Log(logrus.LogsSystem).Errorf("wsSession Stack---::%v\n %s\n", err, string(debug.Stack()))
 			debug.PrintStack()
@@ -163,7 +163,32 @@ func (s *wsSession) RunRcv() {
 }
 
 func (s *wsSession) RunSend() {
+	defer func() {
+		// 打印堆栈信息
+		if err := recover(); err != nil {
+			logrus.Log(logrus.LogsSystem).Errorf("wsSession Stack---::%v\n %s\n", err, string(debug.Stack()))
+			debug.PrintStack()
+		}
+	}()
 
+	for data := range s.sendQueue {
+		if data == nil {
+			break
+		}
+		err := s.SendMsg(&common.SendMsgEvent{Sess: s, Message: data})
+		if err != nil {
+			logrus.Log(logrus.LogsSystem).Errorf("wsSession RunSend SendMsg err:%v \n", err)
+			break
+		}
+	}
+
+	logrus.Log(logrus.LogsSystem).Infof("wsSession RunSend exit RunSend goroutine addr=%v", s.conn.LocalAddr())
+	c := s.GetConn()
+	if c != nil {
+		c.Close()
+	}
+
+	s.exitWg.Done()
 }
 
 func newWebSocketSession(conn *websocket.Conn, node iface.INetNode, endCallback func()) *wsSession {
