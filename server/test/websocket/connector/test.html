@@ -12,11 +12,12 @@
 <script>
     const socket = new WebSocket("ws://localhost:3101/ws");
     const outputDiv = document.getElementById("output");
+    let intervalId = 0;
 
     socket.onopen = () => {
         outputDiv.innerHTML += "<div>Connected to WebSocket server!</div>";
         // 每隔5s发送ping消息
-        setInterval(ping, 5000);
+        intervalId = setInterval(ping, 5000);
     };
 
     socket.onmessage = (event) => {
@@ -60,10 +61,12 @@
 
     socket.onclose = () => {
         outputDiv.innerHTML += "<div>Connection closed!</div>";
+        clearInterval(intervalId)
     };
 
     socket.onerror = (error) => {
         outputDiv.innerHTML += `<div>Error: ${error}</div>`;
+        clearInterval(intervalId)
     };
 
     function sendMessage() {

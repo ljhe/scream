@@ -4,8 +4,6 @@ import (
 	"common"
 	"common/iface"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"net"
 )
 
 type NetProcessorRPC struct {
@@ -63,7 +61,7 @@ type TCPMessageProcessor struct {
 
 func (tp *TCPMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, err error) {
 	opt := s.Node().(Option)
-	opt.SocketReadTimeout(s.Raw().(net.Conn), func() {
+	opt.SocketReadTimeout(s, func() {
 		p := TcpDataPacket{}
 		msg, err = p.ReadMessage(s)
 	})
@@ -72,7 +70,7 @@ func (tp *TCPMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, err 
 
 func (tp *TCPMessageProcessor) OnSendMsg(s iface.ISession, msg interface{}) (err error) {
 	opt := s.Node().(Option)
-	opt.SocketWriteTimeout(s.Raw().(net.Conn), func() {
+	opt.SocketWriteTimeout(s, func() {
 		p := TcpDataPacket{}
 		err = p.SendMessage(s, msg)
 	})
@@ -84,7 +82,7 @@ type WSMessageProcessor struct {
 
 func (tp *WSMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, err error) {
 	opt := s.Node().(Option)
-	opt.WSReadTimeout(s.Raw().(*websocket.Conn), func() {
+	opt.SocketReadTimeout(s, func() {
 		p := WsDataPacket{}
 		msg, err = p.ReadMessage(s)
 	})
@@ -93,7 +91,7 @@ func (tp *WSMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, err e
 
 func (tp *WSMessageProcessor) OnSendMsg(s iface.ISession, msg interface{}) (err error) {
 	opt := s.Node().(Option)
-	opt.WSWriteTimeout(s.Raw().(*websocket.Conn), func() {
+	opt.SocketWriteTimeout(s, func() {
 		p := WsDataPacket{}
 		err = p.SendMessage(s, msg)
 	})

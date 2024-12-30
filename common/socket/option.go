@@ -2,6 +2,7 @@ package socket
 
 import (
 	"common"
+	"common/iface"
 	"github.com/gorilla/websocket"
 	"math"
 	"net"
@@ -10,10 +11,8 @@ import (
 
 type Option interface {
 	MaxMsgLen() int
-	SocketReadTimeout(c net.Conn, callback func())
-	SocketWriteTimeout(c net.Conn, callback func())
-	WSReadTimeout(c *websocket.Conn, callback func())
-	WSWriteTimeout(c *websocket.Conn, callback func())
+	SocketReadTimeout(s iface.ISession, callback func())
+	SocketWriteTimeout(s iface.ISession, callback func())
 	CopyOpt(opt *NetTCPSocketOption)
 }
 
@@ -43,23 +42,45 @@ func (no *NetTCPSocketOption) MaxMsgLen() int {
 	return no.maxMsgLen
 }
 
-func (no *NetTCPSocketOption) SocketReadTimeout(c net.Conn, callback func()) {
-	if no.readTimeout > 0 {
-		c.SetReadDeadline(time.Now().Add(no.readTimeout))
-		callback()
-		c.SetReadDeadline(time.Time{})
-	} else {
-		callback()
+func (no *NetTCPSocketOption) SocketReadTimeout(s iface.ISession, callback func()) {
+	switch s.Raw().(type) {
+	case net.Conn:
+		if no.readTimeout > 0 {
+			s.Raw().(net.Conn).SetReadDeadline(time.Now().Add(no.readTimeout))
+			callback()
+			s.Raw().(net.Conn).SetReadDeadline(time.Time{})
+		} else {
+			callback()
+		}
+	case *websocket.Conn:
+		if no.readTimeout > 0 {
+			s.Raw().(*websocket.Conn).SetReadDeadline(time.Now().Add(no.readTimeout))
+			callback()
+			s.Raw().(*websocket.Conn).SetReadDeadline(time.Time{})
+		} else {
+			callback()
+		}
 	}
 }
 
-func (no *NetTCPSocketOption) SocketWriteTimeout(c net.Conn, callback func()) {
-	if no.writeTimeout > 0 {
-		c.SetWriteDeadline(time.Now().Add(no.writeTimeout))
-		callback()
-		c.SetWriteDeadline(time.Time{})
-	} else {
-		callback()
+func (no *NetTCPSocketOption) SocketWriteTimeout(s iface.ISession, callback func()) {
+	switch s.Raw().(type) {
+	case net.Conn:
+		if no.readTimeout > 0 {
+			s.Raw().(net.Conn).SetWriteDeadline(time.Now().Add(no.readTimeout))
+			callback()
+			s.Raw().(net.Conn).SetWriteDeadline(time.Time{})
+		} else {
+			callback()
+		}
+	case *websocket.Conn:
+		if no.readTimeout > 0 {
+			s.Raw().(*websocket.Conn).SetWriteDeadline(time.Now().Add(no.readTimeout))
+			callback()
+			s.Raw().(*websocket.Conn).SetWriteDeadline(time.Time{})
+		} else {
+			callback()
+		}
 	}
 }
 
