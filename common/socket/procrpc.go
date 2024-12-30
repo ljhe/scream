@@ -4,6 +4,7 @@ import (
 	"common"
 	"common/iface"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"net"
 )
 
@@ -82,13 +83,19 @@ type WSMessageProcessor struct {
 }
 
 func (tp *WSMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, err error) {
-	p := WsDataPacket{}
-	msg, err = p.ReadMessage(s)
+	opt := s.Node().(Option)
+	opt.WSReadTimeout(s.Raw().(*websocket.Conn), func() {
+		p := WsDataPacket{}
+		msg, err = p.ReadMessage(s)
+	})
 	return
 }
 
 func (tp *WSMessageProcessor) OnSendMsg(s iface.ISession, msg interface{}) (err error) {
-	p := WsDataPacket{}
-	err = p.SendMessage(s, msg)
+	opt := s.Node().(Option)
+	opt.WSWriteTimeout(s.Raw().(*websocket.Conn), func() {
+		p := WsDataPacket{}
+		err = p.SendMessage(s, msg)
+	})
 	return err
 }

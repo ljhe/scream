@@ -15,8 +15,8 @@
 
     socket.onopen = () => {
         outputDiv.innerHTML += "<div>Connected to WebSocket server!</div>";
-        // 发送ping消息
-        ping()
+        // 每隔5s发送ping消息
+        setInterval(ping, 5000);
     };
 
     socket.onmessage = (event) => {

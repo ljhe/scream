@@ -1,5 +1,7 @@
 package common
 
+import "time"
+
 type ServerNodeProperty interface {
 	SetAddr(a string)
 	GetAddr() string
@@ -11,6 +13,12 @@ type ServerNodeProperty interface {
 	GetServerTyp() int
 	SetIndex(i int)
 	GetIndex() int
+}
+
+// TCPSocketOption option.go
+type TCPSocketOption interface {
+	SetSocketBuff(read, write int, noDelay bool)
+	SetSocketDeadline(read, write time.Duration)
 }
 
 type ProcessorRPCBundle interface {

@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 type NetNodeParam struct {
@@ -59,6 +60,12 @@ func CreateConnector(serverTyp string, multiNode plugins.MultiServerNode) iface.
 			node.(common.ProcessorRPCBundle).SetMsgHandle(msgHandle)
 			node.(common.ProcessorRPCBundle).SetMessageProc(new(socket.TCPMessageProcessor))
 
+			if opt, ok := node.(common.TCPSocketOption); ok {
+				opt.SetSocketBuff(common.MsgMaxLen, common.MsgMaxLen, true)
+				// 15s无读写断开 服务器之间已经添加心跳来维持读写
+				opt.SetSocketDeadline(time.Second*15, time.Second*15)
+			}
+
 			property := node.(common.ServerNodeProperty)
 			property.SetServerTyp(config.SConf.Node.Typ)
 			property.SetZone(config.SConf.Node.Zone)
@@ -80,6 +87,14 @@ func CreateWebSocketAcceptor(serverTyp string, opts ...iface.Option) iface.INetN
 
 	for _, opt := range opts {
 		opt(node)
+	}
+
+	if opt, ok := node.(common.TCPSocketOption); ok {
+		opt.SetSocketBuff(common.MsgMaxLen, common.MsgMaxLen, true)
+		// 40秒无读 30秒无写断开 如果没有心跳了超时直接断开 调试期间可以不加
+		// 通过该方法来模拟心跳保持连接
+		opt.SetSocketDeadline(time.Second*40, time.Second*40)
+		// 读/写协程没有过滤超时事件 发生了操时操作就断开连接
 	}
 
 	property := node.(common.ServerNodeProperty)

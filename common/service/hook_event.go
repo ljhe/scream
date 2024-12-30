@@ -99,8 +99,13 @@ func (wh *WsEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	case *socket.CSPingReq:
 		iv.Session().Send(&socket.SCPingAck{})
 		return nil
+	case *socket.SessionClosed:
+		e := iv.(*common.RcvMsgEvent)
+		if e.Err != nil {
+			logrus.Log(logrus.LogsSystem).Infof("ws session closed. err:%v", e.Err)
+		}
 	default:
-		logrus.Log(logrus.LogsSystem).Printf("receive unknown msg %v msgT:%v ivM %v \n", msg, reflect.TypeOf(msg), iv.Msg())
+		logrus.Log(logrus.LogsSystem).Infof("receive unknown msg %v msgT:%v ivM %v \n", msg, reflect.TypeOf(msg), iv.Msg())
 	}
 	return iv
 }
