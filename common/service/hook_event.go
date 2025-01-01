@@ -104,6 +104,10 @@ func (wh *WsEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		if e.Err != nil {
 			logrus.Log(logrus.LogsSystem).Infof("ws session closed. err:%v", e.Err)
 		}
+	case *socket.CSSendMsgReq:
+		m := iv.Msg().(*socket.CSSendMsgReq)
+		iv.Session().Send(&socket.SCSendMsgAck{Msg: m.Msg})
+		return nil
 	default:
 		logrus.Log(logrus.LogsSystem).Infof("receive unknown msg %v msgT:%v ivM %v \n", msg, reflect.TypeOf(msg), iv.Msg())
 	}

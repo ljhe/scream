@@ -9,9 +9,12 @@
 <button onclick="sendMessage()">Send</button>
 <div id="output"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/jsencrypt/bin/jsencrypt.min.js"></script>
 <script>
+    const publicKey = "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDD1+WUqPrcKnr/sR5goDaEugEE\n+ywxcgFVSM8PbbHlMSlwFNt5/hwnRdxzGAk++Ivlb03BnMfJCyX4HNnlMX4aGEUH\nyu4COivC6SnZ0xh/HoTFq8Q1TyZilMlhQsT8q4ymhTcfjZnlSuLgEDoYLF1w1L8d\n5I3Zmg8YDIIaA6JMXwIDAQAB\n-----END PUBLIC KEY-----\n\""
     const socket = new WebSocket("ws://localhost:3101/ws");
     const outputDiv = document.getElementById("output");
+    const encryptor = new JSEncrypt();
     let intervalId = 0;
 
     socket.onopen = () => {
@@ -45,13 +48,16 @@
 
             // 转化为文本
             var text = arrayBufferToText(slicedBuffer)
+            // 转化为json
+            text = JSON.parse(text)
+
             // 打印提取的 ArrayBuffer 数据
             console.log("messageInfo messageLength:", messageLength, " messageId:", messageId, " flagId:", flagId, " text:", text)
 
             if (messageId === 5) {
                 console.log("SCPingAck")
             } else {
-                outputDiv.innerHTML += `<div>Received: ${text}</div>`;
+                outputDiv.innerHTML += `<div>Received: ${text.Msg}</div>`;
             }
         };
 
@@ -70,9 +76,12 @@
     };
 
     function sendMessage() {
-        const messageContent = document.getElementById("messageInput").value;
+        let messageContent = document.getElementById("messageInput").value;
 
-        var fullMessage = marshal(messageContent, 1)
+        let jsonData = {
+            "msg":messageContent,
+        }
+        let fullMessage = marshal(JSON.stringify(jsonData), 6)
         console.log("fullMessage:", fullMessage)
 
         // 发送包含消息头和消息内容的二进制数据
@@ -84,8 +93,14 @@
 
     // msgId 由后端定义
     function marshal(messageContent, msgId) {
+        console.log("before:", messageContent)
+        // RSA加密
+        encryptor.setPublicKey(publicKey);
+        messageContent = encryptor.encrypt(messageContent);
+        console.log("after:", messageContent)
+
         const encoder = new TextEncoder();
-        const messageData = encoder.encode(messageContent);
+        let messageData = encoder.encode(messageContent);
 
         // 计算消息的长度（2 字节）
         const messageLength = messageData.length;

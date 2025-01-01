@@ -2,6 +2,7 @@ package socket
 
 import (
 	"common"
+	"common/encryption"
 	"common/iface"
 	"common/plugins/logrus"
 	"common/plugins/mpool"
@@ -331,6 +332,11 @@ func (mb *msgBase) Unmarshal(reader io.Reader) ([]byte, error) {
 }
 
 // MarshalBytes 数据格式 package = MsgBodyLen + MsgIdLen + FlagIdLen + msgData
+// 关于RSA加密
+// RSA私钥只建议放在服务端 因为RSA私钥可以倒推出公钥 而公钥不可以倒推出私钥
+// 所以对于客户端而言 只能去使用公钥来加密 而不能进行使用私钥来解密这类操作
+// 所以加密 一般只是客户端到服务端来进行加密
+// 如果客户端需要验证 推荐[服务端使用私钥对消息签名 客户端用公钥验证签名] 从而让客户端来验证消息的合法性
 func (mb *msgBase) MarshalBytes(msgData []byte) []byte {
 	msgDataLen := len(msgData)
 	data := make([]byte, MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen+MsgOptions.FlagIdLen+uint16(msgDataLen))
@@ -374,6 +380,14 @@ func (mb *msgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
 	}
 	mb.flagId = binary.BigEndian.Uint16(bytes)
 	msgData = bytes[MsgOptions.FlagIdLen:]
+
+	switch mb.flagId {
+	case common.MsgEncryptionRSA:
+		msgData, err = encryption.RSADecrypt(msgData, encryption.RSAWSPrivateKey)
+	default:
+		logrus.Log(logrus.LogsSystem).Errorf("msgBase flagId err. flagId: %d", mb.flagId)
+		return
+	}
 
 	return msgData, nil
 }
