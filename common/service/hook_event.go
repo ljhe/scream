@@ -104,6 +104,10 @@ func (wh *WsEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		if e.Err != nil {
 			logrus.Log(logrus.LogsSystem).Infof("ws session closed. err:%v", e.Err)
 		}
+		return nil
+	case *socket.SessionAccepted:
+		logrus.Log(logrus.LogsSystem).Infof("WS-SessionConnected cliId=%v", iv.Session().GetId())
+		return nil
 	case *socket.CSSendMsgReq:
 		m := iv.Msg().(*socket.CSSendMsgReq)
 		iv.Session().Send(&socket.SCSendMsgAck{Msg: m.Msg})
