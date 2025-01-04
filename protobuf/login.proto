@@ -1,4 +1,5 @@
 syntax = "proto3";
+package pbgo;
 
 // 登录操作
 message CSLoginReq {

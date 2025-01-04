@@ -1,0 +1,6 @@
+syntax = "proto3";
+package pbgo;
+
+message AccountRole {
+  string open_id = 1;
+}
