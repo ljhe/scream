@@ -1,8 +1,0 @@
-syntax = "proto3";
-package serverproto;
-enum protoMsgId{
-	MSG_BEGIN	= 0;
-	CS_LOGIN_REQ                     = 1;		//	登录操作 **CSLoginReq **login.proto ** [CSLoginReq]
-	SC_LOGIN_ACK                     = 2;		//	SCLoginAck **SCLoginAck **login.proto ** [SCLoginAck]
-
-}

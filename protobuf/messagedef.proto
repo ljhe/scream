@@ -1,0 +1,12 @@
+syntax = "proto3";
+package pbgo;
+enum protoMsgId{
+	MSG_BEGIN	= 0;
+	CS_LOGIN_REQ                     = 1;		//	登录操作 **CSLoginReq **login.proto ** [CSLoginReq]
+	SC_LOGIN_ACK                     = 2;		//	SCLoginAck **SCLoginAck **login.proto ** [SCLoginAck]
+	CS_PING_REQ                      = 3;		//	CSPingReq **CSPingReq **login.proto ** [CSPingReq]
+	SC_PING_ACK                      = 4;		//	SCPingAck **SCPingAck **login.proto ** [SCPingAck]
+	CS_CREATE_ROLE_REQ               = 5;		//	CSCreateRoleReq **CSCreateRoleReq **user.proto ** [CSCreateRoleReq]
+	SC_CREATE_ROLE_ACK               = 6;		//	SCCreateRoleAck **SCCreateRoleAck **user.proto ** [SCCreateRoleAck]
+
+}

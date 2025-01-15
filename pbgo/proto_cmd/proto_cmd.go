@@ -13,9 +13,10 @@ import (
 )
 
 var (
-	repattern  = regexp.MustCompile(`.*[\.]{1}([^\.]+)`)
-	packagekey = regexp.MustCompile(`.*package\s+([\S]+)\s*;`)
-	messagekey = regexp.MustCompile(`\s*message\s+([\S]+)[^\r\n]*`)
+	repattern    = regexp.MustCompile(`.*[\.]{1}([^\.]+)`)
+	packagekey   = regexp.MustCompile(`.*package\s+([\S]+)\s*;`)
+	messageidkey = regexp.MustCompile(`^\s*([\S]+)\s*=\s*([\d]+)\s*;\s*//\s*(.*)$`)
+	messagekey   = regexp.MustCompile(`\s*message\s+([\S]+)[^\r\n]*`)
 )
 
 var protoMsgs = make(map[string][]*msg)
@@ -58,6 +59,25 @@ func main() {
 // messages[msgkey] = {"id":int(msgid), "desc":msgdesc}
 func analysisMessageDef(fileName string) map[string]*msg {
 	messageDef := make(map[string]*msg)
+	f, err := os.Open(fileName)
+	if err != nil {
+		return messageDef
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		match := messageidkey.FindStringSubmatch(line)
+		if len(match) < 1 {
+			continue
+		}
+		id, _ := strconv.Atoi(match[2])
+		messageDef[match[1]] = &msg{
+			id:   id,
+			desc: match[3],
+		}
+	}
 	return messageDef
 }
 
@@ -237,6 +257,14 @@ func saveOutFile(outDir, messageFile, messageFileClient string, msgSection map[s
 				messageMap[pbName] = make([]*msg, 0)
 			}
 			messageMap[pbName] = append(messageMap[pbName], data)
+
+			// 获取pbName中已经在messagedef.proto文件中定义的枚举最大值
+			if messagesDef[data.msgId] != nil {
+				msgIndex := messagesDef[data.msgId].id
+				if messageIdMax[pbName] == 0 || messageIdMax[pbName] < msgIndex {
+					messageIdMax[pbName] = msgIndex
+				}
+			}
 		}
 	}
 
@@ -275,8 +303,11 @@ func saveOutFile(outDir, messageFile, messageFileClient string, msgSection map[s
 func saveMessageDef(messageFile, messageFileClient string, messagesDef map[string]*msg) {
 	sortMsg := make(map[int]*msg)
 	for _, data := range messagesDef {
+		// 协议被删除后的处理
+		if data.name == "" {
+			continue
+		}
 		sortMsg[data.id] = data
-		fmt.Println("这里是测试 ", data)
 	}
 	// 获取排序后的键
 	keys := make([]int, 0, len(sortMsg))
@@ -287,7 +318,6 @@ func saveMessageDef(messageFile, messageFileClient string, messagesDef map[strin
 
 	// 构建消息文本
 	messageText := ""
-
 	// 格式化消息文本
 	for _, id := range keys {
 		data := sortMsg[id]
@@ -297,7 +327,7 @@ func saveMessageDef(messageFile, messageFileClient string, messagesDef map[strin
 
 	// 保存到文件
 	saveFile(messageFile, fmt.Sprintf(`syntax = "proto3";
-package serverproto;
+package pbgo;
 enum protoMsgId{
 	MSG_BEGIN	= 0;
 %s
@@ -316,6 +346,9 @@ func increaseMessageId(msgSection map[string]*section, messageIdMax map[string]i
 		}
 	} else {
 		index = messageIdMax[pbName] + increase
+		if index < maxIndex {
+			index = maxIndex + increase
+		}
 		if msgSection[pbName] != nil {
 			section := msgSection[pbName]
 			// pbName当前对应的区域段ID不够使用

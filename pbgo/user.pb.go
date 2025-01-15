@@ -59,18 +59,83 @@ func (m *AccountRole) GetOpenId() string {
 	return ""
 }
 
+type CSCreateRoleReq struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *CSCreateRoleReq) Reset()         { *m = CSCreateRoleReq{} }
+func (m *CSCreateRoleReq) String() string { return proto.CompactTextString(m) }
+func (*CSCreateRoleReq) ProtoMessage()    {}
+func (*CSCreateRoleReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_116e343673f7ffaf, []int{1}
+}
+
+func (m *CSCreateRoleReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CSCreateRoleReq.Unmarshal(m, b)
+}
+func (m *CSCreateRoleReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CSCreateRoleReq.Marshal(b, m, deterministic)
+}
+func (m *CSCreateRoleReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CSCreateRoleReq.Merge(m, src)
+}
+func (m *CSCreateRoleReq) XXX_Size() int {
+	return xxx_messageInfo_CSCreateRoleReq.Size(m)
+}
+func (m *CSCreateRoleReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_CSCreateRoleReq.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CSCreateRoleReq proto.InternalMessageInfo
+
+type SCCreateRoleAck struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SCCreateRoleAck) Reset()         { *m = SCCreateRoleAck{} }
+func (m *SCCreateRoleAck) String() string { return proto.CompactTextString(m) }
+func (*SCCreateRoleAck) ProtoMessage()    {}
+func (*SCCreateRoleAck) Descriptor() ([]byte, []int) {
+	return fileDescriptor_116e343673f7ffaf, []int{2}
+}
+
+func (m *SCCreateRoleAck) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SCCreateRoleAck.Unmarshal(m, b)
+}
+func (m *SCCreateRoleAck) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SCCreateRoleAck.Marshal(b, m, deterministic)
+}
+func (m *SCCreateRoleAck) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SCCreateRoleAck.Merge(m, src)
+}
+func (m *SCCreateRoleAck) XXX_Size() int {
+	return xxx_messageInfo_SCCreateRoleAck.Size(m)
+}
+func (m *SCCreateRoleAck) XXX_DiscardUnknown() {
+	xxx_messageInfo_SCCreateRoleAck.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SCCreateRoleAck proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*AccountRole)(nil), "pbgo.AccountRole")
+	proto.RegisterType((*CSCreateRoleReq)(nil), "pbgo.CSCreateRoleReq")
+	proto.RegisterType((*SCCreateRoleAck)(nil), "pbgo.SCCreateRoleAck")
 }
 
 func init() { proto.RegisterFile("user.proto", fileDescriptor_116e343673f7ffaf) }
 
 var fileDescriptor_116e343673f7ffaf = []byte{
-	// 85 bytes of a gzipped FileDescriptorProto
+	// 111 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2a, 0x2d, 0x4e, 0x2d,
 	0xd2, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x29, 0x48, 0x4a, 0xcf, 0x57, 0x52, 0xe3, 0xe2,
 	0x76, 0x4c, 0x4e, 0xce, 0x2f, 0xcd, 0x2b, 0x09, 0xca, 0xcf, 0x49, 0x15, 0x12, 0xe7, 0x62, 0xcf,
 	0x2f, 0x48, 0xcd, 0x8b, 0xcf, 0x4c, 0x91, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x0c, 0x62, 0x03, 0x71,
-	0x3d, 0x53, 0x92, 0xd8, 0xc0, 0x9a, 0x8c, 0x01, 0x01, 0x00, 0x00, 0xff, 0xff, 0x7d, 0xc6, 0xa6,
-	0xce, 0x42, 0x00, 0x00, 0x00,
+	0x3d, 0x53, 0x94, 0x04, 0xb9, 0xf8, 0x9d, 0x83, 0x9d, 0x8b, 0x52, 0x13, 0x4b, 0x52, 0x41, 0x0a,
+	0x83, 0x52, 0x0b, 0x41, 0x42, 0xc1, 0xce, 0x08, 0x21, 0xc7, 0xe4, 0xec, 0x24, 0x36, 0xb0, 0xd1,
+	0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0x94, 0x4f, 0xb8, 0x39, 0x68, 0x00, 0x00, 0x00,
 }

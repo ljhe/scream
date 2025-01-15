@@ -4,3 +4,7 @@ package pbgo;
 message AccountRole {
   string open_id = 1;
 }
+
+message CSCreateRoleReq {}
+
+message SCCreateRoleAck {}
