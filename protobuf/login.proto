@@ -10,9 +10,3 @@ message SCLoginAck {
   int32 error = 1; // 错误码 0表示无错误
   uint64 client_id = 2;
 }
-
-message CSPingReq {
-  string open_id = 1;
-}
-
-message SCPingAck {}

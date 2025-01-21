@@ -107,87 +107,15 @@ func (m *SCLoginAck) GetClientId() uint64 {
 	return 0
 }
 
-type CSPingReq struct {
-	OpenId               string   `protobuf:"bytes,1,opt,name=open_id,json=openId,proto3" json:"open_id,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *CSPingReq) Reset()         { *m = CSPingReq{} }
-func (m *CSPingReq) String() string { return proto.CompactTextString(m) }
-func (*CSPingReq) ProtoMessage()    {}
-func (*CSPingReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_67c21677aa7f4e4f, []int{2}
-}
-
-func (m *CSPingReq) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CSPingReq.Unmarshal(m, b)
-}
-func (m *CSPingReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CSPingReq.Marshal(b, m, deterministic)
-}
-func (m *CSPingReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CSPingReq.Merge(m, src)
-}
-func (m *CSPingReq) XXX_Size() int {
-	return xxx_messageInfo_CSPingReq.Size(m)
-}
-func (m *CSPingReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_CSPingReq.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CSPingReq proto.InternalMessageInfo
-
-func (m *CSPingReq) GetOpenId() string {
-	if m != nil {
-		return m.OpenId
-	}
-	return ""
-}
-
-type SCPingAck struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *SCPingAck) Reset()         { *m = SCPingAck{} }
-func (m *SCPingAck) String() string { return proto.CompactTextString(m) }
-func (*SCPingAck) ProtoMessage()    {}
-func (*SCPingAck) Descriptor() ([]byte, []int) {
-	return fileDescriptor_67c21677aa7f4e4f, []int{3}
-}
-
-func (m *SCPingAck) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_SCPingAck.Unmarshal(m, b)
-}
-func (m *SCPingAck) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_SCPingAck.Marshal(b, m, deterministic)
-}
-func (m *SCPingAck) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SCPingAck.Merge(m, src)
-}
-func (m *SCPingAck) XXX_Size() int {
-	return xxx_messageInfo_SCPingAck.Size(m)
-}
-func (m *SCPingAck) XXX_DiscardUnknown() {
-	xxx_messageInfo_SCPingAck.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_SCPingAck proto.InternalMessageInfo
-
 func init() {
 	proto.RegisterType((*CSLoginReq)(nil), "pbgo.CSLoginReq")
 	proto.RegisterType((*SCLoginAck)(nil), "pbgo.SCLoginAck")
-	proto.RegisterType((*CSPingReq)(nil), "pbgo.CSPingReq")
-	proto.RegisterType((*SCPingAck)(nil), "pbgo.SCPingAck")
 }
 
 func init() { proto.RegisterFile("login.proto", fileDescriptor_67c21677aa7f4e4f) }
 
 var fileDescriptor_67c21677aa7f4e4f = []byte{
-	// 154 bytes of a gzipped FileDescriptorProto
+	// 131 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xce, 0xc9, 0x4f, 0xcf,
 	0xcc, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x29, 0x48, 0x4a, 0xcf, 0x57, 0x52, 0xe5,
 	0xe2, 0x72, 0x0e, 0xf6, 0x01, 0x09, 0x07, 0xa5, 0x16, 0x0a, 0x89, 0x73, 0xb1, 0xe7, 0x17, 0xa4,
@@ -195,7 +123,6 @@ var fileDescriptor_67c21677aa7f4e4f = []byte{
 	0x4a, 0xf6, 0x5c, 0x5c, 0xc1, 0xce, 0x60, 0x65, 0x8e, 0xc9, 0xd9, 0x42, 0x22, 0x5c, 0xac, 0xa9,
 	0x45, 0x45, 0xf9, 0x45, 0x60, 0x45, 0xac, 0x41, 0x10, 0x8e, 0x90, 0x34, 0x17, 0x67, 0x72, 0x4e,
 	0x66, 0x6a, 0x5e, 0x09, 0x48, 0x3b, 0x93, 0x02, 0xa3, 0x06, 0x4b, 0x10, 0x07, 0x44, 0xc0, 0x33,
-	0x45, 0x49, 0x85, 0x8b, 0xd3, 0x39, 0x38, 0x20, 0x33, 0x2f, 0x1d, 0xaf, 0x35, 0xdc, 0x5c, 0x9c,
-	0xc1, 0xce, 0x20, 0x55, 0x8e, 0xc9, 0xd9, 0x49, 0x6c, 0x60, 0x77, 0x1a, 0x03, 0x02, 0x00, 0x00,
-	0xff, 0xff, 0x91, 0x67, 0x99, 0xe3, 0xb6, 0x00, 0x00, 0x00,
+	0x25, 0x89, 0x0d, 0x6c, 0xa9, 0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0x69, 0xa8, 0x8c, 0x1f, 0x83,
+	0x00, 0x00, 0x00,
 }

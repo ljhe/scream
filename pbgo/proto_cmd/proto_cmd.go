@@ -12,6 +12,8 @@ import (
 	"strings"
 )
 
+const PackageName = "pbgo"
+
 var (
 	repattern    = regexp.MustCompile(`.*[\.]{1}([^\.]+)`)
 	packagekey   = regexp.MustCompile(`.*package\s+([\S]+)\s*;`)
@@ -39,6 +41,7 @@ func main() {
 	// 导出的proto文件协议对应ID
 	messageFile := "messagedef.proto"
 	messageFileClient := "messagedefclient.proto"
+	pbBindGo := "pbbind_gen.go"
 	// 每个proto文件的消息ID分段 用来区分消息类型
 	configFile := "msgidconfig.cfg"
 
@@ -51,7 +54,7 @@ func main() {
 		analysisProto(file)
 	}
 
-	saveOutFile("./", messageFile, messageFileClient, msgSection, messagesDef)
+	saveOutFile("./", messageFile, messageFileClient, pbBindGo, msgSection, messagesDef)
 }
 
 // 生成消息对应的ID映射
@@ -244,7 +247,7 @@ func messageIdGen(name, packageName string) string {
 }
 
 // saveOutFile 输出文件
-func saveOutFile(outDir, messageFile, messageFileClient string, msgSection map[string]*section, messagesDef map[string]*msg) {
+func saveOutFile(outDir, messageFile, messageFileClient, pbBindGo string, msgSection map[string]*section, messagesDef map[string]*msg) {
 	// 所有消息的集合
 	messageMap := make(map[string][]*msg)
 	// 更新每一个proto文件最大的协议号
@@ -297,6 +300,9 @@ func saveOutFile(outDir, messageFile, messageFileClient string, msgSection map[s
 
 	// 生成消息枚举定义文件messagedef.proto
 	saveMessageDef(messageFile, messageFileClient, messagesDef)
+
+	// 生成pbbind_gen.go文件
+	savePbBindGo(pbBindGo, messagesDef)
 }
 
 // saveMessageDef 生成消息枚举定义文件messagedef.proto
@@ -327,12 +333,53 @@ func saveMessageDef(messageFile, messageFileClient string, messagesDef map[strin
 
 	// 保存到文件
 	saveFile(messageFile, fmt.Sprintf(`syntax = "proto3";
-package pbgo;
+package %s;
 enum protoMsgId{
 	MSG_BEGIN	= 0;
 %s
 }
-`, messageText))
+`, PackageName, messageText))
+}
+
+// 生成pbbind_gen.go文件
+func savePbBindGo(fileName string, messagesDef map[string]*msg) {
+	sortMsg := make(map[int]*msg)
+	for _, data := range messagesDef {
+		// 协议被删除后的处理
+		if data.name == "" {
+			continue
+		}
+		sortMsg[data.id] = data
+	}
+	// 获取排序后的键
+	keys := make([]int, 0, len(sortMsg))
+	for id := range sortMsg {
+		keys = append(keys, id)
+	}
+	sort.Ints(keys)
+
+	messageHandlerDef := fmt.Sprintf(`package %s
+
+import (
+	"log"
+	"reflect"
+)
+
+func registerInfo(id int, msgType reflect.Type) {
+	RegisterMessageInfo(&MessageInfo{ID: id, Codec: GetCodec(), Type: msgType})
+}`, PackageName)
+
+	// init部分
+	messageInit := "\n\nfunc init() {\n\t// 协议注册\n\tlog.SetFlags(log.Lshortfile | log.LstdFlags)"
+	// 格式化消息文本
+	for _, id := range keys {
+		data := sortMsg[id]
+		messageInit += "\n\tregisterInfo(" + strconv.Itoa(id) + ", reflect.TypeOf((*" + data.name + ")(nil)).Elem())"
+	}
+	messageInit += "\n\tlog.Println(\"pbbind_gen.go init success\")\n}"
+
+	messageText := messageHandlerDef + messageInit
+	saveFile(fileName, messageText)
 }
 
 func increaseMessageId(msgSection map[string]*section, messageIdMax map[string]int, pbName string, maxIndex int) int {

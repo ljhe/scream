@@ -2,14 +2,17 @@ module server
 
 go 1.22.4
 
-require common v0.0.1
+require (
+	common v0.0.1
+	pbgo v0.0.1
+	github.com/gorilla/websocket v1.5.3
+)
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/coreos/etcd v3.3.13+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/panjf2000/ants/v2 v2.10.0 // indirect
@@ -32,6 +35,7 @@ require (
 
 replace (
 	common => ../common
+	pbgo => ../pbgo
 	github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.5
 	google.golang.org/grpc => google.golang.org/grpc v1.26.0
 )

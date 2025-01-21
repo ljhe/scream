@@ -8,6 +8,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v2 v2.4.0
+	pbgo v0.0.1
 )
 
 require (
@@ -45,6 +46,7 @@ require (
 )
 
 replace (
+	pbgo => ../pbgo
 	github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.5
 	google.golang.org/grpc => google.golang.org/grpc v1.26.0
 )

@@ -1,7 +1,7 @@
 package socket
 
 import (
-	"log"
+	_ "pbgo"
 	"reflect"
 )
 
@@ -54,5 +54,4 @@ func init() {
 	RegisterSystemMsg(&SystemMsg{MsgId: 5, typ: reflect.TypeOf((*SCPingAck)(nil)).Elem()})
 	RegisterSystemMsg(&SystemMsg{MsgId: 6, typ: reflect.TypeOf((*CSSendMsgReq)(nil)).Elem()})
 	RegisterSystemMsg(&SystemMsg{MsgId: 7, typ: reflect.TypeOf((*SCSendMsgAck)(nil)).Elem()})
-	log.Println("operation init success")
 }

@@ -2,11 +2,14 @@ syntax = "proto3";
 package pbgo;
 enum protoMsgId{
 	MSG_BEGIN	= 0;
-	CS_LOGIN_REQ                     = 1;		//	登录操作 **CSLoginReq **login.proto ** [CSLoginReq]
-	SC_LOGIN_ACK                     = 2;		//	SCLoginAck **SCLoginAck **login.proto ** [SCLoginAck]
-	CS_PING_REQ                      = 3;		//	CSPingReq **CSPingReq **login.proto ** [CSPingReq]
-	SC_PING_ACK                      = 4;		//	SCPingAck **SCPingAck **login.proto ** [SCPingAck]
-	CS_CREATE_ROLE_REQ               = 5;		//	CSCreateRoleReq **CSCreateRoleReq **user.proto ** [CSCreateRoleReq]
-	SC_CREATE_ROLE_ACK               = 6;		//	SCCreateRoleAck **SCCreateRoleAck **user.proto ** [SCCreateRoleAck]
+	SERVICE_IDENTIFY_ACK             = 1;		//	连接成功后服务器节点回复验证信息 **ServiceIdentifyACK **framework.proto ** [ServiceIdentifyACK]
+	PING_REQ                         = 2;		//	PingReq 心跳包 **PingReq **framework.proto ** [PingReq]
+	PING_ACK                         = 3;		//	PingAck 心跳包回复 **PingAck **framework.proto ** [PingAck]
+	CS_PING_REQ                      = 4;		//	CSPingReq 客户端连接后 发送ping消息 **CSPingReq **framework.proto ** [CSPingReq]
+	SC_PING_ACK                      = 5;		//	SCPingAck 服务端收到客户端的ping消息后返回 **SCPingAck **framework.proto ** [SCPingAck]
+	CS_LOGIN_REQ                     = 1000;		//	登录操作 **CSLoginReq **login.proto ** [CSLoginReq]
+	SC_LOGIN_ACK                     = 1001;		//	SCLoginAck **SCLoginAck **login.proto ** [SCLoginAck]
+	CS_CREATE_ROLE_REQ               = 1002;		//	CSCreateRoleReq **CSCreateRoleReq **user.proto ** [CSCreateRoleReq]
+	SC_CREATE_ROLE_ACK               = 1003;		//	SCCreateRoleAck **SCCreateRoleAck **user.proto ** [SCCreateRoleAck]
 
 }
