@@ -7,11 +7,11 @@ import (
 	"common/plugins/logrus"
 	"common/plugins/mpool"
 	"encoding/binary"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"io"
+	"pbgo"
 	"reflect"
 )
 
@@ -33,17 +33,6 @@ var MsgOptions = struct {
 	FlagIdLen:      2,
 }
 
-var (
-	systemMsgById  = map[uint16]*SystemMsg{}
-	systemMsgByTyp = map[reflect.Type]*SystemMsg{}
-)
-
-type SystemMsg struct {
-	MsgId uint16
-	Msg   []byte
-	typ   reflect.Type
-}
-
 type msgBase struct {
 	msgLen        uint16
 	msgId         uint16
@@ -60,30 +49,6 @@ type TcpDataPacket struct {
 }
 
 type WsDataPacket struct {
-}
-
-func RegisterSystemMsg(sys *SystemMsg) {
-	if _, ok := systemMsgById[sys.MsgId]; ok {
-		panic(fmt.Sprintf("msgId already registered. msgId: %d", sys.MsgId))
-	}
-	systemMsgById[sys.MsgId] = sys
-
-	if _, ok := systemMsgByTyp[sys.typ]; ok {
-		panic(fmt.Sprintf("msgType already registered. msgType: %s", sys.typ))
-	}
-	systemMsgByTyp[sys.typ] = sys
-}
-
-func MessageInfoById(msgId uint16) *SystemMsg {
-	return systemMsgById[msgId]
-}
-
-func MessageInfoByMsg(msg interface{}) *SystemMsg {
-	typ := reflect.TypeOf(msg)
-	if typ.Kind() == reflect.Ptr {
-		return systemMsgByTyp[typ.Elem()]
-	}
-	return systemMsgByTyp[typ]
 }
 
 func (t *TcpDataPacket) ReadMessage(s iface.ISession) (interface{}, error) {
@@ -116,7 +81,7 @@ func (t *TcpDataPacket) SendMessage(s iface.ISession, msg interface{}) (err erro
 	msgLen := len(msgData)
 	mb := &msgBase{
 		msgLen:    uint16(len(msgData)),
-		msgId:     msgInfo.MsgId,
+		msgId:     msgInfo.ID,
 		chunkNum:  uint16(msgLen/common.MsgMaxLen + 1), // 计算分片数量
 		chunkId:   1,
 		sendBytes: 0,
@@ -180,7 +145,7 @@ func (w *WsDataPacket) SendMessage(s iface.ISession, msg interface{}) (err error
 		return fmt.Errorf("ws sendMessage too big. msgId=%v msglen=%v maxlen=%v", 1, msgDataLen, opt.MaxMsgLen())
 	}
 	mb := &msgBase{
-		msgId:  msgInfo.MsgId,
+		msgId:  msgInfo.ID,
 		flagId: 1,
 	}
 	buf := mb.MarshalBytes(msgData)
@@ -216,26 +181,26 @@ func WriteFull(writer io.Writer, buf []byte) error {
 }
 
 // EncodeMessage 消息序列化
-func EncodeMessage(msg interface{}) ([]byte, *SystemMsg, error) {
-	info := MessageInfoByMsg(msg)
+func EncodeMessage(msg interface{}) ([]byte, *pbgo.MessageInfo, error) {
+	info := pbgo.MessageInfoByMsg(msg)
 	if info == nil {
 		return nil, nil, ErrMsgIdNotFound
 	}
-	bt, err := json.Marshal(msg)
+	bt, err := info.Codec.Marshal(msg)
 	if err != nil {
 		return nil, nil, err
 	}
-	return bt, info, nil
+	return bt.([]byte), info, nil
 }
 
 // DecodeMessage 消息反序列化
 func DecodeMessage(msgId uint16, msg []byte) (interface{}, error) {
-	sys := MessageInfoById(msgId)
+	sys := pbgo.MessageInfoById(msgId)
 	if sys == nil {
 		return nil, fmt.Errorf("msgId not found. msgId: %d msg:%v", msgId, msg)
 	}
-	msgObj := reflect.New(sys.typ).Interface()
-	err := json.Unmarshal(msg, msgObj)
+	msgObj := reflect.New(sys.Type).Interface()
+	err := sys.Codec.Unmarshal(msg, msgObj)
 	if err != nil {
 		return nil, err
 	}

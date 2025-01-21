@@ -8,6 +8,7 @@ import (
 	"common/plugins/logrus"
 	"common/socket"
 	"common/util"
+	"pbgo"
 	"reflect"
 )
 
@@ -26,7 +27,7 @@ func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		if ctx.RawContextData(common.ContextSetEtcdKey, &ed) {
 			prop := iv.Session().Node().(common.ServerNodeProperty)
 			// 连接上服务器节点后 发送确认信息 告诉对端自己的服务器信息
-			iv.Session().Send(&socket.ServiceIdentifyACK{
+			iv.Session().Send(&pbgo.ServiceIdentifyACK{
 				ServiceId:       util.GenServiceId(prop),
 				ServiceName:     prop.GetName(),
 				ServerStartTime: util.GetCurrentTimeMs(),
@@ -39,7 +40,7 @@ func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 			logrus.Log(logrus.LogsSystem).Println("connector connect err. etcd not exist", msg)
 		}
 		return nil
-	case *socket.ServiceIdentifyACK:
+	case *pbgo.ServiceIdentifyACK:
 		// 来自其他服务器的连接确认信息
 		logrus.Log(logrus.LogsSystem).Printf("receive ServiceIdentifyACK from [%v]  sessionId:%v \n", msg.ServiceId, iv.Session().GetId())
 		// 重连时会有问题 重连上来时 但是上一个连接还未移除(正在移除中) 导致重连失败(想连接的没连接上 该移除的正在移除)
@@ -50,10 +51,10 @@ func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 			// 服务器之间的心跳检测
 			// acceptor触发send connector触发rcv
 			// 所以这里只能反应acceptor端的send和connector端的rcv是否正常
-			iv.Session().HeartBeat(&socket.PingReq{})
+			iv.Session().HeartBeat(&pbgo.PingReq{})
 		}
 		return nil
-	case *socket.PingReq:
+	case *pbgo.PingReq:
 		// 来自ServiceIdentifyACK接收端的服务器信息
 		ctx := iv.Session().(common.ContextSet)
 		var ed *plugins.ETCDServiceDesc
@@ -64,9 +65,9 @@ func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 				logrus.Log(logrus.LogsSystem).Printf("receive PingReq from [%v] session=%v \n", ed.Id, iv.Session().GetId())
 			}
 		}
-		iv.Session().Send(&socket.PingAck{})
+		iv.Session().Send(&pbgo.PingAck{})
 		return nil
-	case *socket.PingAck:
+	case *pbgo.PingAck:
 		ctx := iv.Session().(common.ContextSet)
 		var ed *plugins.ETCDServiceDesc
 		iv.Session().IncRcvPingNum(1)
@@ -96,8 +97,8 @@ type WsEventHook struct {
 
 func (wh *WsEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	switch msg := iv.Msg().(type) {
-	case *socket.CSPingReq:
-		iv.Session().Send(&socket.SCPingAck{})
+	case *pbgo.CSPingReq:
+		iv.Session().Send(&pbgo.SCPingAck{})
 		return nil
 	case *socket.SessionClosed:
 		e := iv.(*common.RcvMsgEvent)
@@ -108,9 +109,9 @@ func (wh *WsEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	case *socket.SessionAccepted:
 		logrus.Log(logrus.LogsSystem).Infof("WS-SessionConnected cliId=%v", iv.Session().GetId())
 		return nil
-	case *socket.CSSendMsgReq:
-		m := iv.Msg().(*socket.CSSendMsgReq)
-		iv.Session().Send(&socket.SCSendMsgAck{Msg: m.Msg})
+	case *pbgo.CSSendMsgReq:
+		m := iv.Msg().(*pbgo.CSSendMsgReq)
+		iv.Session().Send(&pbgo.SCSendMsgAck{Msg: m.Msg})
 		return nil
 	default:
 		logrus.Log(logrus.LogsSystem).Infof("receive unknown msg %v msgT:%v ivM %v \n", msg, reflect.TypeOf(msg), iv.Msg())

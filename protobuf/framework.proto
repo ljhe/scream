@@ -20,10 +20,10 @@ message CSPingReq {}
 // SCPingAck 服务端收到客户端的ping消息后返回
 message SCPingAck {}
 
-message CSSendMsgReq{
+message CSSendMsgReq {
   bytes msg = 1;
 }
 
-message SCSendMsgAck{
+message SCSendMsgAck {
   bytes msg = 1;
 }

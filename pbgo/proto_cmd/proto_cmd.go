@@ -365,7 +365,7 @@ import (
 	"reflect"
 )
 
-func registerInfo(id int, msgType reflect.Type) {
+func registerInfo(id uint16, msgType reflect.Type) {
 	RegisterMessageInfo(&MessageInfo{ID: id, Codec: GetCodec(), Type: msgType})
 }`, PackageName)
 
