@@ -8,6 +8,7 @@ import (
 	"common/plugins/logrus"
 	"common/socket"
 	"common/util"
+	"log"
 	"pbgo"
 	"reflect"
 )
@@ -111,6 +112,7 @@ func (wh *WsEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		return nil
 	case *pbgo.CSSendMsgReq:
 		m := iv.Msg().(*pbgo.CSSendMsgReq)
+		log.Println("这里是测试 msg:", m.Msg)
 		iv.Session().Send(&pbgo.SCSendMsgAck{Msg: m.Msg})
 		return nil
 	default:

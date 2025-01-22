@@ -865,10 +865,10 @@ proto.pbgo.CSSendMsgReq.serializeBinaryToWriter = function(message, writer) {
 
 /**
  * optional bytes msg = 1;
- * @return {!(string|Uint8Array)}
+ * @return {string}
  */
 proto.pbgo.CSSendMsgReq.prototype.getMsg = function() {
-  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
 
@@ -1016,10 +1016,10 @@ proto.pbgo.SCSendMsgAck.serializeBinaryToWriter = function(message, writer) {
 
 /**
  * optional bytes msg = 1;
- * @return {!(string|Uint8Array)}
+ * @return {string}
  */
 proto.pbgo.SCSendMsgAck.prototype.getMsg = function() {
-  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
 

@@ -21,9 +21,9 @@ message CSPingReq {}
 message SCPingAck {}
 
 message CSSendMsgReq {
-  string msg = 1;
+  bytes msg = 1;
 }
 
 message SCSendMsgAck {
-  string msg = 1;
+  bytes msg = 1;
 }

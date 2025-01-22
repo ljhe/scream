@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"io"
+	"log"
 	"pbgo"
 	"reflect"
 )
@@ -118,6 +119,7 @@ func (w *WsDataPacket) ReadMessage(s iface.ISession) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
+		log.Println("这里是测试数据 msg: id:", msg, msgId)
 		bt, err := DecodeMessage(msgId, msg)
 		if err != nil {
 			return nil, err
@@ -188,6 +190,7 @@ func EncodeMessage(msg interface{}) ([]byte, *pbgo.MessageInfo, error) {
 	}
 	bt, err := info.Codec.Marshal(msg)
 	if err != nil {
+		logrus.Log(logrus.LogsSystem).Errorf("EncodeMessage Marshal err. msg:%v err:%v", msg, err)
 		return nil, nil, err
 	}
 	return bt.([]byte), info, nil
@@ -202,6 +205,7 @@ func DecodeMessage(msgId uint16, msg []byte) (interface{}, error) {
 	msgObj := reflect.New(sys.Type).Interface()
 	err := sys.Codec.Unmarshal(msg, msgObj)
 	if err != nil {
+		logrus.Log(logrus.LogsSystem).Errorf("DecodeMessage Unmarshal err. msg:%v err:%v", msg, err)
 		return nil, err
 	}
 	return msgObj, nil

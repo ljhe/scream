@@ -10,78 +10,111 @@
 <div id="output"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/jsencrypt/bin/jsencrypt.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/protobufjs/dist/protobuf.min.js"></script>
 <script>
     const publicKey = "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDD1+WUqPrcKnr/sR5goDaEugEE\n+ywxcgFVSM8PbbHlMSlwFNt5/hwnRdxzGAk++Ivlb03BnMfJCyX4HNnlMX4aGEUH\nyu4COivC6SnZ0xh/HoTFq8Q1TyZilMlhQsT8q4ymhTcfjZnlSuLgEDoYLF1w1L8d\n5I3Zmg8YDIIaA6JMXwIDAQAB\n-----END PUBLIC KEY-----\n\""
-    const socket = new WebSocket("ws://localhost:3101/ws");
     const outputDiv = document.getElementById("output");
     const encryptor = new JSEncrypt();
     let intervalId = 0;
 
-    socket.onopen = () => {
-        outputDiv.innerHTML += "<div>Connected to WebSocket server!</div>";
-        // 每隔5s发送ping消息
-        intervalId = setInterval(ping, 5000);
-    };
+    let CSPingReq = ""
+    let CSSendMsgReq = ""
+    let message = ""
+    let sendMsg = ""
+    let socket = ""
+    protobuf.load("framework.proto", function(err, root) {
+        if (err) throw err;
 
-    socket.onmessage = (event) => {
-        // event.data 是原始的 WebSocket 数据，可能是文本或二进制（Blob 或 ArrayBuffer）
-        const data = event.data;
+        socket = new WebSocket("ws://localhost:3101/ws");
 
-        // 创建一个FileReader对象
-        var reader = new FileReader();
+        // 获取消息类型
+        CSPingReq = root.lookupType("CSPingReq");
+        CSSendMsgReq = root.lookupType("CSSendMsgReq");
+        SCSendMsgAck = root.lookupType("SCSendMsgAck");
+        message = CSPingReq.create();
+        sendMsg = CSSendMsgReq.create();
+        sendMsgAck = SCSendMsgAck.create();
 
-        // 设置FileReader的onload事件处理程序，以便在读取操作完成后处理结果
-        reader.onload = function(event) {
-            // 获取 ArrayBuffer
-            const arrayBuffer = event.target.result;
-            console.log("arrayBuffer:", arrayBuffer)
-
-            // 读取信息
-            const dataView = new DataView(arrayBuffer)
-            const messageLength = dataView.getUint16(0)
-            const messageId = dataView.getUint16(2)
-            const flagId = dataView.getUint16(4)
-
-            // 从第 6 字节开始 前几字节属于请求头
-            const startByte = 6;
-            const slicedBuffer = arrayBuffer.slice(startByte);
-
-            // 转化为文本
-            var text = arrayBufferToText(slicedBuffer)
-            // 转化为json
-            text = JSON.parse(text)
-
-            // 打印提取的 ArrayBuffer 数据
-            console.log("messageInfo messageLength:", messageLength, " messageId:", messageId, " flagId:", flagId, " text:", text)
-
-            if (messageId === 5) {
-                console.log("SCPingAck")
-            } else {
-                outputDiv.innerHTML += `<div>Received: ${text.Msg}</div>`;
-            }
+        socket.onopen = () => {
+            outputDiv.innerHTML += "<div>Connected to WebSocket server!</div>";
+            // 每隔5s发送ping消息
+            console.log(message)
+            intervalId = setInterval(ping, 5000);
         };
 
-        // 使用FileReader的readAsText方法读取Blob
-        reader.readAsArrayBuffer(data);
-    };
+        socket.onmessage = (event) => {
+            // event.data 是原始的 WebSocket 数据，可能是文本或二进制（Blob 或 ArrayBuffer）
+            const data = event.data;
 
-    socket.onclose = () => {
-        outputDiv.innerHTML += "<div>Connection closed!</div>";
-        clearInterval(intervalId)
-    };
+            // 创建一个FileReader对象
+            var reader = new FileReader();
 
-    socket.onerror = (error) => {
-        outputDiv.innerHTML += `<div>Error: ${error}</div>`;
-        clearInterval(intervalId)
-    };
+            // 设置FileReader的onload事件处理程序，以便在读取操作完成后处理结果
+            reader.onload = function(event) {
+                // 获取 ArrayBuffer
+                const arrayBuffer = event.target.result;
+                console.log("arrayBuffer:", arrayBuffer)
+
+                // 读取信息
+                const dataView = new DataView(arrayBuffer)
+                const messageLength = dataView.getUint16(0)
+                const messageId = dataView.getUint16(2)
+                const flagId = dataView.getUint16(4)
+
+                // 从第 6 字节开始 前几字节属于请求头
+                const startByte = 6;
+                const slicedBuffer = arrayBuffer.slice(startByte);
+
+                // 转化为文本
+                var text = arrayBufferToText(slicedBuffer)
+                // 转化为json
+                //text = JSON.parse(text)
+
+                // 打印提取的 ArrayBuffer 数据
+                console.log("messageInfo messageLength:", messageLength, " messageId:", messageId, " flagId:", flagId, " text:", text)
+
+                if (messageId === 5) {
+                    console.log("SCPingAck")
+                } else {
+                    // decodedMessage = SCSendMsgAck.decode(slicedBuffer)
+                    // console.log("decodedMessage:", decodedMessage.message)
+                    outputDiv.innerHTML += `<div>Received: ${text.Msg}</div>`;
+                }
+            };
+
+            // 使用FileReader的readAsText方法读取Blob
+            reader.readAsArrayBuffer(data);
+        };
+
+        socket.onclose = () => {
+            outputDiv.innerHTML += "<div>Connection closed!</div>";
+            clearInterval(intervalId)
+        };
+
+        socket.onerror = (error) => {
+            outputDiv.innerHTML += `<div>Error: ${error}</div>`;
+            clearInterval(intervalId)
+        };
+
+        function ping() {
+            const buffer = CSPingReq.encode(message).finish();
+            var msg = marshal(buffer, 4)
+            console.log("CSPingReq:", msg)
+            socket.send(msg)
+        }
+
+        console.log("load proto success")
+    });
 
     function sendMessage() {
         let messageContent = document.getElementById("messageInput").value;
 
-        let jsonData = {
-            "msg":messageContent,
-        }
-        let fullMessage = marshal(JSON.stringify(jsonData), 6)
+        const buffer = CSSendMsgReq.encode(CSSendMsgReq.create({msg:messageContent})).finish();
+        console.log("Serialized Buffer:", buffer);
+        // const decode = CSSendMsgReq.decode(buffer)
+        // console.log("Decoded Message:",decode.msg)
+
+        let fullMessage = marshal(buffer, 6)
         console.log("fullMessage:", fullMessage)
 
         // 发送包含消息头和消息内容的二进制数据
@@ -133,13 +166,6 @@
     function arrayBufferToText(arrayBuffer) {
         const decoder = new TextDecoder('utf-8');
         return decoder.decode(arrayBuffer);
-    }
-
-    function ping() {
-        let emptyJsonString = "{}";
-        var msg = marshal(emptyJsonString, 4)
-        console.log("CSPingReq:", msg)
-        socket.send(msg)
     }
 </script>
 </body>
