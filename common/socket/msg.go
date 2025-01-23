@@ -358,7 +358,7 @@ func (mb *msgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
 		return
 	}
 
-	return msgData, nil
+	return msgData, err
 }
 
 func (mb *msgBase) Container() []byte {

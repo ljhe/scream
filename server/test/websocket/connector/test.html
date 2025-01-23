@@ -76,9 +76,10 @@
                 if (messageId === 5) {
                     console.log("SCPingAck")
                 } else {
-                    // decodedMessage = SCSendMsgAck.decode(slicedBuffer)
-                    // console.log("decodedMessage:", decodedMessage.message)
-                    outputDiv.innerHTML += `<div>Received: ${text.Msg}</div>`;
+                    // 将 ArrayBuffer 转化为Uint8Array
+                    let msg = new Uint8Array(slicedBuffer);
+                    let decodedMessage = SCSendMsgAck.decode(msg)
+                    outputDiv.innerHTML += `<div>Received: ${decodedMessage.msg}</div>`;
                 }
             };
 
@@ -111,8 +112,6 @@
 
         const buffer = CSSendMsgReq.encode(CSSendMsgReq.create({msg:messageContent})).finish();
         console.log("Serialized Buffer:", buffer);
-        // const decode = CSSendMsgReq.decode(buffer)
-        // console.log("Decoded Message:",decode.msg)
 
         let fullMessage = marshal(buffer, 6)
         console.log("fullMessage:", fullMessage)
@@ -126,6 +125,9 @@
 
     // msgId 由后端定义
     function marshal(messageContent, msgId) {
+        // 将 Uint8Array 转换为 Buffer
+        messageContent = arrayBufferToText(messageContent)
+
         console.log("before:", messageContent)
         // RSA加密
         encryptor.setPublicKey(publicKey);
