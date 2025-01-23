@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"strings"
 )
 
 const DateTime = "2006-01-02"
@@ -28,7 +29,10 @@ func (f *SelfFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 
 	// 打印日志的位置信息
 	// 需要SetReportCaller(true) 否则这里会报错
-	b.WriteString(fmt.Sprintf("%s:%d ", entry.Caller.File, entry.Caller.Line))
+	// 格式化文件名
+	str := strings.Split(entry.Caller.File, "/")
+	name := str[len(str)-1]
+	b.WriteString(fmt.Sprintf("[%s:%d] ", name, entry.Caller.Line))
 
 	// 日志消息的值
 	b.WriteString(fmt.Sprintf("%s\n", entry.Message))
