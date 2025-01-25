@@ -393,7 +393,7 @@ func increaseMessageId(msgSection map[string]*section, messageIdMax map[string]i
 		}
 	} else {
 		index = messageIdMax[pbName] + increase
-		if index < maxIndex {
+		if index > maxIndex {
 			index = maxIndex + increase
 		}
 		if msgSection[pbName] != nil {

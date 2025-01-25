@@ -31,8 +31,7 @@ func (f *SelfFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	// 需要SetReportCaller(true) 否则这里会报错
 	// 格式化文件名
 	str := strings.Split(entry.Caller.File, "/")
-	name := str[len(str)-1]
-	b.WriteString(fmt.Sprintf("[%s:%d] ", name, entry.Caller.Line))
+	b.WriteString(fmt.Sprintf("[%s:%d] ", str[len(str)-1], entry.Caller.Line))
 
 	// 日志消息的值
 	b.WriteString(fmt.Sprintf("%s\n", entry.Message))

@@ -4,6 +4,7 @@ go 1.22.4
 
 require (
 	github.com/coreos/etcd v3.3.13+incompatible
+	github.com/gorilla/websocket v1.4.2
 	github.com/panjf2000/ants/v2 v2.10.0
 	github.com/sirupsen/logrus v1.9.3
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -46,7 +47,7 @@ require (
 )
 
 replace (
-	pbgo => ../pbgo
 	github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.5
 	google.golang.org/grpc => google.golang.org/grpc v1.26.0
+	pbgo => ../pbgo
 )
