@@ -11,7 +11,7 @@ enum protoMsgId{
 	SC_SEND_MSG_ACK                  = 7;		//	SCSendMsgAck **SCSendMsgAck **framework.proto ** [SCSendMsgAck]
 	CS_LOGIN_REQ                     = 1000;		//	登录操作 **CSLoginReq **login.proto ** [CSLoginReq]
 	SC_LOGIN_ACK                     = 1001;		//	SCLoginAck **SCLoginAck **login.proto ** [SCLoginAck]
-	CS_CREATE_ROLE_REQ               = 1002;		//	CSCreateRoleReq **CSCreateRoleReq **user.proto ** [CSCreateRoleReq]
-	SC_CREATE_ROLE_ACK               = 1003;		//	SCCreateRoleAck **SCCreateRoleAck **user.proto ** [SCCreateRoleAck]
+	CS_CREATE_ROLE_REQ               = 5000;		//	CSCreateRoleReq **CSCreateRoleReq **user.proto ** [CSCreateRoleReq]
+	SC_CREATE_ROLE_ACK               = 5001;		//	SCCreateRoleAck **SCCreateRoleAck **user.proto ** [SCCreateRoleAck]
 
 }

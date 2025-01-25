@@ -21,7 +21,7 @@ func init() {
 	registerInfo(7, reflect.TypeOf((*SCSendMsgAck)(nil)).Elem())
 	registerInfo(1000, reflect.TypeOf((*CSLoginReq)(nil)).Elem())
 	registerInfo(1001, reflect.TypeOf((*SCLoginAck)(nil)).Elem())
-	registerInfo(1002, reflect.TypeOf((*CSCreateRoleReq)(nil)).Elem())
-	registerInfo(1003, reflect.TypeOf((*SCCreateRoleAck)(nil)).Elem())
+	registerInfo(5000, reflect.TypeOf((*CSCreateRoleReq)(nil)).Elem())
+	registerInfo(5001, reflect.TypeOf((*SCCreateRoleAck)(nil)).Elem())
 	log.Println("pbbind_gen.go init success")
 }

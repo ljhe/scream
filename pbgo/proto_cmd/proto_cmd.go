@@ -279,6 +279,14 @@ func saveOutFile(outDir, messageFile, messageFileClient, pbBindGo string, msgSec
 		}
 	}
 
+	// 获取配置区间的最大值
+	maxMsgSection := 0
+	for _, data := range msgSection {
+		if data.end > maxMsgSection {
+			maxMsgSection = data.end
+		}
+	}
+
 	for pbName, pbData := range messageMap {
 		for _, data := range pbData {
 			def := &msg{
@@ -288,7 +296,7 @@ func saveOutFile(outDir, messageFile, messageFileClient, pbBindGo string, msgSec
 				msgId: data.msgId,
 			}
 			if messagesDef[data.msgId] == nil {
-				messageIdMax[pbName] = increaseMessageId(msgSection, messageIdMax, pbName, maxIndex)
+				messageIdMax[pbName] = increaseMessageId(msgSection, messageIdMax, pbName, maxIndex, maxMsgSection)
 				maxIndex = messageIdMax[pbName]
 				def.id = messageIdMax[pbName]
 			} else {
@@ -382,11 +390,14 @@ func registerInfo(id uint16, msgType reflect.Type) {
 	saveFile(fileName, messageText)
 }
 
-func increaseMessageId(msgSection map[string]*section, messageIdMax map[string]int, pbName string, maxIndex int) int {
+func increaseMessageId(msgSection map[string]*section, messageIdMax map[string]int, pbName string, maxIndex, maxMsgSection int) int {
 	increase := 1
 	index := 0
 	if messageIdMax[pbName] == 0 {
 		if msgSection[pbName] == nil {
+			if maxIndex < maxMsgSection {
+				maxIndex = maxMsgSection
+			}
 			index = maxIndex + increase
 		} else {
 			index = msgSection[pbName].begin
