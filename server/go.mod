@@ -4,7 +4,6 @@ go 1.22.4
 
 require (
 	common v0.0.1
-	pbgo v0.0.1
 	github.com/gorilla/websocket v1.5.3
 )
 
@@ -31,11 +30,12 @@ require (
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	pbgo v0.0.1 // indirect
 )
 
 replace (
 	common => ../common
-	pbgo => ../pbgo
 	github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.5
 	google.golang.org/grpc => google.golang.org/grpc v1.26.0
+	pbgo => ../pbgo
 )
