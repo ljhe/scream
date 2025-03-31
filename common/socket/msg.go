@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"io"
-	"log"
 	"pbgo"
 	"reflect"
 )
@@ -119,7 +118,6 @@ func (w *WsDataPacket) ReadMessage(s iface.ISession) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		log.Println("这里是测试数据 msg: id:", msg, msgId)
 		bt, err := DecodeMessage(msgId, msg)
 		if err != nil {
 			return nil, err
