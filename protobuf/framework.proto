@@ -25,5 +25,6 @@ message CSSendMsgReq {
 }
 
 message SCSendMsgAck {
-  string msg = 1;
+  int32     error   = 1;  // 错误码 0表示无错误
+  string    msg     = 2;
 }

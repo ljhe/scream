@@ -1,0 +1,8 @@
+syntax = "proto3";
+package pbgo;
+
+enum ErrorCode {
+    ERROR_OK                        = 0;
+    ERROR_FAIL                      = 1;    // 通用错误
+    ERROR_SESSION_BIND_CLIENT       = 2;    // session绑定客户端错误
+}

@@ -70,17 +70,17 @@
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <h2>游戏登录</h2>
-        <form>
-            <input type="text" class="input-field" id="username" placeholder="请输入账号"><br>
-            <input type="password" class="input-field" id="password" placeholder="请输入密码"><br>
-            <button type="button" class="login-btn" onclick="login()">登录</button>
-        </form>
-        <div class="footer">
-            <p>© 2025 游戏公司</p>
-        </div>
+<div class="login-container">
+    <h2>游戏登录</h2>
+    <form>
+        <input type="text" class="input-field" id="username" placeholder="请输入账号"><br>
+        <input type="password" class="input-field" id="password" placeholder="请输入密码"><br>
+        <button type="button" class="login-btn" onclick="login()">登录</button>
+    </form>
+    <div class="footer">
+        <p>© 2025 游戏公司</p>
     </div>
+</div>
 </body>
 </html>
 
@@ -94,60 +94,18 @@
 
     let CSPingReq = ""
     let CSLoginReq = ""
+    let SCSendMsgAck = ""
+    let SCLoginAck = ""
     let message = ""
     let socket = ""
-    protobuf.load("framework.proto", function(err, root) {
+    protobuf.load("framework.proto", function (err, root) {
         if (err) throw err;
         CSPingReq = root.lookupType("CSPingReq");
         CSLoginReq = root.lookupType("CSLoginReq");
+        SCSendMsgAck = root.lookupType("SCSendMsgAck");
         SCLoginAck = root.lookupType("SCLoginAck");
         console.log("load proto success")
     });
-
-    socket.onmessage = (event) => {
-        // event.data 是原始的 WebSocket 数据，可能是文本或二进制（Blob 或 ArrayBuffer）
-        const data = event.data;
-
-        // 创建一个FileReader对象
-        var reader = new FileReader();
-
-        // 设置FileReader的onload事件处理程序，以便在读取操作完成后处理结果
-        reader.onload = function(event) {
-            // 获取 ArrayBuffer
-            const arrayBuffer = event.target.result;
-            console.log("arrayBuffer:", arrayBuffer)
-
-            // 读取信息
-            const dataView = new DataView(arrayBuffer)
-            const messageLength = dataView.getUint16(0)
-            const messageId = dataView.getUint16(2)
-            const flagId = dataView.getUint16(4)
-
-            // 从第 6 字节开始 前几字节属于请求头
-            const startByte = 6;
-            const slicedBuffer = arrayBuffer.slice(startByte);
-
-            // 转化为文本
-            var text = arrayBufferToText(slicedBuffer)
-            // 转化为json
-            //text = JSON.parse(text)
-
-            // 打印提取的 ArrayBuffer 数据
-            console.log("messageInfo messageLength:", messageLength, " messageId:", messageId, " flagId:", flagId, " text:", text)
-
-            if (messageId === 5) {
-                console.log("SCPingAck")
-            } else {
-                // 将 ArrayBuffer 转化为Uint8Array
-                let msg = new Uint8Array(slicedBuffer);
-                let decodedMessage = SCSendMsgAck.decode(msg)
-                console.log("Received: ", decodedMessage.msg)
-            }
-        };
-
-        // 使用FileReader的readAsText方法读取Blob
-        reader.readAsArrayBuffer(data);
-    };
 
     socket.onclose = () => {
         console.log("Connection closed!")
@@ -221,8 +179,7 @@
         return decoder.decode(arrayBuffer);
     }
 
-    function login()
-    {
+    function login() {
         var openId = document.getElementById('username').value;
         console.log("get openId:", openId)
 
@@ -242,6 +199,62 @@
             var msg = marshal(buffer, 4)
             console.log("CSPingReq:", msg)
             socket.send(msg)
+        }
+
+        socket.onmessage = (event) => {
+            // event.data 是原始的 WebSocket 数据，可能是文本或二进制（Blob 或 ArrayBuffer）
+            const data = event.data;
+            console.log("print data:", data)
+            // 创建一个FileReader对象
+            var reader = new FileReader();
+
+            // 设置FileReader的onload事件处理程序，以便在读取操作完成后处理结果
+            reader.onload = function (event) {
+                // 获取 ArrayBuffer
+                const arrayBuffer = event.target.result;
+                console.log("arrayBuffer:", arrayBuffer)
+
+                // 读取信息
+                const dataView = new DataView(arrayBuffer)
+                const messageLength = dataView.getUint16(0)
+                const messageId = dataView.getUint16(2)
+                const flagId = dataView.getUint16(4)
+
+                // 从第 6 字节开始 前几字节属于请求头
+                const startByte = 6;
+                const slicedBuffer = arrayBuffer.slice(startByte);
+
+                // 转化为文本
+                var text = arrayBufferToText(slicedBuffer)
+                // 转化为json
+                //text = JSON.parse(text)
+
+                // 打印提取的 ArrayBuffer 数据
+                console.log("messageInfo messageLength:", messageLength, " messageId:", messageId, " flagId:", flagId, " text:", text)
+                handle(messageId, new Uint8Array(slicedBuffer))
+            };
+
+            // 使用FileReader的readAsText方法读取Blob
+            reader.readAsArrayBuffer(data);
+        };
+    }
+
+    function handle(msgId, msg) {
+        switch (msgId) {
+            case 5:
+                console.log("SCPingAck")
+                break;
+            case 1001:
+                console.log("SCLoginAck")
+                if (SCLoginAck.decode(msg).error === 0) {
+                    location.href = "home.html"
+                } else {
+                    console.log("SCLoginAck err:", SCLoginAck.decode(msg).error)
+                }
+                break;
+            default:
+                console.log("Received: ", SCSendMsgAck.decode(msg).msg)
+                break;
         }
     }
 </script>

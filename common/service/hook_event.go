@@ -115,8 +115,15 @@ func (wh *WsEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		return nil
 	case *pbgo.CSLoginReq:
 		m := iv.Msg().(*pbgo.CSLoginReq)
-		iv.Session().Send(&pbgo.SCSendMsgAck{Msg: m.OpenId})
-		logrus.Log(logrus.LogsSystem).Infof("ws session login.openId=%v ", m.OpenId)
+		cliUser, err := baseserver.BindClient(iv.Session(), m.OpenId, m.Platform)
+		if err == nil {
+			// todo 绑定成功 转发给对应的服务器做处理
+			cliUser.SendServer()
+			iv.Session().Send(&pbgo.SCLoginAck{Error: int32(pbgo.ErrorCode_ERROR_OK)})
+		} else {
+			logrus.Log(logrus.LogsSystem).Errorf("CSLoginReq BindClient err:%s. openId=%s", err, m.OpenId)
+			iv.Session().Send(&pbgo.SCLoginAck{Error: int32(pbgo.ErrorCode_ERROR_SESSION_BIND_CLIENT)})
+		}
 		return nil
 	default:
 		logrus.Log(logrus.LogsSystem).Infof("receive unknown msg %v msgT:%v ivM %v \n", msg, reflect.TypeOf(msg), iv.Msg())
