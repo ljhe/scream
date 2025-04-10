@@ -34,6 +34,7 @@ func SessionUser(cliSession iface.ISession) *ClientUser {
 //	return nil
 //}
 
+// BindClient 绑定客户端连接到服务器
 func BindClient(cliSession iface.ISession, openId, platform string) (*ClientUser, error) {
 	cliUser := SessionUser(cliSession)
 	// 用户已经绑定

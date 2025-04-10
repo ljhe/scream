@@ -56,3 +56,5 @@ type DataPacket interface {
 	ReadMessage(s iface.ISession) (interface{}, error)
 	SendMessage(s iface.ISession, msg interface{}) (err error)
 }
+
+type EventCallBack func(e iface.IProcEvent)

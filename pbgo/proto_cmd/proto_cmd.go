@@ -15,10 +15,11 @@ import (
 const PackageName = "pbgo"
 
 var (
-	repattern    = regexp.MustCompile(`.*[\.]{1}([^\.]+)`)
-	packagekey   = regexp.MustCompile(`.*package\s+([\S]+)\s*;`)
-	messageidkey = regexp.MustCompile(`^\s*([\S]+)\s*=\s*([\d]+)\s*;\s*//\s*(.*)$`)
-	messagekey   = regexp.MustCompile(`\s*message\s+([\S]+)[^\r\n]*`)
+	repattern     = regexp.MustCompile(`.*[\.]{1}([^\.]+)`)
+	packagekey    = regexp.MustCompile(`.*package\s+([\S]+)\s*;`)
+	messageidkey  = regexp.MustCompile(`^\s*([\S]+)\s*=\s*([\d]+)\s*;\s*//\s*(.*)$`)
+	messagedefkey = regexp.MustCompile(`^\s*message\s+([\S]+).*//\s*project\s+([\S]+)$`)
+	messagekey    = regexp.MustCompile(`\s*message\s+([\S]+)[^\r\n]*`)
 )
 
 var protoMsgs = make(map[string][]*msg)
@@ -30,6 +31,7 @@ type msg struct {
 	msgId     string
 	gopackage string
 	file      string
+	project   string
 }
 
 type section struct {
@@ -38,7 +40,12 @@ type section struct {
 }
 
 func main() {
-	// 导出的proto文件协议对应ID
+	projects := []string{
+		"gate",
+		"game",
+	}
+
+	// 导出proto文件 协议对应ID
 	messageFile := "messagedef.proto"
 	messageFileClient := "messagedefclient.proto"
 	pbBindGo := "pbbind_gen.go"
@@ -54,7 +61,7 @@ func main() {
 		analysisProto(file)
 	}
 
-	saveOutFile("./", messageFile, messageFileClient, pbBindGo, msgSection, messagesDef)
+	saveOutFile(messageFile, messageFileClient, pbBindGo, projects, msgSection, messagesDef)
 }
 
 // 生成消息对应的ID映射
@@ -183,7 +190,7 @@ func analysisProto(fileName string) map[string][]*msg {
 		if strings.HasPrefix(lastline, "//") {
 			desc = strings.TrimSpace(lastline[2:])
 		}
-		match := messagekey.FindStringSubmatch(line)
+		match := messagedefkey.FindStringSubmatch(line)
 		if len(match) > 1 {
 			msgdefname := match[1]
 			msgdefnameLower := strings.ToLower(msgdefname)
@@ -202,7 +209,30 @@ func analysisProto(fileName string) map[string][]*msg {
 				desc:      desc,
 				msgId:     messageIdGen(msgdefname, gopackage),
 				gopackage: gopackage,
+				project:   match[2],
 			})
+		} else {
+			match = messagekey.FindStringSubmatch(line)
+			if len(match) > 1 {
+				msgdefname := match[1]
+				msgdefnameLower := strings.ToLower(msgdefname)
+				if len(msgdefnameLower) < 3 {
+					continue
+				}
+				suffix := msgdefnameLower[len(msgdefnameLower)-3:]
+				if !inArray(suffix, []string{"ntf", "ack", "req"}) {
+					continue
+				}
+				if len(desc) <= 0 {
+					desc = msgdefname
+				}
+				define = append(define, &msg{
+					name:      msgdefname,
+					desc:      desc,
+					msgId:     messageIdGen(msgdefname, gopackage),
+					gopackage: gopackage,
+				})
+			}
 		}
 		lastline = line
 	}
@@ -247,7 +277,8 @@ func messageIdGen(name, packageName string) string {
 }
 
 // saveOutFile 输出文件
-func saveOutFile(outDir, messageFile, messageFileClient, pbBindGo string, msgSection map[string]*section, messagesDef map[string]*msg) {
+func saveOutFile(messageFile, messageFileClient, pbBindGo string, projects []string,
+	msgSection map[string]*section, messagesDef map[string]*msg) {
 	// 所有消息的集合
 	messageMap := make(map[string][]*msg)
 	// 更新每一个proto文件最大的协议号
@@ -290,10 +321,11 @@ func saveOutFile(outDir, messageFile, messageFileClient, pbBindGo string, msgSec
 	for pbName, pbData := range messageMap {
 		for _, data := range pbData {
 			def := &msg{
-				desc:  data.desc,
-				name:  data.name,
-				file:  pbName,
-				msgId: data.msgId,
+				desc:    data.desc,
+				name:    data.name,
+				file:    pbName,
+				msgId:   data.msgId,
+				project: data.project,
 			}
 			if messagesDef[data.msgId] == nil {
 				messageIdMax[pbName] = increaseMessageId(msgSection, messageIdMax, pbName, maxIndex, maxMsgSection)
@@ -310,7 +342,7 @@ func saveOutFile(outDir, messageFile, messageFileClient, pbBindGo string, msgSec
 	saveMessageDef(messageFile, messageFileClient, messagesDef)
 
 	// 生成pbbind_gen.go文件
-	savePbBindGo(pbBindGo, messagesDef)
+	savePbBindGo(pbBindGo, messagesDef, projects)
 }
 
 // saveMessageDef 生成消息枚举定义文件messagedef.proto
@@ -350,43 +382,79 @@ enum protoMsgId{
 }
 
 // 生成pbbind_gen.go文件
-func savePbBindGo(fileName string, messagesDef map[string]*msg) {
-	sortMsg := make(map[int]*msg)
+func savePbBindGo(fileName string, messagesDef map[string]*msg, projects []string) {
+	sortHandleMsg := make(map[int]*msg)
+	sortInitMsg := make(map[int]*msg)
 	for _, data := range messagesDef {
 		// 协议被删除后的处理
 		if data.name == "" {
 			continue
 		}
-		sortMsg[data.id] = data
+		sortInitMsg[data.id] = data
+		if data.project != "" {
+			sortHandleMsg[data.id] = data
+		}
 	}
 	// 获取排序后的键
-	keys := make([]int, 0, len(sortMsg))
-	for id := range sortMsg {
-		keys = append(keys, id)
+	initKeys := make([]int, 0, len(sortInitMsg))
+	for id := range sortInitMsg {
+		initKeys = append(initKeys, id)
 	}
-	sort.Ints(keys)
+	sort.Ints(initKeys)
+	handleKeys := make([]int, 0, len(sortHandleMsg))
+	for id := range sortHandleMsg {
+		handleKeys = append(handleKeys, id)
+	}
+	sort.Ints(handleKeys)
 
-	messageHandlerDef := fmt.Sprintf(`package %s
+	mhead := fmt.Sprintf(`package %s
 
 import (
+	"common"
+	"common/iface"
 	"log"
 	"reflect"
 )
 
 func registerInfo(id uint16, msgType reflect.Type) {
 	RegisterMessageInfo(&MessageInfo{ID: id, Codec: GetCodec(), Type: msgType})
-}`, PackageName)
+}
+`, PackageName)
+
+	// 具体每个协议的定义
+	mhanderDef := ""
+	mhandlerDetail := ""
+	mhandler := "\nfunc GetMessageHandler(sreviceName string) common.EventCallBack {\n\tswitch sreviceName { //note.serviceName must be lower words"
+	for _, p := range projects {
+		upper := strings.ToUpper(p)
+		lower := strings.ToLower(p)
+		mhanderDef += "\n//" + upper + "\nvar ("
+		mhandler += "\n\tcase \"" + lower + "\":\t//" + upper + " message process part\n\t\treturn "
+		mhandlerDetail = "func(e iface.IProcEvent) {\n\t\t\tswitch e.Msg().(type) {"
+		for _, id := range handleKeys {
+			data := sortInitMsg[id]
+			if p != data.project {
+				continue
+			}
+			mhanderDef += "\n\tHandle_" + upper + "_" + data.name + "  = func(e  iface.IProcEvent){panic(\"" + data.name + " not implements\")}"
+			mhandlerDetail += "\n\t\t\tcase *" + data.name + ": Handle_" + upper + "_" + data.name + "(e)"
+		}
+		mhanderDef += "\n\tHandle_" + upper + "_Default		func(e  iface.IProcEvent)\n)\n"
+		mhandlerDetail += "\n\t\t\tdefault:\n\t\t\t\tif Handle_" + upper + "_Default != nil {\n\t\t\t\t\tHandle_" + upper + "_Default(e)\n\t\t\t\t}\n\t\t\t}\n\t\t}\n"
+		mhandler += mhandlerDetail
+	}
+	mhandler += "\n\tdefault: \n\t\treturn nil\n\t}\n}"
 
 	// init部分
-	messageInit := "\n\nfunc init() {\n\t// 协议注册\n\tlog.SetFlags(log.Lshortfile | log.LstdFlags)"
+	minit := "\n\nfunc init() {\n\t// 协议注册\n\tlog.SetFlags(log.Lshortfile | log.LstdFlags)"
 	// 格式化消息文本
-	for _, id := range keys {
-		data := sortMsg[id]
-		messageInit += "\n\tregisterInfo(" + strconv.Itoa(id) + ", reflect.TypeOf((*" + data.name + ")(nil)).Elem())"
+	for _, id := range initKeys {
+		data := sortInitMsg[id]
+		minit += "\n\tregisterInfo(" + strconv.Itoa(id) + ", reflect.TypeOf((*" + data.name + ")(nil)).Elem())"
 	}
-	messageInit += "\n\tlog.Println(\"pbbind_gen.go init success\")\n}"
+	minit += "\n\tlog.Println(\"pbbind_gen.go init success\")\n}"
 
-	messageText := messageHandlerDef + messageInit
+	messageText := mhead + mhanderDef + mhandler + minit
 	saveFile(fileName, messageText)
 }
 
