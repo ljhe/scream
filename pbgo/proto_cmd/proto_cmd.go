@@ -12,7 +12,12 @@ import (
 	"strings"
 )
 
-const PackageName = "pbgo"
+const (
+	packageName = "pbgo"
+	messageFile = "messagedef.proto" // id list file
+	pbBindGo    = "pbbind_gen.go"    // 导出proto文件 协议对应ID
+	config      = "msgidconfig.cfg"  // 每个proto文件的消息ID分段 用来区分消息类型
+)
 
 var (
 	repattern     = regexp.MustCompile(`.*[\.]{1}([^\.]+)`)
@@ -22,7 +27,13 @@ var (
 	messagekey    = regexp.MustCompile(`\s*message\s+([\S]+)[^\r\n]*`)
 )
 
-var protoMsgs = make(map[string][]*msg)
+var (
+	projects = []string{
+		"gate",
+		"game",
+	}
+	protoMsg = make(map[string][]*msg)
+)
 
 type msg struct {
 	id        int
@@ -40,36 +51,24 @@ type section struct {
 }
 
 func main() {
-	projects := []string{
-		"gate",
-		"game",
-	}
-
-	// 导出proto文件 协议对应ID
-	messageFile := "messagedef.proto"
-	messageFileClient := "messagedefclient.proto"
-	pbBindGo := "pbbind_gen.go"
-	// 每个proto文件的消息ID分段 用来区分消息类型
-	configFile := "msgidconfig.cfg"
-
-	msgSection := getMsgSection(configFile)
-	messagesDef := analysisMessageDef(messageFile)
+	msgSection := getMsgSection()
+	messagesDef := analysisMessageDef()
 
 	// 获取所有需要解析的proto文件
-	fileList := getFileList("./")
-	for _, file := range fileList {
-		analysisProto(file)
+	lists := getFileList("./")
+	for _, f := range lists {
+		analysisProto(f)
 	}
 
-	saveOutFile(messageFile, messageFileClient, pbBindGo, projects, msgSection, messagesDef)
+	saveOutFile(msgSection, messagesDef)
 }
 
-// 生成消息对应的ID映射
-// 已经存在的消息映射不会改变
+// 获取已经存在的 消息对应的ID映射
+// 保证已经存在的消息映射不会改变
 // messages[msgkey] = {"id":int(msgid), "desc":msgdesc}
-func analysisMessageDef(fileName string) map[string]*msg {
+func analysisMessageDef() map[string]*msg {
 	messageDef := make(map[string]*msg)
-	f, err := os.Open(fileName)
+	f, err := os.Open(messageFile)
 	if err != nil {
 		return messageDef
 	}
@@ -93,16 +92,16 @@ func analysisMessageDef(fileName string) map[string]*msg {
 
 // 获得msgidconfig.cfg中定义的消息ID区间段
 // 例如 login.proto 	1000-1999
-func getMsgSection(fileName string) map[string]*section {
-	msgSection := make(map[string]*section)
-	f, err := os.Open(fileName)
+func getMsgSection() map[string]*section {
+	sec := make(map[string]*section)
+	f, err := os.Open(config)
 	if err != nil {
-		log.Fatalf("error opening file %q: %v\n", fileName, err)
+		log.Fatalf("error opening file %q: %v\n", config, err)
 	}
 	defer func(f *os.File) {
-		err := f.Close()
+		err = f.Close()
 		if err != nil {
-			log.Fatalf("error closing file %q: %v\n", fileName, err)
+			log.Fatalf("error closing file %q: %v\n", config, err)
 		}
 	}(f)
 
@@ -126,14 +125,14 @@ func getMsgSection(fileName string) map[string]*section {
 		}
 		begin, _ := strconv.Atoi(value[0])
 		end, _ := strconv.Atoi(value[1])
-		msgSection[protoName] = &section{begin: begin, end: end}
+		sec[protoName] = &section{begin: begin, end: end}
 	}
-	return msgSection
+	return sec
 }
 
 // getFileList 获取指定路径下的指定类型文件列表
 func getFileList(root string) []string {
-	fileList := make([]string, 0)
+	list := make([]string, 0)
 	err := filepath.Walk(root, func(p string, f os.FileInfo, err error) error {
 		if err != nil {
 			log.Fatalf("prevent panic by handling failure accessing a path %q: %v\n", p, err)
@@ -144,7 +143,7 @@ func getFileList(root string) []string {
 		match := repattern.FindStringSubmatch(f.Name())
 		if len(match) > 1 {
 			if match[1] == "proto" {
-				fileList = append(fileList, p)
+				list = append(list, p)
 			}
 		}
 		return nil
@@ -152,21 +151,22 @@ func getFileList(root string) []string {
 	if err != nil {
 		log.Fatalf("filepath.Walk() failed with %s\n", err)
 	}
-	return fileList
+	return list
 }
 
 // analysisProto 解析.proto文件
-func analysisProto(fileName string) map[string][]*msg {
-	println("analysis proto:", fileName)
+func analysisProto(file string) map[string][]*msg {
+	println("analysis proto:", file)
 	define := make([]*msg, 0)
-	f, err := os.Open(fileName)
+
+	f, err := os.Open(file)
 	if err != nil {
-		log.Fatalf("error opening file %q: %v\n", fileName, err)
+		log.Fatalf("error opening file %q: %v\n", file, err)
 	}
 	defer func(f *os.File) {
 		err := f.Close()
 		if err != nil {
-			log.Fatalf("error closing file %q: %v\n", fileName, err)
+			log.Fatalf("error closing file %q: %v\n", file, err)
 		}
 	}(f)
 
@@ -179,80 +179,78 @@ func analysisProto(fileName string) map[string][]*msg {
 		if len(line) <= 0 {
 			continue
 		}
+
 		if gopackage == "" {
 			match := packagekey.FindStringSubmatch(line)
 			if len(match) > 1 {
 				gopackage = strings.TrimSpace(match[1])
 			}
 		}
+
 		// 协议消息注释
 		desc := ""
 		if strings.HasPrefix(lastline, "//") {
 			desc = strings.TrimSpace(lastline[2:])
 		}
+
 		match := messagedefkey.FindStringSubmatch(line)
-		if len(match) > 1 {
-			msgdefname := match[1]
-			msgdefnameLower := strings.ToLower(msgdefname)
-			if len(msgdefnameLower) < 3 {
-				continue
-			}
-			suffix := msgdefnameLower[len(msgdefnameLower)-3:]
-			if !inArray(suffix, []string{"ntf", "ack", "req"}) {
-				continue
-			}
-			if len(desc) <= 0 {
-				desc = msgdefname
-			}
-			define = append(define, &msg{
-				name:      msgdefname,
-				desc:      desc,
-				msgId:     messageIdGen(msgdefname, gopackage),
-				gopackage: gopackage,
-				project:   match[2],
-			})
-		} else {
+		if len(match) <= 1 {
 			match = messagekey.FindStringSubmatch(line)
-			if len(match) > 1 {
-				msgdefname := match[1]
-				msgdefnameLower := strings.ToLower(msgdefname)
-				if len(msgdefnameLower) < 3 {
-					continue
-				}
-				suffix := msgdefnameLower[len(msgdefnameLower)-3:]
-				if !inArray(suffix, []string{"ntf", "ack", "req"}) {
-					continue
-				}
-				if len(desc) <= 0 {
-					desc = msgdefname
-				}
-				define = append(define, &msg{
-					name:      msgdefname,
-					desc:      desc,
-					msgId:     messageIdGen(msgdefname, gopackage),
-					gopackage: gopackage,
-				})
-			}
 		}
+		if len(match) == 0 {
+			continue
+		}
+		msg := genMsg(&desc, gopackage, match)
+		if msg == nil {
+			continue
+		}
+		define = append(define, msg)
 		lastline = line
 	}
+
 	if err := scanner.Err(); err != nil {
-		log.Fatalf("error scanning file %q: %v\n", fileName, err)
+		log.Fatalf("error scanning file %q: %v\n", file, err)
 	}
+
 	if len(define) > 0 {
-		newName := fileName
-		nameArr := strings.Split(strings.Replace(fileName, "\\", "/", -1), "/")
+		newName := file
+		nameArr := strings.Split(strings.Replace(file, "\\", "/", -1), "/")
 		if len(nameArr) > 0 {
 			newName = nameArr[len(nameArr)-1]
 		}
-		protoMsgs[newName] = define
+		protoMsg[newName] = define
 	}
 	return nil
 }
 
+func genMsg(desc *string, gopackage string, match []string) *msg {
+	msgdefname := match[1]
+	msgdefnameLower := strings.ToLower(msgdefname)
+	if len(msgdefnameLower) < 3 {
+		return nil
+	}
+	suffix := msgdefnameLower[len(msgdefnameLower)-3:]
+	if !inArray(suffix, []string{"ntf", "ack", "req"}) {
+		return nil
+	}
+	if len(*desc) <= 0 {
+		*desc = msgdefname
+	}
+	m := &msg{
+		name:      msgdefname,
+		desc:      *desc,
+		msgId:     messageIdGen(msgdefname),
+		gopackage: gopackage,
+	}
+	if len(match) > 2 {
+		m.project = match[2]
+	}
+	return m
+}
+
 // 根据proto中定义的结构名称生成对应规则的枚举名称
 // 例如CSLoginReq -> CS_LOGIN_REQ
-func messageIdGen(name, packageName string) string {
+func messageIdGen(name string) string {
 	// 提取前两个字符
 	result := name[:2]
 	// 大写字母集
@@ -277,15 +275,14 @@ func messageIdGen(name, packageName string) string {
 }
 
 // saveOutFile 输出文件
-func saveOutFile(messageFile, messageFileClient, pbBindGo string, projects []string,
-	msgSection map[string]*section, messagesDef map[string]*msg) {
+func saveOutFile(msgSection map[string]*section, messagesDef map[string]*msg) {
 	// 所有消息的集合
 	messageMap := make(map[string][]*msg)
 	// 更新每一个proto文件最大的协议号
 	messageIdMax := make(map[string]int)
 
 	// pbName为proto文件名 例如login.proto
-	for pbName, pbData := range protoMsgs {
+	for pbName, pbData := range protoMsg {
 		for _, data := range pbData {
 			if messageMap[pbName] == nil {
 				messageMap[pbName] = make([]*msg, 0)
@@ -338,35 +335,56 @@ func saveOutFile(messageFile, messageFileClient, pbBindGo string, projects []str
 		}
 	}
 
-	// 生成消息枚举定义文件messagedef.proto
-	saveMessageDef(messageFile, messageFileClient, messagesDef)
-
-	// 生成pbbind_gen.go文件
-	savePbBindGo(pbBindGo, messagesDef, projects)
+	sortMsg := genSortMsg(messagesDef)
+	// 生成 messageFile
+	saveMessageDef(sortMsg)
+	// 生成 pbBindGo
+	savePbBindGo(sortMsg)
 }
 
-// saveMessageDef 生成消息枚举定义文件messagedef.proto
-func saveMessageDef(messageFile, messageFileClient string, messagesDef map[string]*msg) {
-	sortMsg := make(map[int]*msg)
+type sortMsgData struct {
+	initMsg    map[int]*msg
+	initKeys   []int
+	handleMsg  map[int]*msg
+	handleKeys []int
+}
+
+func genSortMsg(messagesDef map[string]*msg) *sortMsgData {
+	d := &sortMsgData{
+		initMsg:   make(map[int]*msg),
+		handleMsg: make(map[int]*msg),
+	}
 	for _, data := range messagesDef {
 		// 协议被删除后的处理
 		if data.name == "" {
 			continue
 		}
-		sortMsg[data.id] = data
+		d.initMsg[data.id] = data
+		if data.project != "" {
+			d.handleMsg[data.id] = data
+		}
 	}
 	// 获取排序后的键
-	keys := make([]int, 0, len(sortMsg))
-	for id := range sortMsg {
-		keys = append(keys, id)
+	d.initKeys = make([]int, 0, len(d.initMsg))
+	d.handleKeys = make([]int, 0, len(d.initMsg))
+	for id := range d.initMsg {
+		d.initKeys = append(d.initKeys, id)
 	}
-	sort.Ints(keys)
+	for id := range d.handleMsg {
+		d.handleKeys = append(d.handleKeys, id)
+	}
+	sort.Ints(d.initKeys)
+	sort.Ints(d.handleKeys)
+	return d
+}
 
+// saveMessageDef 生成消息枚举定义文件 messageFile
+func saveMessageDef(sortMsg *sortMsgData) {
 	// 构建消息文本
 	messageText := ""
 	// 格式化消息文本
-	for _, id := range keys {
-		data := sortMsg[id]
+	for _, id := range sortMsg.initKeys {
+		data := sortMsg.initMsg[id]
 		messageText += fmt.Sprintf("\t%-32s = %d;\t\t//\t%s **%s **%s **%s [%s]\n",
 			data.msgId, id, data.desc, data.name, data.file, data.gopackage, data.name)
 	}
@@ -378,35 +396,11 @@ enum protoMsgId{
 	MSG_BEGIN	= 0;
 %s
 }
-`, PackageName, messageText))
+`, packageName, messageText))
 }
 
 // 生成pbbind_gen.go文件
-func savePbBindGo(fileName string, messagesDef map[string]*msg, projects []string) {
-	sortHandleMsg := make(map[int]*msg)
-	sortInitMsg := make(map[int]*msg)
-	for _, data := range messagesDef {
-		// 协议被删除后的处理
-		if data.name == "" {
-			continue
-		}
-		sortInitMsg[data.id] = data
-		if data.project != "" {
-			sortHandleMsg[data.id] = data
-		}
-	}
-	// 获取排序后的键
-	initKeys := make([]int, 0, len(sortInitMsg))
-	for id := range sortInitMsg {
-		initKeys = append(initKeys, id)
-	}
-	sort.Ints(initKeys)
-	handleKeys := make([]int, 0, len(sortHandleMsg))
-	for id := range sortHandleMsg {
-		handleKeys = append(handleKeys, id)
-	}
-	sort.Ints(handleKeys)
-
+func savePbBindGo(sortMsg *sortMsgData) {
 	mhead := fmt.Sprintf(`package %s
 
 import (
@@ -419,7 +413,7 @@ import (
 func registerInfo(id uint16, msgType reflect.Type) {
 	RegisterMessageInfo(&MessageInfo{ID: id, Codec: GetCodec(), Type: msgType})
 }
-`, PackageName)
+`, packageName)
 
 	// 具体每个协议的定义
 	mhanderDef := ""
@@ -431,9 +425,9 @@ func registerInfo(id uint16, msgType reflect.Type) {
 		mhanderDef += "\n//" + upper + "\nvar ("
 		mhandler += "\n\tcase \"" + lower + "\":\t//" + upper + " message process part\n\t\treturn "
 		mhandlerDetail = "func(e iface.IProcEvent) {\n\t\t\tswitch e.Msg().(type) {"
-		for _, id := range handleKeys {
-			data := sortInitMsg[id]
-			if p != data.project {
+		for _, id := range sortMsg.handleKeys {
+			data := sortMsg.initMsg[id]
+			if !strings.Contains(data.project, p) {
 				continue
 			}
 			mhanderDef += "\n\tHandle_" + upper + "_" + data.name + "  = func(e  iface.IProcEvent){panic(\"" + data.name + " not implements\")}"
@@ -448,14 +442,14 @@ func registerInfo(id uint16, msgType reflect.Type) {
 	// init部分
 	minit := "\n\nfunc init() {\n\t// 协议注册\n\tlog.SetFlags(log.Lshortfile | log.LstdFlags)"
 	// 格式化消息文本
-	for _, id := range initKeys {
-		data := sortInitMsg[id]
+	for _, id := range sortMsg.initKeys {
+		data := sortMsg.initMsg[id]
 		minit += "\n\tregisterInfo(" + strconv.Itoa(id) + ", reflect.TypeOf((*" + data.name + ")(nil)).Elem())"
 	}
 	minit += "\n\tlog.Println(\"pbbind_gen.go init success\")\n}"
 
 	messageText := mhead + mhanderDef + mhandler + minit
-	saveFile(fileName, messageText)
+	saveFile(pbBindGo, messageText)
 }
 
 func increaseMessageId(msgSection map[string]*section, messageIdMax map[string]int, pbName string, maxIndex, maxMsgSection int) int {

@@ -13,6 +13,7 @@ func registerInfo(id uint16, msgType reflect.Type) {
 
 //GATE
 var (
+	Handle_GATE_CSLoginReq  = func(e  iface.IProcEvent){panic("CSLoginReq not implements")}
 	Handle_GATE_SCLoginAck  = func(e  iface.IProcEvent){panic("SCLoginAck not implements")}
 	Handle_GATE_Default		func(e  iface.IProcEvent)
 )
@@ -28,6 +29,7 @@ func GetMessageHandler(sreviceName string) common.EventCallBack {
 	case "gate":	//GATE message process part
 		return func(e iface.IProcEvent) {
 			switch e.Msg().(type) {
+			case *CSLoginReq: Handle_GATE_CSLoginReq(e)
 			case *SCLoginAck: Handle_GATE_SCLoginAck(e)
 			default:
 				if Handle_GATE_Default != nil {

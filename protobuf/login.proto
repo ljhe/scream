@@ -2,7 +2,7 @@ syntax = "proto3";
 package pbgo;
 
 // 登录操作
-message CSLoginReq { //project game
+message CSLoginReq { //project gate|game
   string      platform        = 1;  // 用户平台
   int32       phone_platform  = 2;  // 手机平台 android ios
   string      platform_token  = 3;  // 平台token验证登陆
