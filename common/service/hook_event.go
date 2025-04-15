@@ -10,6 +10,7 @@ import (
 	"common/util"
 	"pbgo"
 	"reflect"
+	"time"
 )
 
 type ServerEventHook struct {
@@ -51,7 +52,7 @@ func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 			// 服务器之间的心跳检测
 			// acceptor触发send connector触发rcv
 			// 所以这里只能反应acceptor端的send和connector端的rcv是否正常
-			iv.Session().HeartBeat(&pbgo.PingReq{})
+			iv.Session().HeartBeat(&pbgo.PingReq{Ms: time.Now().UnixMilli()})
 		}
 		return nil
 	case *pbgo.PingReq:
@@ -65,7 +66,7 @@ func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 				logrus.Log(logrus.LogsSystem).Printf("receive PingReq from [%v] session=%v \n", ed.Id, iv.Session().GetId())
 			}
 		}
-		iv.Session().Send(&pbgo.PingAck{})
+		iv.Session().Send(&pbgo.PingAck{Ms: time.Now().UnixMilli()})
 		return nil
 	case *pbgo.PingAck:
 		ctx := iv.Session().(common.ContextSet)

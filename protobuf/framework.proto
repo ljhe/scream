@@ -9,10 +9,14 @@ message ServiceIdentifyACK {
 }
 
 // PingReq 心跳包
-message PingReq {}
+message PingReq {
+  int64 ms = 1;  // 毫秒级时间戳
+}
 
 // PingAck 心跳包回复
-message PingAck {}
+message PingAck {
+  int64 ms = 1;  // 毫秒级时间戳
+}
 
 // CSPingReq 客户端连接后 发送ping消息
 message CSPingReq {}
