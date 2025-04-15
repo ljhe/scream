@@ -4,6 +4,7 @@ import (
 	"common"
 	"common/config"
 	"common/iface"
+	plugins "common/plugins/etcd"
 	"common/plugins/logrus"
 	"common/service"
 	"common/socket"
@@ -11,6 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
+	"pbgo"
 )
 
 func GateWsFrontEndOpt() []iface.Option {
@@ -20,8 +22,8 @@ func GateWsFrontEndOpt() []iface.Option {
 		if ok {
 			bundle.SetMessageProc(new(socket.WSMessageProcessor)) //socket 收发数据处理
 			bundle.(common.ProcessorRPCBundle).SetHooker(new(service.WsEventHook))
-			msgHandle := service.GetMsgHandle(0)
-			bundle.(common.ProcessorRPCBundle).SetMsgHandle(msgHandle)
+			msgPrcFunc := pbgo.GetMessageHandler(common.ServiceNodeTypeGateStr)
+			bundle.(common.ProcessorRPCBundle).SetMsgRouter(msgPrcFunc)
 		}
 	})
 	return options
@@ -37,6 +39,10 @@ func main() {
 		logrus.Log(logrus.LogsSystem).Errorf("server starting fail:%v", err)
 		return
 	}
+
+	connector := plugins.NewMultiServerNode()
+	service.CreateConnector(common.SocketTypTcpConnector, connector)
+
 	logrus.Log(logrus.LogsSystem).Info("server starting ...")
 	node := service.CreateWebSocketAcceptor(common.SocketTypTcpWSAcceptor, GateWsFrontEndOpt()...)
 	logrus.Log(logrus.LogsSystem).Info("server start success")

@@ -10,6 +10,7 @@ type NetProcessorRPC struct {
 	MsgRPC    common.MessageProcessor // 根据不同对象来处理消息读写的加解密
 	Hooker    common.EventHook        // 不进入主消息队列 直接操作
 	MsgHandle common.IMsgHandle
+	MsgRouter common.EventCallBack
 }
 
 func (n *NetProcessorRPC) SetMessageProc(v common.MessageProcessor) {
@@ -24,6 +25,10 @@ func (n *NetProcessorRPC) SetMsgHandle(v common.IMsgHandle) {
 	n.MsgHandle = v
 }
 
+func (n *NetProcessorRPC) SetMsgRouter(msgr common.EventCallBack) {
+	n.MsgRouter = msgr
+}
+
 func (n *NetProcessorRPC) GetRPC() *NetProcessorRPC {
 	return n
 }
@@ -33,9 +38,11 @@ func (n *NetProcessorRPC) ProcEvent(e iface.IProcEvent) {
 		e = n.Hooker.InEvent(e)
 	}
 	if e != nil {
-		n.MsgHandle.PostCb(func() {
-			fmt.Println("这里是测试数据")
-		})
+		if n.MsgHandle != nil {
+			n.MsgHandle.PostCb(func() {
+				n.MsgRouter(e)
+			})
+		}
 	}
 }
 

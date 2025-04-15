@@ -118,8 +118,12 @@ func (wh *WsEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		m := iv.Msg().(*pbgo.CSLoginReq)
 		cliUser, err := baseserver.BindClient(iv.Session(), m.OpenId, m.Platform)
 		if err == nil {
-			// todo 绑定成功 转发给对应的服务器做处理
-			cliUser.SendServer()
+			// 绑定成功 转发给对应的服务器做处理
+			node, _ := baseserver.GetServiceNodeAndSession("", common.ServiceNodeTypeGameStr, 0)
+			err = cliUser.ClientDirect2Backend(node, 0, 0, []byte(m.OpenId), common.ServiceNodeTypeGameStr)
+			if err != nil {
+				return nil
+			}
 			iv.Session().Send(&pbgo.SCLoginAck{Error: int32(pbgo.ErrorCode_ERROR_OK)})
 		} else {
 			logrus.Log(logrus.LogsSystem).Errorf("CSLoginReq BindClient err:%s. openId=%s", err, m.OpenId)

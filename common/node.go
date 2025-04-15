@@ -25,6 +25,7 @@ type ProcessorRPCBundle interface {
 	SetMessageProc(v MessageProcessor)
 	SetHooker(v EventHook)
 	SetMsgHandle(v IMsgHandle)
+	SetMsgRouter(v EventCallBack)
 }
 
 type ContextSet interface {

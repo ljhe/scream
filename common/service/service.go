@@ -2,6 +2,7 @@ package service
 
 import (
 	"common"
+	_ "common/baseserver/normal_logic"
 	"common/config"
 	"common/iface"
 	plugins "common/plugins/etcd"
@@ -12,6 +13,7 @@ import (
 	_ "common/socket/websocket"
 	"os"
 	"os/signal"
+	"pbgo"
 	"syscall"
 	"time"
 )
@@ -31,8 +33,11 @@ func CreateAcceptor(serverTyp string) iface.INetNode {
 	node := socket.NewServerNode(serverTyp, config.SConf.Node.Name, config.SConf.Node.Addr)
 	node.(common.ProcessorRPCBundle).SetMessageProc(new(socket.TCPMessageProcessor))
 	node.(common.ProcessorRPCBundle).SetHooker(new(ServerEventHook))
-	msgHandle := GetMsgHandle(0)
+	msgHandle := GetMsgHandle(100)
 	node.(common.ProcessorRPCBundle).SetMsgHandle(msgHandle)
+
+	msgPrcFunc := pbgo.GetMessageHandler(common.ServiceNodeTypeGameStr)
+	node.(common.ProcessorRPCBundle).SetMsgRouter(msgPrcFunc)
 
 	property := node.(common.ServerNodeProperty)
 	property.SetServerTyp(config.SConf.Node.Typ)
