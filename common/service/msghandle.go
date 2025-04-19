@@ -6,7 +6,6 @@ import (
 	"log"
 	"runtime/debug"
 	"sync"
-	"time"
 )
 
 // 事件列表容量
@@ -45,10 +44,9 @@ func (m *MsgHandle) Start() common.IMsgHandle {
 		for {
 			select {
 			case msg := <-m.queList:
-				switch t := msg.(type) {
+				switch f := msg.(type) {
 				case func():
-					log.Println("msghandle start time:", time.Now().Unix())
-					t()
+					f()
 				}
 			}
 		}

@@ -4,6 +4,9 @@ import (
 	"common"
 	"common/iface"
 	"fmt"
+	"log"
+	"reflect"
+	"time"
 )
 
 type NetProcessorRPC struct {
@@ -40,7 +43,10 @@ func (n *NetProcessorRPC) ProcEvent(e iface.IProcEvent) {
 	if e != nil {
 		if n.MsgHandle != nil {
 			n.MsgHandle.PostCb(func() {
+				start := time.Now()
 				n.MsgRouter(e)
+				duration := time.Since(start)
+				log.Printf("%+v 方法 耗时: %s (%dμs / %dns)\n", reflect.TypeOf(e.Msg()), duration, duration.Microseconds(), duration.Nanoseconds())
 			})
 		}
 	}

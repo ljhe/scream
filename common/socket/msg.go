@@ -96,7 +96,6 @@ func (t *TcpDataPacket) SendMessage(s iface.ISession, msg interface{}) (err erro
 		}
 		mb.sendBytes += mb.chunkSize
 		mb.chunkId++
-		mpool.GetMemoryPool(mpool.TCPMemoryPoolKey).Put(data)
 		mb.Release(data)
 	}
 	return nil
@@ -157,7 +156,6 @@ func (w *WsDataPacket) SendMessage(s iface.ISession, msg interface{}) (err error
 func RcvPackageData(reader io.Reader) ([]byte, uint16, error) {
 	mb := &msgBase{}
 	bufMsg, err := mb.Unmarshal(reader)
-	mb.Release(bufMsg)
 	return bufMsg, mb.msgId, err
 }
 
@@ -287,6 +285,7 @@ func (mb *msgBase) Unmarshal(reader io.Reader) ([]byte, error) {
 			return nil, err
 		}
 		copy(bufMsg[mb.receivedBytes:], buf)
+		mb.Release(buf)
 		mb.receivedBytes += uint16(mb.chunkSize)
 		if mb.chunkId >= mb.chunkNum {
 			break
