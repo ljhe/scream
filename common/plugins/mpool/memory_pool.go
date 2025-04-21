@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"sync/atomic"
 )
 
 type MemoryPool struct {
@@ -29,11 +28,11 @@ func NewMemoryPools(mps, mpc []int) *MemoryPools {
 				},
 			},
 			max: int32(mpc[k]),
+			cur: 0,
 		}
-		atomic.AddInt32(&pool.cur, 1)
 		pools[size] = pool
-		log.Printf("Allocating new memory of size: %d maxCount:%d \n", size, mpc[k])
 	}
+	log.Printf("MemoryPool init success.")
 	return &MemoryPools{
 		pools: pools,
 		sizes: mps,
@@ -57,21 +56,24 @@ func (mps *MemoryPools) Get(size int) []byte {
 	if pool == nil {
 		panic(fmt.Sprintf("memory pool is nil. size:%d closestSize:%d", size, closestSize))
 	}
-	atomic.AddInt32(&pool.cur, -1)
-	return pool.pool.Get().([]byte)
+	pool.mu.Lock()
+	defer pool.mu.Unlock()
+	if pool.cur > 0 {
+		pool.cur--
+		return pool.pool.Get().([]byte)
+	}
+	return make([]byte, closestSize)
 }
 
 // Put 将内存块放回池中
 func (mps *MemoryPools) Put(buf []byte) {
 	closestSize := mps.findClosestSize(len(buf))
 	pool := mps.pools[closestSize]
-
 	pool.mu.Lock()
 	defer pool.mu.Unlock()
-
 	// 只有在缓存数量小于最大限制时才将块放回池中
 	if pool.cur < pool.max {
-		atomic.AddInt32(&pool.cur, 1)
+		pool.cur++
 		pool.pool.Put(buf)
 	} else {
 		// 超过最大缓存数量的块直接丢弃
@@ -84,6 +86,8 @@ func (mps *MemoryPools) GetCount(size int) (int32, int32) {
 	if pool == nil {
 		return 0, 0
 	}
+	pool.mu.Lock()
+	defer pool.mu.Unlock()
 	return pool.cur, pool.max
 }
 

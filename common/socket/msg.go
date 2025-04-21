@@ -361,13 +361,13 @@ func (mb *msgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
 func (mb *msgBase) Container() []byte {
 	// 使用内存池
 	if MsgOptions.Pool {
-		return mpool.GetMemoryPool(mpool.TCPMemoryPoolKey).Get(mb.actualDataLen)
+		return mpool.GetMemoryPool(mpool.SystemMemoryPoolKey).Get(mb.actualDataLen)
 	}
 	return make([]byte, mb.actualDataLen)
 }
 
 func (mb *msgBase) Release(data []byte) {
 	if MsgOptions.Pool {
-		mpool.GetMemoryPool(mpool.TCPMemoryPoolKey).Put(data)
+		mpool.GetMemoryPool(mpool.SystemMemoryPoolKey).Put(data)
 	}
 }

@@ -4,13 +4,13 @@ import (
 	"common"
 )
 
-var TCPMemoryPoolKey = "TCPMemoryPoolKey"
+var SystemMemoryPoolKey = "SystemMemoryPoolKey"
 
 var MemoryPoolConfigs = []*MemoryPoolConf{
 	{
-		key: TCPMemoryPoolKey,
+		key: SystemMemoryPoolKey,
 		Mps: []int{8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, common.MsgMaxLen},
-		Mpc: []int{10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+		Mpc: []int{10, 10, 10, 10, 10, 10, 10, 10, 5, 5, 5, 5, 3, 3},
 	},
 }
 
