@@ -3,8 +3,8 @@ package main
 import (
 	"common"
 	"common/config"
-	"common/plugins/logrus"
 	"common/service"
+	"plugins/logrus"
 )
 
 func main() {

@@ -3,7 +3,6 @@ package websocket
 import (
 	"common"
 	"common/iface"
-	"common/plugins/logrus"
 	"common/socket"
 	"common/util"
 	"context"
@@ -11,6 +10,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"plugins/logrus"
 	"syscall"
 )
 

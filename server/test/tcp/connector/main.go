@@ -3,10 +3,10 @@ package main
 import (
 	"common"
 	"common/config"
-	plugins "common/plugins/etcd"
-	"common/plugins/logrus"
 	"common/service"
 	"log"
+	plugins "plugins/etcd"
+	"plugins/logrus"
 )
 
 func main() {

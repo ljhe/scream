@@ -2,10 +2,10 @@ package baseserver
 
 import (
 	"common/iface"
-	"common/plugins/logrus"
 	"errors"
 	"fmt"
 	"pbgo"
+	"plugins/logrus"
 )
 
 type ClientUser struct {

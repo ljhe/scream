@@ -1,11 +1,11 @@
 package config
 
 import (
-	"common/plugins/logrus"
 	"flag"
 	"gopkg.in/yaml.v2"
 	"log"
 	"os"
+	"plugins/logrus"
 )
 
 var SConf ScreamConfig

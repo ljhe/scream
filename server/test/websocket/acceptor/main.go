@@ -4,8 +4,6 @@ import (
 	"common"
 	"common/config"
 	"common/iface"
-	plugins "common/plugins/etcd"
-	"common/plugins/logrus"
 	"common/service"
 	"common/socket"
 	"fmt"
@@ -13,6 +11,8 @@ import (
 	"log"
 	"net/http"
 	"pbgo"
+	plugins "plugins/etcd"
+	"plugins/logrus"
 )
 
 func GateWsFrontEndOpt() []iface.Option {

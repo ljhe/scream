@@ -3,9 +3,9 @@ package websocket
 import (
 	"common"
 	"common/iface"
-	"common/plugins/logrus"
 	"common/socket"
 	"github.com/gorilla/websocket"
+	"plugins/logrus"
 	"runtime/debug"
 	"sync"
 	"sync/atomic"

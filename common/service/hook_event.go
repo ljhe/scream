@@ -4,11 +4,11 @@ import (
 	"common"
 	"common/baseserver"
 	"common/iface"
-	plugins "common/plugins/etcd"
-	"common/plugins/logrus"
 	"common/socket"
 	"common/util"
 	"pbgo"
+	plugins "plugins/etcd"
+	"plugins/logrus"
 	"reflect"
 	"time"
 )

@@ -3,13 +3,13 @@ package plugins
 import (
 	"common"
 	"common/iface"
-	"common/plugins/logrus"
 	"common/util"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/coreos/etcd/clientv3"
 	"log"
+	"plugins/logrus"
 	"strconv"
 	"strings"
 )

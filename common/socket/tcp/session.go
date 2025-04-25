@@ -3,10 +3,10 @@ package tcp
 import (
 	"common"
 	"common/iface"
-	"common/plugins/logrus"
 	"common/socket"
 	"log"
 	"net"
+	"plugins/logrus"
 	"runtime/debug"
 	"sync"
 	"sync/atomic"

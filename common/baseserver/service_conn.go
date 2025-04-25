@@ -3,9 +3,9 @@ package baseserver
 import (
 	"common"
 	"common/iface"
-	plugins "common/plugins/etcd"
 	"log"
 	"math/rand"
+	plugins "plugins/etcd"
 	"sync"
 )
 

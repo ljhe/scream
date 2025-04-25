@@ -1,11 +1,11 @@
 package plugins
 
 import (
-	"common/plugins/logrus"
 	"common/util"
 	"context"
 	"fmt"
 	"github.com/coreos/etcd/clientv3"
+	"plugins/logrus"
 	"sync"
 	"time"
 )
