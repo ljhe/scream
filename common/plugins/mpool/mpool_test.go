@@ -2,108 +2,106 @@ package mpool
 
 import (
 	"fmt"
+	"runtime"
 	"sync"
 	"testing"
-	"time"
 )
 
-func TestMemoryPool(t *testing.T) {
-	MemoryPoolInit()
-	pools := GetMemoryPool(SystemMemoryPoolKey)
-	for i := 0; i < 20; i++ {
-		go func() {
-			mem := pools.Get(7)
-			fmt.Printf("test memory pool. i:%d  size:%d 地址:%p \n", i, len(mem), mem)
-			pools.Put(mem)
-		}()
-	}
-	time.Sleep(3 * time.Second)
-	cur, max := pools.GetCount(8)
-	fmt.Printf("test memory pool end. cur:%d max:%d \n", cur, max)
-	for i := 0; i < 20; i++ {
-		go func() {
-			mem := pools.Get(7)
-			fmt.Printf("test memory pool after sleep. i:%d  size:%d 地址:%p \n", i, len(mem), mem)
-			pools.Put(mem)
-		}()
-	}
-	time.Sleep(2 * time.Second)
+// go test -bench . -benchmem
+
+var pool = sync.Pool{
+	New: func() interface{} {
+		return make([]byte, 0)
+	},
 }
 
-// 只有在高并
-// cpu: 12th Gen Intel(R) Core(TM) i7-12700
-// j = 100000	size = 40960
-// BenchmarkMemoryPool-20    	  295358	      4108 ns/op
-// j = 100000	size = 40960
-// BenchmarkNotMemoryPool-20      1000000	      1400 ns/op
-// j = 1000000	size = 40960
-// BenchmarkMemoryPool-20    	  299025	      3859 ns/op
-// j = 1000000	size = 40960
-// BenchmarkNotMemoryPool-20      130359	      11389 ns/op
-// j = 1000000	size = 1024
-// BenchmarkMemoryPool-20    	  299025	      3859 ns/op
-// j = 1000000	size = 1024
-// BenchmarkNotMemoryPool-20      147814	      9189 ns/op
-// j = 10000000	size = 40960
-// BenchmarkMemoryPool-20    	  275229	      4061 ns/op
-// j = 10000000	size = 40960
-// BenchmarkNotMemoryPool-20      18127	    	  124465 ns/op
-func BenchmarkMemoryPool(b *testing.B) {
-	MemoryPoolInit()
-	pools := GetMemoryPool(SystemMemoryPoolKey)
-	b.ResetTimer()
+func BenchmarkMake(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		go func() {
-			for j := 0; j < 1000000; j++ {
-				mem := pools.Get(1024)
-				mem[0] = 1
-				pools.Put(mem)
-			}
-		}()
+		// 每次分配新的切片
+		_ = make([]byte, 40960)
 	}
+	printGCStats(b)
 }
 
-func BenchmarkNotMemoryPool(b *testing.B) {
-	b.ResetTimer()
+func BenchmarkSyncPool(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		go func() {
-			for j := 0; j < 1000000; j++ {
-				data := make([]byte, 40960)
-				data[0] = 1
-			}
-		}()
+		obj := pool.Get().([]byte)
+		// 模拟对对象的操作
+		pool.Put(obj[:0])
+	}
+	printGCStats(b)
+}
+
+func BenchmarkSyncPoolWithoutPut(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = pool.Get().([]byte) // 只获取对象，不进行放回
+	}
+	printGCStats(b)
+}
+
+func BenchmarkMakeConcurrent(b *testing.B) {
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			// 每次分配新的切片
+			_ = make([]byte, 40960)
+		}
+	})
+	printGCStats(b)
+}
+
+func BenchmarkSyncPoolConcurrent(b *testing.B) {
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			obj := pool.Get().([]byte)
+			// 模拟对对象的操作
+			pool.Put(obj[:0])
+		}
+	})
+	printGCStats(b)
+}
+
+func BenchmarkSyncPoolWithoutPutConcurrent(b *testing.B) {
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = pool.Get().([]byte) // 只获取对象，不进行放回
+		}
+	})
+	printGCStats(b)
+}
+
+func printGCStats(b *testing.B) {
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+	// 当前堆中已分配的内存字节数。此值表示当前应用程序使用的堆内存量
+	b.Logf("HeapAlloc: %d bytes", memStats.HeapAlloc)
+	// 堆中已分配的内存的总量（包括 GC 使用的内存）。它包括了 Go 程序分配的内存以及由垃圾回收器管理的内存。
+	b.Logf("HeapSys: %d bytes", memStats.HeapSys)
+	// 当前堆中未使用的内存字节数
+	b.Logf("HeapIdle: %d bytes", memStats.HeapIdle)
+	// 从应用程序中释放的堆内存字节数
+	b.Logf("HeapReleased: %d bytes", memStats.HeapReleased)
+	// 自程序启动以来发生的 GC 次数。通过这个值可以看出 GC 发生的频率
+	b.Logf("NumGC: %d", memStats.NumGC)
+	// 垃圾回收暂停总时间
+	b.Logf("PauseTotalNs: %d", memStats.PauseTotalNs)
+}
+
+func TestSliceForAppend(t *testing.T) {
+	for i := 10; i > 0; i-- {
+		obj := pool.Get().([]byte)
+		_, obj = sliceForAppend(obj[:0], i)
+		fmt.Printf("pool's ptr: %p\n", obj)
+		pool.Put(obj[:0])
 	}
 }
 
-type TMemoryPool struct {
-	pool sync.Pool
-}
-
-func TNewMemoryPool() *TMemoryPool {
-	return &TMemoryPool{
-		pool: sync.Pool{
-			New: func() interface{} {
-				return make([]byte, 1024) // 假设每个内存块大小为 1024 字节
-			},
-		},
+func sliceForAppend(in []byte, n int) (head, tail []byte) {
+	if total := len(in) + n; cap(in) >= total {
+		head = in[:total]
+	} else {
+		head = make([]byte, total)
+		copy(head, in)
 	}
-}
-
-func (mp *TMemoryPool) Get() []byte {
-	return mp.pool.Get().([]byte)
-}
-
-func (mp *TMemoryPool) Put(b []byte) {
-	mp.pool.Put(b)
-}
-
-func TestTNewMemoryPool(t *testing.T) {
-	mp := TNewMemoryPool()
-
-	// 测试内存池是否复用内存块
-	for i := 0; i < 5; i++ {
-		mem := mp.Get()
-		fmt.Printf("获取的内存块地址：%p 大小:%d \n", mem, len(mem))
-		mp.Put(mem) // 归还内存块
-	}
+	tail = head[len(in):]
+	return
 }

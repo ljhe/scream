@@ -7,7 +7,6 @@ import (
 	"common/iface"
 	plugins "common/plugins/etcd"
 	"common/plugins/logrus"
-	"common/plugins/mpool"
 	"common/socket"
 	_ "common/socket/tcp"
 	_ "common/socket/websocket"
@@ -120,7 +119,7 @@ func Init() error {
 	// 初始化日志模块
 	logrus.Init(*config.ServerConfigPath)
 	// 初始化内存池
-	mpool.MemoryPoolInit()
+	//mpool.MemoryPoolInit()
 	// 初始化服务发现
 	err := plugins.InitServiceDiscovery("127.0.0.1:2379")
 	if err != nil {

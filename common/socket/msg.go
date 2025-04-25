@@ -5,7 +5,6 @@ import (
 	"common/encryption"
 	"common/iface"
 	"common/plugins/logrus"
-	"common/plugins/mpool"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -13,6 +12,7 @@ import (
 	"io"
 	"pbgo"
 	"reflect"
+	"sync"
 )
 
 var ErrMsgIdNotFound = errors.New("msgId not found")
@@ -43,6 +43,12 @@ type msgBase struct {
 	chunkSize     int
 	receivedBytes uint16
 	flagId        uint16
+}
+
+var bufPool = sync.Pool{
+	New: func() any {
+		return make([]byte, 0)
+	},
 }
 
 type TcpDataPacket struct {
@@ -358,16 +364,32 @@ func (mb *msgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
 	return msgData, err
 }
 
+// 仿照go底层crypto\tls\conn中的sync.Pool
 func (mb *msgBase) Container() []byte {
 	// 使用内存池
 	if MsgOptions.Pool {
-		return mpool.GetMemoryPool(mpool.SystemMemoryPoolKey).Get(mb.actualDataLen)
+		//return mpool.GetMemoryPool(mpool.SystemMemoryPoolKey).Get(mb.actualDataLen)
+		outBuf := bufPool.Get().([]byte)
+		_, outBuf = sliceForAppend(outBuf[:0], mb.actualDataLen)
+		return outBuf
 	}
 	return make([]byte, mb.actualDataLen)
 }
 
 func (mb *msgBase) Release(data []byte) {
 	if MsgOptions.Pool {
-		mpool.GetMemoryPool(mpool.SystemMemoryPoolKey).Put(data)
+		//mpool.GetMemoryPool(mpool.SystemMemoryPoolKey).Put(data)
+		bufPool.Put(data[:0])
 	}
+}
+
+func sliceForAppend(in []byte, n int) (head, tail []byte) {
+	if total := len(in) + n; cap(in) >= total {
+		head = in[:total]
+	} else {
+		head = make([]byte, total)
+		copy(head, in)
+	}
+	tail = head[len(in):]
+	return
 }
