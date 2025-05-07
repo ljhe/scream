@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"plugins/logrus"
+	"plugins/mysql"
 )
 
 var SConf ScreamConfig
@@ -25,8 +26,9 @@ type Node struct {
 }
 
 var (
-	ServerCmd        = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-	ServerConfigPath = ServerCmd.String("config", "config.yaml", "server config file")
+	ServerCmd         = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+	ServerConfigPath  = ServerCmd.String("config", "config.yaml", "server config file")
+	MysqlOrmConnector *mysql.OrmConn
 )
 
 func Init() {
@@ -39,4 +41,8 @@ func Init() {
 		log.Fatalf("global config Unmarshal err: %v", err)
 	}
 	log.Println("global config load success", SConf)
+}
+
+func GetMysqlOrm() *mysql.OrmConn {
+	return MysqlOrmConnector
 }

@@ -13,6 +13,7 @@ import (
 	"pbgo"
 	plugins "plugins/etcd"
 	"plugins/logrus"
+	"plugins/mysql"
 	"syscall"
 	"time"
 )
@@ -124,6 +125,13 @@ func Init() error {
 	err := plugins.InitServiceDiscovery("127.0.0.1:2379")
 	if err != nil {
 		logrus.Log(logrus.LogsSystem).Errorf("InitServiceDiscovery err:%v", err)
+		return err
+	}
+	// 初始化db
+	config.MysqlOrmConnector = mysql.NewOrmConn()
+	err = config.MysqlOrmConnector.Start("127.0.0.1:3306")
+	if err != nil {
+		logrus.Log(logrus.LogsSystem).Errorf("init db err:%v", err)
 		return err
 	}
 	return nil
