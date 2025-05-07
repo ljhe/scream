@@ -1,4 +1,4 @@
-package mysql
+package gorm
 
 import (
 	"fmt"
@@ -7,10 +7,12 @@ import (
 	"testing"
 )
 
+// gorm 相关的官方文档 https://gorm.io/zh_CN/docs/
+
 type User struct {
 	gorm.Model
 	Name   string
-	OpenId string
+	OpenId string `gorm:"index:idx_open_id"`
 }
 
 func TestNewOrmConn(t *testing.T) {
@@ -24,7 +26,7 @@ func TestNewOrmConn(t *testing.T) {
 	create(orm)
 }
 
-func create(orm *OrmConn) {
+func create(orm *Orm) {
 	user := User{
 		Name:   "ljh",
 		OpenId: "123456",
@@ -33,7 +35,7 @@ func create(orm *OrmConn) {
 	// 如果没有这张表 就自动创建
 	err := orm.GetOrmDB().AutoMigrate(&user)
 	if err != nil {
-		log.Printf("mysql create err:%v", err)
+		log.Printf("db create err:%v", err)
 		return
 	}
 

@@ -5,8 +5,8 @@ import (
 	"gopkg.in/yaml.v2"
 	"log"
 	"os"
+	"plugins/db/gorm"
 	"plugins/logrus"
-	"plugins/mysql"
 )
 
 var SConf ScreamConfig
@@ -26,9 +26,9 @@ type Node struct {
 }
 
 var (
-	ServerCmd         = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-	ServerConfigPath  = ServerCmd.String("config", "config.yaml", "server config file")
-	MysqlOrmConnector *mysql.OrmConn
+	ServerCmd        = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+	ServerConfigPath = ServerCmd.String("config", "config.yaml", "server config file")
+	OrmConnector     *gorm.Orm
 )
 
 func Init() {
@@ -43,6 +43,6 @@ func Init() {
 	log.Println("global config load success", SConf)
 }
 
-func GetMysqlOrm() *mysql.OrmConn {
-	return MysqlOrmConnector
+func GetOrm() *gorm.Orm {
+	return OrmConnector
 }

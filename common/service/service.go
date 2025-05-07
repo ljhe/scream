@@ -11,9 +11,9 @@ import (
 	"os"
 	"os/signal"
 	"pbgo"
+	"plugins/db/gorm"
 	plugins "plugins/etcd"
 	"plugins/logrus"
-	"plugins/mysql"
 	"syscall"
 	"time"
 )
@@ -128,8 +128,8 @@ func Init() error {
 		return err
 	}
 	// 初始化db
-	config.MysqlOrmConnector = mysql.NewOrmConn()
-	err = config.MysqlOrmConnector.Start("127.0.0.1:3306")
+	config.OrmConnector = gorm.NewOrmConn()
+	err = config.OrmConnector.Start("root:123456@(127.0.0.1:3306)/gamedb_9999?charset=utf8&loc=Asia%2FShanghai&parseTime=true")
 	if err != nil {
 		logrus.Log(logrus.LogsSystem).Errorf("init db err:%v", err)
 		return err
