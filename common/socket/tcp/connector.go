@@ -1,10 +1,10 @@
 package tcp
 
 import (
-	"common"
-	"common/iface"
-	"common/socket"
 	"fmt"
+	"github.com/ljhe/scream/common"
+	"github.com/ljhe/scream/common/iface"
+	"github.com/ljhe/scream/common/socket"
 	"log"
 	"net"
 	"sync"

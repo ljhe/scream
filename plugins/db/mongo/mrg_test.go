@@ -6,6 +6,8 @@ import (
 	"testing"
 )
 
+// mongodb的官网文档 https://www.mongodb.com/zh-cn/docs/drivers/go/current/
+
 type User struct {
 	Name   string
 	OpenId string

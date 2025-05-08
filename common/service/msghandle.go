@@ -1,7 +1,7 @@
 package service
 
 import (
-	"common"
+	"github.com/ljhe/scream/common"
 	"github.com/panjf2000/ants/v2"
 	"log"
 	"runtime/debug"

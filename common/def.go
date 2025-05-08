@@ -1,7 +1,7 @@
 package common
 
 import (
-	"common/iface"
+	"github.com/ljhe/scream/common/iface"
 )
 
 // IMsgHandle 事件处理队列

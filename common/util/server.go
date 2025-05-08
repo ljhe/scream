@@ -1,8 +1,8 @@
 package util
 
 import (
-	"common"
 	"fmt"
+	"github.com/ljhe/scream/common"
 )
 
 // GenServiceId 生成服务器id

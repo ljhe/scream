@@ -1,8 +1,8 @@
 package normal_logic
 
 import (
-	"common/baseserver"
-	"common/iface"
+	"github.com/ljhe/scream/common/baseserver"
+	"github.com/ljhe/scream/common/iface"
 )
 
 func HandleMessage(userHandler func(ev iface.IProcEvent, cliID baseserver.ClientID)) func(ev iface.IProcEvent) {

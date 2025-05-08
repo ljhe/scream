@@ -1,11 +1,11 @@
 package baseserver
 
 import (
-	"common"
-	"common/iface"
+	"github.com/ljhe/scream/common"
+	"github.com/ljhe/scream/common/iface"
+	plugins "github.com/ljhe/scream/plugins/etcd"
 	"log"
 	"math/rand"
-	plugins "plugins/etcd"
 	"sync"
 )
 

@@ -1,7 +1,7 @@
 package socket
 
 import (
-	_ "pbgo"
+	_ "github.com/ljhe/scream/pbgo"
 )
 
 // SessionConnected 连接成功事件

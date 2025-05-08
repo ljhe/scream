@@ -1,15 +1,15 @@
 package plugins
 
 import (
-	"common"
-	"common/iface"
-	"common/util"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/coreos/etcd/clientv3"
+	"github.com/ljhe/scream/common"
+	"github.com/ljhe/scream/common/iface"
+	"github.com/ljhe/scream/common/util"
+	"github.com/ljhe/scream/plugins/logrus"
 	"log"
-	"plugins/logrus"
 	"strconv"
 	"strings"
 )

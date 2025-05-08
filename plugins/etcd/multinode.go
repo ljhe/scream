@@ -1,7 +1,7 @@
 package plugins
 
 import (
-	"common/iface"
+	"github.com/ljhe/scream/common/iface"
 	"sync"
 )
 

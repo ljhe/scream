@@ -2,11 +2,11 @@ package config
 
 import (
 	"flag"
+	"github.com/ljhe/scream/plugins/db/gorm"
+	"github.com/ljhe/scream/plugins/logrus"
 	"gopkg.in/yaml.v2"
 	"log"
 	"os"
-	"plugins/db/gorm"
-	"plugins/logrus"
 )
 
 var SConf ScreamConfig

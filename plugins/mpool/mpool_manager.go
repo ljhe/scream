@@ -1,7 +1,7 @@
 package mpool
 
 import (
-	"common"
+	"github.com/ljhe/scream/common"
 )
 
 var SystemMemoryPoolKey = "SystemMemoryPoolKey"

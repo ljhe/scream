@@ -1,8 +1,8 @@
 package socket
 
 import (
-	"common"
-	"common/iface"
+	"github.com/ljhe/scream/common"
+	"github.com/ljhe/scream/common/iface"
 	"log"
 )
 

@@ -1,18 +1,18 @@
 package main
 
 import (
-	"common"
-	"common/config"
-	"common/iface"
-	"common/service"
-	"common/socket"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"github.com/ljhe/scream/common"
+	"github.com/ljhe/scream/common/config"
+	"github.com/ljhe/scream/common/iface"
+	"github.com/ljhe/scream/common/service"
+	"github.com/ljhe/scream/common/socket"
+	"github.com/ljhe/scream/pbgo"
+	plugins "github.com/ljhe/scream/plugins/etcd"
+	"github.com/ljhe/scream/plugins/logrus"
 	"log"
 	"net/http"
-	"pbgo"
-	plugins "plugins/etcd"
-	"plugins/logrus"
 )
 
 func GateWsFrontEndOpt() []iface.Option {
@@ -33,7 +33,7 @@ func main() {
 
 	//wsTest()
 
-	*config.ServerConfigPath = "./test/websocket/acceptor/config.yaml"
+	*config.ServerConfigPath = "./server/test/websocket/acceptor/config.yaml"
 	err := service.Init()
 	if err != nil {
 		logrus.Log(logrus.LogsSystem).Errorf("server starting fail:%v", err)

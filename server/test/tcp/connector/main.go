@@ -1,16 +1,16 @@
 package main
 
 import (
-	"common"
-	"common/config"
-	"common/service"
+	"github.com/ljhe/scream/common"
+	"github.com/ljhe/scream/common/config"
+	"github.com/ljhe/scream/common/service"
+	plugins "github.com/ljhe/scream/plugins/etcd"
+	"github.com/ljhe/scream/plugins/logrus"
 	"log"
-	plugins "plugins/etcd"
-	"plugins/logrus"
 )
 
 func main() {
-	*config.ServerConfigPath = "./test/tcp/connector/config.yaml"
+	*config.ServerConfigPath = "./server/test/tcp/connector/config.yaml"
 	err := service.Init()
 	if err != nil {
 		logrus.Log(logrus.LogsSystem).Errorf("server starting fail:%v", err)
@@ -22,6 +22,6 @@ func main() {
 	log.Println("server start success")
 	service.WaitExitSignal()
 	log.Println("server stopping ...")
-	service.Stop(connector.GetNodeByName("test"))
+	service.Stop(connector.GetNodeByName("tests"))
 	log.Println("server close")
 }

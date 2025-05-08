@@ -6,7 +6,7 @@ node:
   index: 1                                # 服务器区内的编号
   discoveryServiceName: game              # 服务器区内的编号
 log:
-  logName: test     # 日志文件名前缀
+  logName: tests     # 日志文件名前缀
   logLevel: 6       # 日志级别
   maxSize: 512      # 每个日志文件的最大大小(MB)
   maxBackups: 100   # 保留日志文件的最大数量(maxAge可能仍然会导致它们丢失)

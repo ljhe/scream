@@ -2,9 +2,9 @@ package gorm
 
 import (
 	"database/sql"
+	"github.com/ljhe/scream/plugins/logrus"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"plugins/logrus"
 	"sync"
 )
 

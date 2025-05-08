@@ -1,11 +1,11 @@
 package baseserver
 
 import (
-	"common/iface"
 	"errors"
 	"fmt"
-	"pbgo"
-	"plugins/logrus"
+	"github.com/ljhe/scream/common/iface"
+	"github.com/ljhe/scream/pbgo"
+	"github.com/ljhe/scream/plugins/logrus"
 )
 
 type ClientUser struct {

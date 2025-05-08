@@ -1,14 +1,14 @@
 package main
 
 import (
-	"common"
-	"common/config"
-	"common/service"
-	"plugins/logrus"
+	"github.com/ljhe/scream/common"
+	"github.com/ljhe/scream/common/config"
+	"github.com/ljhe/scream/common/service"
+	"github.com/ljhe/scream/plugins/logrus"
 )
 
 func main() {
-	*config.ServerConfigPath = "./test/tcp/acceptor/config.yaml"
+	*config.ServerConfigPath = "./server/test/tcp/acceptor/config.yaml"
 	err := service.Init()
 	if err != nil {
 		logrus.Log(logrus.LogsSystem).Errorf("server starting fail:%v", err)

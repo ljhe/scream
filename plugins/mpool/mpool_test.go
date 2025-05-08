@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// go test -bench . -benchmem
+// go tests -bench . -benchmem
 
 var pool = sync.Pool{
 	New: func() interface{} {

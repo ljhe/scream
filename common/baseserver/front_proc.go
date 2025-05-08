@@ -1,10 +1,10 @@
 package baseserver
 
 import (
-	"common"
-	"common/iface"
 	"errors"
 	"fmt"
+	"github.com/ljhe/scream/common"
+	"github.com/ljhe/scream/common/iface"
 )
 
 var ErrUserHasBeenBind = errors.New(fmt.Sprintf("user has been bind"))

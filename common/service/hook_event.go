@@ -1,14 +1,14 @@
 package service
 
 import (
-	"common"
-	"common/baseserver"
-	"common/iface"
-	"common/socket"
-	"common/util"
-	"pbgo"
-	plugins "plugins/etcd"
-	"plugins/logrus"
+	"github.com/ljhe/scream/common"
+	"github.com/ljhe/scream/common/baseserver"
+	"github.com/ljhe/scream/common/iface"
+	"github.com/ljhe/scream/common/socket"
+	"github.com/ljhe/scream/common/util"
+	"github.com/ljhe/scream/pbgo"
+	plugins "github.com/ljhe/scream/plugins/etcd"
+	"github.com/ljhe/scream/plugins/logrus"
 	"reflect"
 	"time"
 )

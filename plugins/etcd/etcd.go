@@ -1,11 +1,11 @@
 package plugins
 
 import (
-	"common/util"
 	"context"
 	"fmt"
 	"github.com/coreos/etcd/clientv3"
-	"plugins/logrus"
+	"github.com/ljhe/scream/common/util"
+	"github.com/ljhe/scream/plugins/logrus"
 	"sync"
 	"time"
 )

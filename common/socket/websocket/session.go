@@ -1,11 +1,11 @@
 package websocket
 
 import (
-	"common"
-	"common/iface"
-	"common/socket"
 	"github.com/gorilla/websocket"
-	"plugins/logrus"
+	"github.com/ljhe/scream/common"
+	"github.com/ljhe/scream/common/iface"
+	"github.com/ljhe/scream/common/socket"
+	"github.com/ljhe/scream/plugins/logrus"
 	"runtime/debug"
 	"sync"
 	"sync/atomic"

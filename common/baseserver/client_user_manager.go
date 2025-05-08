@@ -1,6 +1,6 @@
 package baseserver
 
-import "common/iface"
+import "github.com/ljhe/scream/common/iface"
 
 var ClientUserManager = NewClientUserManager()
 

@@ -1,9 +1,9 @@
 package socket
 
 import (
-	"common"
-	"common/iface"
 	"github.com/gorilla/websocket"
+	"github.com/ljhe/scream/common"
+	"github.com/ljhe/scream/common/iface"
 	"math"
 	"net"
 	"time"

@@ -1,9 +1,9 @@
 package socket
 
 import (
-	"common"
-	"common/iface"
 	"fmt"
+	"github.com/ljhe/scream/common"
+	"github.com/ljhe/scream/common/iface"
 	"log"
 	"reflect"
 	"time"

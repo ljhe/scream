@@ -1,16 +1,16 @@
 package socket
 
 import (
-	"common"
-	"common/encryption"
-	"common/iface"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"github.com/ljhe/scream/common"
+	"github.com/ljhe/scream/common/encryption"
+	"github.com/ljhe/scream/common/iface"
+	"github.com/ljhe/scream/pbgo"
+	"github.com/ljhe/scream/plugins/logrus"
 	"io"
-	"pbgo"
-	"plugins/logrus"
 	"reflect"
 	"sync"
 )
