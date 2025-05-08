@@ -17,12 +17,12 @@ type ScreamConfig struct {
 }
 
 type Node struct {
-	Name                 string `yaml:"name"`
-	Addr                 string `yaml:"addr"`
-	Typ                  int    `yaml:"typ"`
-	Zone                 int    `yaml:"zone"`
-	Index                int    `yaml:"index"`
-	DiscoveryServiceName string `yaml:"discoveryServiceName"`
+	Name    string   `yaml:"name"`
+	Addr    string   `yaml:"addr"`
+	Typ     int      `yaml:"typ"`
+	Zone    int      `yaml:"zone"`
+	Index   int      `yaml:"index"`
+	Connect []string `yaml:"connect"`
 }
 
 var (

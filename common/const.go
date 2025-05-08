@@ -1,9 +1,9 @@
 package common
 
 const (
-	SocketTypTcpAcceptor   = "tcpAcceptor"
-	SocketTypTcpConnector  = "tcpConnector"
-	SocketTypTcpWSAcceptor = "tcpWebSocketAcceptor"
+	SocketTypTcpAcceptor   = "TcpAcceptor"
+	SocketTypTcpConnector  = "TcpConnector"
+	SocketTypTcpWSAcceptor = "TcpWebSocketAcceptor"
 )
 
 const (

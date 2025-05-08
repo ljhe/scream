@@ -18,19 +18,9 @@ import (
 	"time"
 )
 
-type NetNodeParam struct {
-	ServerTyp            string
-	ServerName           string
-	Addr                 string
-	Typ                  int
-	Zone                 int
-	Index                int
-	DiscoveryServiceName string // 用于服务发现
-}
-
 // CreateAcceptor 创建监听节点
-func CreateAcceptor(serverTyp string) iface.INetNode {
-	node := socket.NewServerNode(serverTyp, config.SConf.Node.Name, config.SConf.Node.Addr)
+func CreateAcceptor() iface.INetNode {
+	node := socket.NewServerNode(common.SocketTypTcpAcceptor, config.SConf.Node.Name, config.SConf.Node.Addr)
 	node.(common.ProcessorRPCBundle).SetMessageProc(new(socket.TCPMessageProcessor))
 	node.(common.ProcessorRPCBundle).SetHooker(new(ServerEventHook))
 	msgHandle := GetMsgHandle(100)
@@ -52,14 +42,14 @@ func CreateAcceptor(serverTyp string) iface.INetNode {
 }
 
 // CreateConnector 创建连接节点
-func CreateConnector(serverTyp string, multiNode plugins.MultiServerNode) iface.INetNode {
-	plugins.DiscoveryService(multiNode, config.SConf.Node.DiscoveryServiceName, config.SConf.Node.Zone,
+func CreateConnector(connect string, multiNode plugins.MultiServerNode) {
+	plugins.DiscoveryService(multiNode, connect, config.SConf.Node.Zone,
 		func(mn plugins.MultiServerNode, ed *plugins.ETCDServiceDesc) {
 			// 不连接自己
 			if ed.Typ == config.SConf.Node.Typ && ed.Zone == config.SConf.Node.Zone && ed.Index == config.SConf.Node.Index {
 				return
 			}
-			node := socket.NewServerNode(serverTyp, config.SConf.Node.Name, ed.Host)
+			node := socket.NewServerNode(common.SocketTypTcpConnector, config.SConf.Node.Name, ed.Host)
 			msgHandle := GetMsgHandle(0)
 			node.(common.ProcessorRPCBundle).SetHooker(new(ServerEventHook))
 			node.(common.ProcessorRPCBundle).SetMsgHandle(msgHandle)
@@ -79,11 +69,10 @@ func CreateConnector(serverTyp string, multiNode plugins.MultiServerNode) iface.
 			// 将etcd信息保存在内存中
 			node.(common.ContextSet).SetContextData(common.ContextSetEtcdKey, ed)
 			// 添加到服务发现的节点管理中
-			mn.AddNode(config.SConf.Node.DiscoveryServiceName, ed, node)
+			mn.AddNode(ed, node)
 
 			node.Start()
 		})
-	return nil
 }
 
 // CreateWebSocketAcceptor 创建监听节点
@@ -148,4 +137,26 @@ func Stop(node iface.INetNode) {
 		return
 	}
 	node.Stop()
+}
+
+func StartUp() {
+	err := Init()
+	if err != nil {
+		logrus.Log(logrus.LogsSystem).Errorf("server starting fail:%v", err)
+		return
+	}
+
+	logrus.Log(logrus.LogsSystem).Info("server starting ...")
+	node := CreateAcceptor()
+
+	for _, connect := range config.SConf.Node.Connect {
+		multiNode := plugins.NewMultiServerNode()
+		CreateConnector(connect, multiNode)
+	}
+
+	logrus.Log(logrus.LogsSystem).Info("server start success")
+	WaitExitSignal()
+	logrus.Log(logrus.LogsSystem).Info("server stopping ...")
+	Stop(node)
+	logrus.Log(logrus.LogsSystem).Info("server close")
 }

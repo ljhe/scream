@@ -1,10 +1,10 @@
 node:
   name: gate                              # 节点名称
   addr: 0.0.0.0:3101                      # 节点地址
-  typ: 3                                  # 节点类型
+  typ: 1                                  # 节点类型
   zone: 9999                              # 服务器区号(理解成服务组)
   index: 1                                # 服务器区内的编号
-  discoveryServiceName: game              # 服务器区内的编号
+  connect: [game]                         # 需要建立连接的节点名称
 log:
   logName: tests     # 日志文件名前缀
   logLevel: 6       # 日志级别

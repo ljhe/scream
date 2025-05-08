@@ -4,13 +4,10 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/ljhe/scream/common"
-	"github.com/ljhe/scream/common/config"
 	"github.com/ljhe/scream/common/iface"
 	"github.com/ljhe/scream/common/service"
 	"github.com/ljhe/scream/common/socket"
 	"github.com/ljhe/scream/pbgo"
-	plugins "github.com/ljhe/scream/plugins/etcd"
-	"github.com/ljhe/scream/plugins/logrus"
 	"log"
 	"net/http"
 )
@@ -33,23 +30,23 @@ func main() {
 
 	//wsTest()
 
-	*config.ServerConfigPath = "./server/test/websocket/acceptor/config.yaml"
-	err := service.Init()
-	if err != nil {
-		logrus.Log(logrus.LogsSystem).Errorf("server starting fail:%v", err)
-		return
-	}
-
-	connector := plugins.NewMultiServerNode()
-	service.CreateConnector(common.SocketTypTcpConnector, connector)
-
-	logrus.Log(logrus.LogsSystem).Info("server starting ...")
-	node := service.CreateWebSocketAcceptor(common.SocketTypTcpWSAcceptor, GateWsFrontEndOpt()...)
-	logrus.Log(logrus.LogsSystem).Info("server start success")
-	service.WaitExitSignal()
-	logrus.Log(logrus.LogsSystem).Info("server stopping ...")
-	service.Stop(node)
-	logrus.Log(logrus.LogsSystem).Info("server close")
+	//*config.ServerConfigPath = "./tests/websocket/acceptor/config.yaml"
+	//err := service.Init()
+	//if err != nil {
+	//	logrus.Log(logrus.LogsSystem).Errorf("server starting fail:%v", err)
+	//	return
+	//}
+	//
+	//connector := plugins.NewMultiServerNode()
+	//service.CreateConnector(connector)
+	//
+	//logrus.Log(logrus.LogsSystem).Info("server starting ...")
+	//node := service.CreateWebSocketAcceptor(common.SocketTypTcpWSAcceptor, GateWsFrontEndOpt()...)
+	//logrus.Log(logrus.LogsSystem).Info("server start success")
+	//service.WaitExitSignal()
+	//logrus.Log(logrus.LogsSystem).Info("server stopping ...")
+	//service.Stop(node)
+	//logrus.Log(logrus.LogsSystem).Info("server close")
 }
 
 func wsTest() {
