@@ -5,10 +5,10 @@ type logConf struct {
 }
 
 type LogConfig struct {
-	LogName    string `yaml:"logName"`
-	LogLevel   uint32 `yaml:"logLevel"`
-	MaxSize    int    `yaml:"maxSize"`
-	MaxBackups int    `yaml:"maxBackups"`
-	MaxAge     int    `yaml:"maxAge"`
-	SavePath   string `yaml:"savePath"`
+	LogName    string `yaml:"log_name"`
+	LogLevel   uint32 `yaml:"log_level"`
+	MaxSize    int    `yaml:"max_size"`
+	MaxBackups int    `yaml:"max_backups"`
+	MaxAge     int    `yaml:"max_age"`
+	SavePath   string `yaml:"save_path"`
 }

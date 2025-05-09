@@ -1,13 +1,13 @@
 node:
   name: game            # 节点名称
-  addr: 0.0.0.0:2701    # 节点地址
+  addr: 0.0.0.0:2701    # 监听节点对内的地址
   typ: 2                # 服务器类型
   zone: 9999            # 服务器区号(理解成服务组)
   index: 1              # 服务器区内的编号
 log:
-  logName: tests     # 日志文件名前缀
-  logLevel: 6       # 日志级别
-  maxSize: 512      # 每个日志文件的最大大小(MB)
-  maxBackups: 100   # 保留日志文件的最大数量(maxAge可能仍然会导致它们丢失)
-  maxAge: 10        # 日志文件的最大保留天数
-  savePath: ./      # 日志保存路径
+  log_name: game     # 日志文件名前缀
+  log_level: 6       # 日志级别
+  max_size: 512      # 每个日志文件的最大大小(MB)
+  max_backups: 100   # 保留日志文件的最大数量(maxAge可能仍然会导致它们丢失)
+  max_age: 10        # 日志文件的最大保留天数
+  save_path: ./      # 日志保存路径

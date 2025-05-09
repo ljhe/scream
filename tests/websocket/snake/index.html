@@ -183,7 +183,7 @@
         var openId = document.getElementById('username').value;
         console.log("get openId:", openId)
 
-        socket = new WebSocket("ws://localhost:3101/ws");
+        socket = new WebSocket("ws://localhost:9001/ws");
 
         message = CSPingReq.create();
         socket.onopen = () => {

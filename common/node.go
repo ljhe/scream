@@ -1,6 +1,8 @@
 package common
 
-import "time"
+import (
+	"time"
+)
 
 type ServerNodeProperty interface {
 	SetAddr(a string)

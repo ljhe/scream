@@ -23,6 +23,7 @@ type Node struct {
 	Zone    int      `yaml:"zone"`
 	Index   int      `yaml:"index"`
 	Connect []string `yaml:"connect"`
+	WsAddr  string   `yaml:"ws_addr"`
 }
 
 var (

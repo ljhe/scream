@@ -3,50 +3,18 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
-	"github.com/ljhe/scream/common"
-	"github.com/ljhe/scream/common/iface"
+	"github.com/ljhe/scream/common/config"
 	"github.com/ljhe/scream/common/service"
-	"github.com/ljhe/scream/common/socket"
-	"github.com/ljhe/scream/pbgo"
 	"log"
 	"net/http"
 )
-
-func GateWsFrontEndOpt() []iface.Option {
-	var options []iface.Option
-	options = append(options, func(s iface.INetNode) {
-		bundle, ok := s.(common.ProcessorRPCBundle)
-		if ok {
-			bundle.SetMessageProc(new(socket.WSMessageProcessor)) //socket 收发数据处理
-			bundle.(common.ProcessorRPCBundle).SetHooker(new(service.WsEventHook))
-			msgPrcFunc := pbgo.GetMessageHandler(common.ServiceNodeTypeGateStr)
-			bundle.(common.ProcessorRPCBundle).SetMsgRouter(msgPrcFunc)
-		}
-	})
-	return options
-}
 
 func main() {
 
 	//wsTest()
 
-	//*config.ServerConfigPath = "./tests/websocket/acceptor/config.yaml"
-	//err := service.Init()
-	//if err != nil {
-	//	logrus.Log(logrus.LogsSystem).Errorf("server starting fail:%v", err)
-	//	return
-	//}
-	//
-	//connector := plugins.NewMultiServerNode()
-	//service.CreateConnector(connector)
-	//
-	//logrus.Log(logrus.LogsSystem).Info("server starting ...")
-	//node := service.CreateWebSocketAcceptor(common.SocketTypTcpWSAcceptor, GateWsFrontEndOpt()...)
-	//logrus.Log(logrus.LogsSystem).Info("server start success")
-	//service.WaitExitSignal()
-	//logrus.Log(logrus.LogsSystem).Info("server stopping ...")
-	//service.Stop(node)
-	//logrus.Log(logrus.LogsSystem).Info("server close")
+	*config.ServerConfigPath = "./tests/websocket/acceptor/config.yaml"
+	service.StartUp()
 }
 
 func wsTest() {

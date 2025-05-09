@@ -25,7 +25,7 @@
     protobuf.load("framework.proto", function(err, root) {
         if (err) throw err;
 
-        socket = new WebSocket("ws://localhost:3101/ws");
+        socket = new WebSocket("ws://localhost:9001/ws");
 
         // 获取消息类型
         CSPingReq = root.lookupType("CSPingReq");
