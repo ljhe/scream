@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/ljhe/scream/common"
+	"github.com/ljhe/scream/common/iface"
 	"github.com/panjf2000/ants/v2"
 	"log"
 	"runtime/debug"
@@ -18,7 +18,7 @@ type MsgHandle struct {
 	wg       sync.WaitGroup
 }
 
-func NewMsgHandle() common.IMsgHandle {
+func NewMsgHandle() iface.IMsgHandle {
 	return &MsgHandle{
 		queList: make(chan interface{}, queListSize),
 		onError: func(data interface{}) {
@@ -29,7 +29,7 @@ func NewMsgHandle() common.IMsgHandle {
 	}
 }
 
-func GetMsgHandle(size int) common.IMsgHandle {
+func GetMsgHandle(size int) iface.IMsgHandle {
 	handle := NewMsgHandle()
 	if size > 0 {
 		handle.SetWorkPool(size)
@@ -38,7 +38,7 @@ func GetMsgHandle(size int) common.IMsgHandle {
 	return handle
 }
 
-func (m *MsgHandle) Start() common.IMsgHandle {
+func (m *MsgHandle) Start() iface.IMsgHandle {
 	m.wg.Add(1)
 	go func() {
 		for {
@@ -55,7 +55,7 @@ func (m *MsgHandle) Start() common.IMsgHandle {
 	return m
 }
 
-func (m *MsgHandle) Stop() common.IMsgHandle {
+func (m *MsgHandle) Stop() iface.IMsgHandle {
 	return nil
 }
 

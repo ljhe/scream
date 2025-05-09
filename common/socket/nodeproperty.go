@@ -1,6 +1,7 @@
 package socket
 
 import (
+	"github.com/ljhe/scream/common/config"
 	"reflect"
 	"sync"
 )
@@ -51,6 +52,12 @@ func (n *NetServerNodeProperty) SetIndex(i int) {
 
 func (n *NetServerNodeProperty) GetIndex() int {
 	return n.index
+}
+
+func (n *NetServerNodeProperty) SetServerNodeProperty() {
+	n.SetServerTyp(config.SConf.Node.Typ)
+	n.SetZone(config.SConf.Node.Zone)
+	n.SetIndex(config.SConf.Node.Index)
 }
 
 // NetContextSet 用来记录上下文数据

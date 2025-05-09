@@ -2,7 +2,6 @@ package websocket
 
 import (
 	"github.com/gorilla/websocket"
-	"github.com/ljhe/scream/common"
 	"github.com/ljhe/scream/common/iface"
 	"github.com/ljhe/scream/common/socket"
 	"github.com/ljhe/scream/plugins/logrus"
@@ -150,12 +149,12 @@ func (s *wsSession) RunRcv() {
 			}
 
 			// 抛出关闭事件
-			s.ProcEvent(&common.RcvMsgEvent{Sess: s, Message: &socket.SessionClosed{}, Err: err})
+			s.ProcEvent(&socket.RcvMsgEvent{Sess: s, Message: &socket.SessionClosed{}, Err: err})
 			break
 		}
 
 		// 接收数据事件放到队列中(需要放到队列中，否则会有线程冲突)
-		s.ProcEvent(&common.RcvMsgEvent{Sess: s, Message: msg, Err: nil})
+		s.ProcEvent(&socket.RcvMsgEvent{Sess: s, Message: msg, Err: nil})
 	}
 
 	logrus.Log(logrus.LogsSystem).Infof("wsSession exit addr:%v", s.conn.LocalAddr())
@@ -175,7 +174,7 @@ func (s *wsSession) RunSend() {
 		if data == nil {
 			break
 		}
-		err := s.SendMsg(&common.SendMsgEvent{Sess: s, Message: data})
+		err := s.SendMsg(&socket.SendMsgEvent{Sess: s, Message: data})
 		if err != nil {
 			logrus.Log(logrus.LogsSystem).Errorf("wsSession RunSend SendMsg err:%v \n", err)
 			break

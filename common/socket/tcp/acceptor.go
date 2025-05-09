@@ -109,7 +109,7 @@ func (t *tcpAcceptor) tcpAccept() {
 			session := newTcpSession(conn, t)
 			session.Start()
 			// 通知上层主事件 (将回调放入队列中 防止多线程冲突)
-			t.ProcEvent(&common.RcvMsgEvent{Sess: session, Message: &socket.SessionAccepted{}})
+			t.ProcEvent(&socket.RcvMsgEvent{Sess: session, Message: &socket.SessionAccepted{}})
 		}()
 	}
 	t.SetRunState(false)

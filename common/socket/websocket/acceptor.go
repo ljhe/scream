@@ -18,9 +18,9 @@ type tcpWebSocketAcceptor struct {
 	socket.NetRuntimeTag      // 运行状态
 	socket.NetTCPSocketOption // socket相关设置
 	socket.NetProcessorRPC    // 事件处理相关
-	socket.SessionManager     // 会话管理
 	socket.NetServerNodeProperty
 	socket.NetContextSet
+	socket.SessionManager // 会话管理
 
 	listener net.Listener // 保存端口
 	upgrader *websocket.Upgrader
@@ -128,7 +128,7 @@ func (ws *tcpWebSocketAcceptor) handleConn(w http.ResponseWriter, r *http.Reques
 	session.SetContextData("request", r)
 	session.start()
 	// 通知上层事件(这边的回调要放到队列中，否则会有多线程冲突)
-	ws.ProcEvent(&common.RcvMsgEvent{Sess: session, Message: &socket.SessionAccepted{}})
+	ws.ProcEvent(&socket.RcvMsgEvent{Sess: session, Message: &socket.SessionAccepted{}})
 }
 
 func init() {

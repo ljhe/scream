@@ -13,20 +13,20 @@ import (
 	"time"
 )
 
-type ServerEventHook struct {
+type ServerHookEvent struct {
 }
 
-func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
+func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	switch msg := iv.Msg().(type) {
 	case *socket.SessionAccepted:
 		logrus.Log(logrus.LogsSystem).Printf("receive SessionAccepted success. session:%d \n", iv.Session().GetId())
 		return nil
 	case *socket.SessionConnected:
 		// 从内存中的etcd获取服务器信息
-		ctx := iv.Session().Node().(common.ContextSet)
+		ctx := iv.Session().Node().(iface.ContextSet)
 		var ed *plugins.ETCDServiceDesc
 		if ctx.RawContextData(common.ContextSetEtcdKey, &ed) {
-			prop := iv.Session().Node().(common.ServerNodeProperty)
+			prop := iv.Session().Node().(iface.ServerNodeProperty)
 			// 连接上服务器节点后 发送确认信息 告诉对端自己的服务器信息
 			iv.Session().Send(&pbgo.ServiceIdentifyACK{
 				ServiceId:       util.GenServiceId(prop),
@@ -57,7 +57,7 @@ func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		return nil
 	case *pbgo.PingReq:
 		// 来自ServiceIdentifyACK接收端的服务器信息
-		ctx := iv.Session().(common.ContextSet)
+		ctx := iv.Session().(iface.ContextSet)
 		var ed *plugins.ETCDServiceDesc
 		iv.Session().IncRcvPingNum(1)
 		if iv.Session().RcvPingNum() >= 10 {
@@ -69,7 +69,7 @@ func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		iv.Session().Send(&pbgo.PingAck{Ms: time.Now().UnixMilli()})
 		return nil
 	case *pbgo.PingAck:
-		ctx := iv.Session().(common.ContextSet)
+		ctx := iv.Session().(iface.ContextSet)
 		var ed *plugins.ETCDServiceDesc
 		iv.Session().IncRcvPingNum(1)
 		if iv.Session().RcvPingNum() >= 10 {
@@ -89,20 +89,20 @@ func (eh *ServerEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	return iv
 }
 
-func (eh *ServerEventHook) OutEvent(ov iface.IProcEvent) iface.IProcEvent {
+func (eh *ServerHookEvent) OutEvent(ov iface.IProcEvent) iface.IProcEvent {
 	return ov
 }
 
-type WsEventHook struct {
+type WsHookEvent struct {
 }
 
-func (wh *WsEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
+func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	switch msg := iv.Msg().(type) {
 	case *pbgo.CSPingReq:
 		iv.Session().Send(&pbgo.SCPingAck{})
 		return nil
 	case *socket.SessionClosed:
-		e := iv.(*common.RcvMsgEvent)
+		e := iv.(*socket.RcvMsgEvent)
 		if e.Err != nil {
 			logrus.Log(logrus.LogsSystem).Infof("ws session closed. err:%v", e.Err)
 		}
@@ -136,6 +136,6 @@ func (wh *WsEventHook) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	return iv
 }
 
-func (wh *WsEventHook) OutEvent(ov iface.IProcEvent) iface.IProcEvent {
+func (wh *WsHookEvent) OutEvent(ov iface.IProcEvent) iface.IProcEvent {
 	return ov
 }

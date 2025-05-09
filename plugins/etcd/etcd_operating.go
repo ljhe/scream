@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/coreos/etcd/clientv3"
-	"github.com/ljhe/scream/common"
 	"github.com/ljhe/scream/common/iface"
 	"github.com/ljhe/scream/common/util"
 	"github.com/ljhe/scream/plugins/logrus"
@@ -35,7 +34,7 @@ func (e *ETCDServiceDesc) String() string {
 }
 
 func ETCDRegister(node iface.INetNode) *ETCDServiceDesc {
-	property := node.(common.ServerNodeProperty)
+	property := node.(iface.ServerNodeProperty)
 	ed := &ETCDServiceDesc{
 		Id:    util.GenServiceId(property),
 		Name:  property.GetName(),

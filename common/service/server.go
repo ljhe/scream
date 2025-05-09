@@ -49,7 +49,7 @@ func StartUp() {
 	}
 
 	if config.SConf.Node.WsAddr != "" {
-		nodes = append(nodes, CreateWebSocketAcceptor(GateWsFrontEndOpt()...))
+		nodes = append(nodes, CreateWebSocketAcceptor())
 	}
 
 	for _, connect := range config.SConf.Node.Connect {

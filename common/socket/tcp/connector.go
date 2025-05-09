@@ -79,7 +79,7 @@ func (t *tcpConnector) connect() {
 		t.session.SetConn(conn)
 		t.session.Start()
 		// 连接事件
-		t.ProcEvent(&common.RcvMsgEvent{Sess: t.session, Message: &socket.SessionConnected{}})
+		t.ProcEvent(&socket.RcvMsgEvent{Sess: t.session, Message: &socket.SessionConnected{}})
 		//go t.deal(conn)
 		t.wg.Wait()
 		if t.GetCloseFlag() {

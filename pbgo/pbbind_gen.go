@@ -1,7 +1,6 @@
 package pbgo
 
 import (
-	"github.com/ljhe/scream/common"
 	"github.com/ljhe/scream/common/iface"
 	"log"
 	"reflect"
@@ -24,7 +23,7 @@ var (
 	Handle_GAME_Default    func(e iface.IProcEvent)
 )
 
-func GetMessageHandler(sreviceName string) common.EventCallBack {
+func GetMessageHandler(sreviceName string) iface.EventCallBack {
 	switch sreviceName { //note.serviceName must be lower words
 	case "gate": //GATE message process part
 		return func(e iface.IProcEvent) {

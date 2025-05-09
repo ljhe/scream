@@ -2,7 +2,6 @@ package socket
 
 import (
 	"fmt"
-	"github.com/ljhe/scream/common"
 	"github.com/ljhe/scream/common/iface"
 	"log"
 	"reflect"
@@ -10,25 +9,25 @@ import (
 )
 
 type NetProcessorRPC struct {
-	MsgRPC    common.MessageProcessor // 根据不同对象来处理消息读写的加解密
-	Hooker    common.EventHook        // 不进入主消息队列 直接操作
-	MsgHandle common.IMsgHandle
-	MsgRouter common.EventCallBack
+	MsgRPC    iface.MessageProcessor // 根据不同对象来处理消息读写的加解密
+	Hooker    iface.HookEvent        // 不进入主消息队列 直接操作
+	MsgHandle iface.IMsgHandle
+	MsgRouter iface.EventCallBack
 }
 
-func (n *NetProcessorRPC) SetMessageProc(v common.MessageProcessor) {
+func (n *NetProcessorRPC) SetMessageProc(v iface.MessageProcessor) {
 	n.MsgRPC = v
 }
 
-func (n *NetProcessorRPC) SetHooker(v common.EventHook) {
+func (n *NetProcessorRPC) SetHooker(v iface.HookEvent) {
 	n.Hooker = v
 }
 
-func (n *NetProcessorRPC) SetMsgHandle(v common.IMsgHandle) {
+func (n *NetProcessorRPC) SetMsgHandle(v iface.IMsgHandle) {
 	n.MsgHandle = v
 }
 
-func (n *NetProcessorRPC) SetMsgRouter(msgr common.EventCallBack) {
+func (n *NetProcessorRPC) SetMsgRouter(msgr iface.EventCallBack) {
 	n.MsgRouter = msgr
 }
 
@@ -67,46 +66,4 @@ func (n *NetProcessorRPC) SendMsg(e iface.IProcEvent) error {
 		return n.MsgRPC.OnSendMsg(e.Session(), e.Msg())
 	}
 	return nil
-}
-
-type TCPMessageProcessor struct {
-}
-
-func (tp *TCPMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, err error) {
-	opt := s.Node().(Option)
-	opt.SocketReadTimeout(s, func() {
-		p := TcpDataPacket{}
-		msg, err = p.ReadMessage(s)
-	})
-	return
-}
-
-func (tp *TCPMessageProcessor) OnSendMsg(s iface.ISession, msg interface{}) (err error) {
-	opt := s.Node().(Option)
-	opt.SocketWriteTimeout(s, func() {
-		p := TcpDataPacket{}
-		err = p.SendMessage(s, msg)
-	})
-	return err
-}
-
-type WSMessageProcessor struct {
-}
-
-func (tp *WSMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, err error) {
-	opt := s.Node().(Option)
-	opt.SocketReadTimeout(s, func() {
-		p := WsDataPacket{}
-		msg, err = p.ReadMessage(s)
-	})
-	return
-}
-
-func (tp *WSMessageProcessor) OnSendMsg(s iface.ISession, msg interface{}) (err error) {
-	opt := s.Node().(Option)
-	opt.SocketWriteTimeout(s, func() {
-		p := WsDataPacket{}
-		err = p.SendMessage(s, msg)
-	})
-	return err
 }

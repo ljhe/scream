@@ -1,7 +1,6 @@
 package socket
 
 import (
-	"github.com/ljhe/scream/common"
 	"github.com/ljhe/scream/common/iface"
 	"log"
 )
@@ -25,7 +24,7 @@ func NewServerNode(serverTyp, serverName, addr string) iface.INetNode {
 		return nil
 	}
 	node := f()
-	nodeProperty := node.(common.ServerNodeProperty)
+	nodeProperty := node.(iface.ServerNodeProperty)
 	nodeProperty.SetAddr(addr)
 	nodeProperty.SetName(serverName)
 	return node

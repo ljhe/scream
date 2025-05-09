@@ -1,60 +1,28 @@
 package common
 
-import (
-	"github.com/ljhe/scream/common/iface"
+const (
+	SocketTypTcpAcceptor   = "TcpAcceptor"
+	SocketTypTcpConnector  = "TcpConnector"
+	SocketTypTcpWSAcceptor = "TcpWebSocketAcceptor"
 )
 
-// IMsgHandle 事件处理队列
-type IMsgHandle interface {
-	Start() IMsgHandle
-	Stop() IMsgHandle
-	SetWorkPool(size int)
-	Wait()
-	PostCb(cb func())
-}
+const (
+	ContextSetEtcdKey = "etcd_node"
+	ContextSetCtxKey  = "ctx"
+)
 
-type RcvMsgEvent struct {
-	Sess    iface.ISession
-	Message interface{}
-	Err     error
-}
+const MsgMaxLen = 1024 * 40 // 40k(发送和接受字节最大数量)
 
-func (re *RcvMsgEvent) Session() iface.ISession {
-	return re.Sess
-}
+const (
+	MsgEncryptionRSA = 1
+)
 
-func (re *RcvMsgEvent) Msg() interface{} {
-	return re.Message
-}
+// 服务器节点类型枚举
+// 服务器类型节点Type:[1 gate] [2 game]
+const (
+	ServiceNodeTypeGate    = 1
+	ServiceNodeTypeGateStr = "gate"
 
-type SendMsgEvent struct {
-	Sess    iface.ISession
-	Message interface{}
-}
-
-func (se *SendMsgEvent) Session() iface.ISession {
-	return se.Sess
-}
-
-func (se *SendMsgEvent) Msg() interface{} {
-	return se.Message
-}
-
-type EventHook interface {
-	InEvent(iv iface.IProcEvent) iface.IProcEvent  // 接收事件
-	OutEvent(ov iface.IProcEvent) iface.IProcEvent // 发送事件
-}
-
-// MessageProcessor 消息处理
-type MessageProcessor interface {
-	OnRcvMsg(s iface.ISession) (interface{}, error)
-	OnSendMsg(s iface.ISession, msg interface{}) error
-}
-
-// DataPacket 收发数据
-type DataPacket interface {
-	ReadMessage(s iface.ISession) (interface{}, error)
-	SendMessage(s iface.ISession, msg interface{}) (err error)
-}
-
-type EventCallBack func(e iface.IProcEvent)
+	ServiceNodeTypeGame    = 2
+	ServiceNodeTypeGameStr = "game"
+)

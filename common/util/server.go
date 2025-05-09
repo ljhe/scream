@@ -2,11 +2,11 @@ package util
 
 import (
 	"fmt"
-	"github.com/ljhe/scream/common"
+	"github.com/ljhe/scream/common/iface"
 )
 
 // GenServiceId 生成服务器id
-func GenServiceId(prop common.ServerNodeProperty) string {
+func GenServiceId(prop iface.ServerNodeProperty) string {
 	return fmt.Sprintf("%s#%d@%d@%d",
 		prop.GetName(),
 		prop.GetZone(),

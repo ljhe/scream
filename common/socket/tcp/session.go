@@ -1,7 +1,6 @@
 package tcp
 
 import (
-	"github.com/ljhe/scream/common"
 	"github.com/ljhe/scream/common/iface"
 	"github.com/ljhe/scream/common/socket"
 	"github.com/ljhe/scream/plugins/logrus"
@@ -130,10 +129,10 @@ func (ts *tcpSession) RunRcv() {
 			}
 
 			// 抛出关闭事件
-			ts.ProcEvent(&common.RcvMsgEvent{Sess: ts, Message: &socket.SessionClosed{}, Err: err})
+			ts.ProcEvent(&socket.RcvMsgEvent{Sess: ts, Message: &socket.SessionClosed{}, Err: err})
 			break
 		}
-		ts.ProcEvent(&common.RcvMsgEvent{Sess: ts, Message: msg})
+		ts.ProcEvent(&socket.RcvMsgEvent{Sess: ts, Message: msg})
 	}
 	ts.exitWg.Done()
 }
@@ -152,7 +151,7 @@ func (ts *tcpSession) RunSend() {
 		if data == nil {
 			continue
 		}
-		err := ts.SendMsg(&common.SendMsgEvent{Sess: ts, Message: data})
+		err := ts.SendMsg(&socket.SendMsgEvent{Sess: ts, Message: data})
 		if err != nil {
 			log.Println("send msg err:", err)
 			break
