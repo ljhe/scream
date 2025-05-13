@@ -21,7 +21,7 @@ func CreateAcceptor() iface.INetNode {
 	msgHandle := GetMsgHandle(100)
 	node.(iface.ProcessorRPCBundle).SetMsgHandle(msgHandle)
 
-	msgPrcFunc := pbgo.GetMessageHandler(common.ServiceNodeTypeGameStr)
+	msgPrcFunc := pbgo.GetMessageHandler(common.GetServiceNodeStr(config.SConf.Node.Typ))
 	node.(iface.ProcessorRPCBundle).SetMsgRouter(msgPrcFunc)
 
 	node.(iface.ServerNodeProperty).SetServerNodeProperty()
@@ -70,14 +70,14 @@ func CreateWebSocketAcceptor() iface.INetNode {
 
 	node.(iface.ProcessorRPCBundle).SetMessageProc(new(socket.WSMessageProcessor)) //socket 收发数据处理
 	node.(iface.ProcessorRPCBundle).(iface.ProcessorRPCBundle).SetHooker(new(WsHookEvent))
-	msgPrcFunc := pbgo.GetMessageHandler(common.ServiceNodeTypeGateStr)
+	msgPrcFunc := pbgo.GetMessageHandler(common.GetServiceNodeStr(config.SConf.Node.Typ))
 	node.(iface.ProcessorRPCBundle).(iface.ProcessorRPCBundle).SetMsgRouter(msgPrcFunc)
 
 	if opt, ok := node.(iface.TCPSocketOption); ok {
 		opt.SetSocketBuff(common.MsgMaxLen, common.MsgMaxLen, true)
 		// 40秒无读 30秒无写断开 如果没有心跳了超时直接断开 调试期间可以不加
 		// 通过该方法来模拟心跳保持连接
-		opt.SetSocketDeadline(time.Second*40, time.Second*40)
+		opt.SetSocketDeadline(time.Second*40, time.Second*30)
 		// 读/写协程没有过滤超时事件 发生了操时操作就断开连接
 	}
 

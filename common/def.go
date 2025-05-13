@@ -1,5 +1,7 @@
 package common
 
+import "fmt"
+
 const (
 	SocketTypTcpAcceptor   = "TcpAcceptor"
 	SocketTypTcpConnector  = "TcpConnector"
@@ -26,3 +28,14 @@ const (
 	ServiceNodeTypeGame    = 2
 	ServiceNodeTypeGameStr = "game"
 )
+
+func GetServiceNodeStr(id int) string {
+	switch id {
+	case ServiceNodeTypeGate:
+		return ServiceNodeTypeGateStr
+	case ServiceNodeTypeGame:
+		return ServiceNodeTypeGameStr
+	default:
+		panic(fmt.Sprintf("get service node str error. id:%d", id))
+	}
+}

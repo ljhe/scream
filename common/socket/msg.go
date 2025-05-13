@@ -33,16 +33,16 @@ var MsgOptions = struct {
 	FlagIdLen:      2,
 }
 
-type msgBase struct {
-	msgLen        uint16
-	msgId         uint16
-	chunkNum      uint16
-	chunkId       uint16
-	sendBytes     int
-	actualDataLen int
-	chunkSize     int
-	receivedBytes uint16
-	flagId        uint16
+type MsgBase struct {
+	MsgId         uint16
+	MsgLen        uint16
+	ChunkNum      uint16
+	ChunkId       uint16
+	SendBytes     int
+	ActualDataLen int
+	ChunkSize     int
+	ReceivedBytes uint16
+	FlagId        uint16
 }
 
 var bufPool = sync.Pool{
@@ -85,23 +85,23 @@ func (t *TcpDataPacket) SendMessage(s iface.ISession, msg interface{}) (err erro
 	}
 
 	msgLen := len(msgData)
-	mb := &msgBase{
-		msgLen:    uint16(len(msgData)),
-		msgId:     msgInfo.ID,
-		chunkNum:  uint16(msgLen/common.MsgMaxLen + 1), // 计算分片数量
-		chunkId:   1,
-		sendBytes: 0,
+	mb := &MsgBase{
+		MsgLen:    uint16(len(msgData)),
+		MsgId:     msgInfo.ID,
+		ChunkNum:  uint16(msgLen/common.MsgMaxLen + 1), // 计算分片数量
+		ChunkId:   1,
+		SendBytes: 0,
 	}
 
-	for mb.sendBytes < int(mb.msgLen) {
+	for mb.SendBytes < int(mb.MsgLen) {
 		data := mb.Marshal(msgData)
 		// 如果使用内存池 会导致每次发送的包里都会有空数据 所以写入的时候只写入有效数据的部分
-		err = WriteFull(writer, data[:mb.actualDataLen])
+		err = WriteFull(writer, data[:mb.ActualDataLen])
 		if err != nil {
 			return err
 		}
-		mb.sendBytes += mb.chunkSize
-		mb.chunkId++
+		mb.SendBytes += mb.ChunkSize
+		mb.ChunkId++
 		mb.Release(data)
 	}
 	return nil
@@ -149,9 +149,9 @@ func (w *WsDataPacket) SendMessage(s iface.ISession, msg interface{}) (err error
 	if msgDataLen > opt.MaxMsgLen() {
 		return fmt.Errorf("ws sendMessage too big. msgId=%v msglen=%v maxlen=%v", 1, msgDataLen, opt.MaxMsgLen())
 	}
-	mb := &msgBase{
-		msgId:  msgInfo.ID,
-		flagId: 1,
+	mb := &MsgBase{
+		MsgId:  msgInfo.ID,
+		FlagId: 1,
 	}
 	buf := mb.MarshalBytes(msgData)
 	err = conn.WriteMessage(websocket.BinaryMessage, buf)
@@ -160,16 +160,16 @@ func (w *WsDataPacket) SendMessage(s iface.ISession, msg interface{}) (err error
 
 // RcvPackageData 获取原始包数据
 func RcvPackageData(reader io.Reader) ([]byte, uint16, error) {
-	mb := &msgBase{}
+	mb := &MsgBase{}
 	bufMsg, err := mb.Unmarshal(reader)
-	return bufMsg, mb.msgId, err
+	return bufMsg, mb.MsgId, err
 }
 
 // RcvPackageDataByByte 通过 []byte 获取原始包数据
 func RcvPackageDataByByte(bt []byte) ([]byte, uint16, error) {
-	mb := &msgBase{}
+	mb := &MsgBase{}
 	bufMsg, err := mb.UnmarshalBytes(bt)
-	return bufMsg, mb.msgId, err
+	return bufMsg, mb.MsgId, err
 }
 
 func WriteFull(writer io.Writer, buf []byte) error {
@@ -223,80 +223,80 @@ func readUint16(reader io.Reader, byteLen uint16) (uint16, error) {
 	return btUint16, nil
 }
 
-func (mb *msgBase) Marshal(msgData []byte) []byte {
-	remaining := int(mb.msgLen) - mb.sendBytes
-	mb.chunkSize = common.MsgMaxLen
-	if remaining < mb.chunkSize {
-		mb.chunkSize = remaining
+func (mb *MsgBase) Marshal(msgData []byte) []byte {
+	remaining := int(mb.MsgLen) - mb.SendBytes
+	mb.ChunkSize = common.MsgMaxLen
+	if remaining < mb.ChunkSize {
+		mb.ChunkSize = remaining
 	}
-	mb.actualDataLen = int(MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen+MsgOptions.MsgChunkNumLen+MsgOptions.MsgChunkIdLen) + mb.chunkSize
+	mb.ActualDataLen = int(MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen+MsgOptions.MsgChunkNumLen+MsgOptions.MsgChunkIdLen) + mb.ChunkSize
 	data := mb.Container()
 	// msgBodyLen
-	binary.BigEndian.PutUint16(data, mb.msgLen)
+	binary.BigEndian.PutUint16(data, mb.MsgLen)
 	// msgIdLen
-	binary.BigEndian.PutUint16(data[MsgOptions.MsgBodyLen:], mb.msgId)
+	binary.BigEndian.PutUint16(data[MsgOptions.MsgBodyLen:], mb.MsgId)
 	// chunkNumLen
-	binary.BigEndian.PutUint16(data[MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen:], mb.chunkNum)
+	binary.BigEndian.PutUint16(data[MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen:], mb.ChunkNum)
 	// chunkIdLen
-	binary.BigEndian.PutUint16(data[MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen+MsgOptions.MsgChunkNumLen:], mb.chunkId)
+	binary.BigEndian.PutUint16(data[MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen+MsgOptions.MsgChunkNumLen:], mb.ChunkId)
 	// msgBody
 	copy(data[MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen+MsgOptions.MsgChunkNumLen+MsgOptions.MsgChunkIdLen:],
-		msgData[mb.sendBytes:mb.sendBytes+mb.chunkSize])
+		msgData[mb.SendBytes:mb.SendBytes+mb.ChunkSize])
 	return data
 }
 
-func (mb *msgBase) Unmarshal(reader io.Reader) ([]byte, error) {
+func (mb *MsgBase) Unmarshal(reader io.Reader) ([]byte, error) {
 	var bufMsg = []byte{}
 	var err error
 	var fId uint16 // chunkId=1时的msgId
 	for {
 		// msgBodyLen
-		mb.msgLen, err = readUint16(reader, MsgOptions.MsgBodyLen)
+		mb.MsgLen, err = readUint16(reader, MsgOptions.MsgBodyLen)
 		if err != nil {
 			return nil, err
 		}
 		// msgId
-		mb.msgId, err = readUint16(reader, MsgOptions.MsgIdLen)
+		mb.MsgId, err = readUint16(reader, MsgOptions.MsgIdLen)
 		if err != nil {
 			return nil, err
 		}
 		// chunkNum
-		mb.chunkNum, err = readUint16(reader, MsgOptions.MsgChunkNumLen)
+		mb.ChunkNum, err = readUint16(reader, MsgOptions.MsgChunkNumLen)
 		if err != nil {
 			return nil, err
 		}
 		// chunkId
-		mb.chunkId, err = readUint16(reader, MsgOptions.MsgChunkIdLen)
+		mb.ChunkId, err = readUint16(reader, MsgOptions.MsgChunkIdLen)
 		if err != nil {
 			return nil, err
 		}
-		if mb.chunkId == 1 {
-			fId = mb.msgId
+		if mb.ChunkId == 1 {
+			fId = mb.MsgId
 		}
 
 		if len(bufMsg) == 0 {
-			bufMsg = make([]byte, mb.msgLen)
+			bufMsg = make([]byte, mb.MsgLen)
 		}
-		remaining := mb.msgLen - mb.receivedBytes
-		mb.chunkSize = common.MsgMaxLen
-		if remaining < uint16(mb.chunkSize) {
-			mb.chunkSize = int(remaining)
+		remaining := mb.MsgLen - mb.ReceivedBytes
+		mb.ChunkSize = common.MsgMaxLen
+		if remaining < uint16(mb.ChunkSize) {
+			mb.ChunkSize = int(remaining)
 		}
 
-		mb.actualDataLen = mb.chunkSize
+		mb.ActualDataLen = mb.ChunkSize
 		buf := mb.Container()
 		// 如果使用内存池  分配的buf内存可能会大于实际数据长度 所以这里只读取有效数据的长度
-		_, err = io.ReadFull(reader, buf[:mb.chunkSize])
+		_, err = io.ReadFull(reader, buf[:mb.ChunkSize])
 		if err != nil {
 			return nil, err
 		}
-		copy(bufMsg[mb.receivedBytes:], buf)
+		copy(bufMsg[mb.ReceivedBytes:], buf)
 		mb.Release(buf)
-		mb.receivedBytes += uint16(mb.chunkSize)
-		if mb.chunkId >= mb.chunkNum {
+		mb.ReceivedBytes += uint16(mb.ChunkSize)
+		if mb.ChunkId >= mb.ChunkNum {
 			break
 		}
-		if mb.msgId != fId {
+		if mb.MsgId != fId {
 			break
 		}
 	}
@@ -309,7 +309,7 @@ func (mb *msgBase) Unmarshal(reader io.Reader) ([]byte, error) {
 // 所以对于客户端而言 只能去使用公钥来加密 而不能进行使用私钥来解密这类操作
 // 所以加密 一般只是客户端到服务端来进行加密
 // 如果客户端需要验证 推荐[服务端使用私钥对消息签名 客户端用公钥验证签名] 从而让客户端来验证消息的合法性
-func (mb *msgBase) MarshalBytes(msgData []byte) []byte {
+func (mb *MsgBase) MarshalBytes(msgData []byte) []byte {
 	msgDataLen := len(msgData)
 	data := make([]byte, MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen+MsgOptions.FlagIdLen+uint16(msgDataLen))
 
@@ -317,9 +317,9 @@ func (mb *msgBase) MarshalBytes(msgData []byte) []byte {
 	// MsgBodyLen
 	binary.BigEndian.PutUint16(data, uint16(msgDataLen))
 	// MsgIdLen
-	binary.BigEndian.PutUint16(data[MsgOptions.MsgBodyLen:], mb.msgId)
+	binary.BigEndian.PutUint16(data[MsgOptions.MsgBodyLen:], mb.MsgId)
 	// FlagIdLen
-	binary.BigEndian.PutUint16(data[MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen:], mb.flagId)
+	binary.BigEndian.PutUint16(data[MsgOptions.MsgBodyLen+MsgOptions.MsgIdLen:], mb.FlagId)
 
 	// body
 	if msgDataLen > 0 {
@@ -329,35 +329,35 @@ func (mb *msgBase) MarshalBytes(msgData []byte) []byte {
 }
 
 // UnmarshalBytes 数据格式 package = MsgBodyLen + MsgIdLen + FlagIdLen + msgData
-func (mb *msgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
+func (mb *MsgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
 	var msgBodyLen uint16 // 请求长度
 	if len(bytes) < int(MsgOptions.MsgBodyLen) {
-		logrus.Log(logrus.LogsSystem).Errorf("msgBase UnmarshalBytes MsgBodyLen err. bytes'len: %d", len(bytes))
+		logrus.Log(logrus.LogsSystem).Errorf("MsgBase UnmarshalBytes MsgBodyLen err. bytes'len: %d", len(bytes))
 		return
 	}
 	msgBodyLen = binary.BigEndian.Uint16(bytes)
-	mb.actualDataLen = int(msgBodyLen)
+	mb.ActualDataLen = int(msgBodyLen)
 	bytes = bytes[MsgOptions.MsgBodyLen:]
 
 	if len(bytes) < int(MsgOptions.MsgIdLen) {
-		logrus.Log(logrus.LogsSystem).Errorf("msgBase UnmarshalBytes MsgIdLen err. bytes'len: %d", len(bytes))
+		logrus.Log(logrus.LogsSystem).Errorf("MsgBase UnmarshalBytes MsgIdLen err. bytes'len: %d", len(bytes))
 		return
 	}
-	mb.msgId = binary.BigEndian.Uint16(bytes)
+	mb.MsgId = binary.BigEndian.Uint16(bytes)
 	bytes = bytes[MsgOptions.MsgIdLen:]
 
 	if len(bytes) < int(MsgOptions.FlagIdLen) {
-		logrus.Log(logrus.LogsSystem).Errorf("msgBase UnmarshalBytes FlagIdLen err. bytes'len: %d", len(bytes))
+		logrus.Log(logrus.LogsSystem).Errorf("MsgBase UnmarshalBytes FlagIdLen err. bytes'len: %d", len(bytes))
 		return
 	}
-	mb.flagId = binary.BigEndian.Uint16(bytes)
+	mb.FlagId = binary.BigEndian.Uint16(bytes)
 	msgData = bytes[MsgOptions.FlagIdLen:]
 
-	switch mb.flagId {
+	switch mb.FlagId {
 	case common.MsgEncryptionRSA:
 		msgData, err = encryption.RSADecrypt(msgData, encryption.RSAWSPrivateKey)
 	default:
-		logrus.Log(logrus.LogsSystem).Errorf("msgBase flagId err. flagId: %d", mb.flagId)
+		logrus.Log(logrus.LogsSystem).Errorf("MsgBase flagId err. flagId: %d", mb.FlagId)
 		return
 	}
 
@@ -365,18 +365,18 @@ func (mb *msgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
 }
 
 // 仿照go底层crypto\tls\conn中的sync.Pool
-func (mb *msgBase) Container() []byte {
+func (mb *MsgBase) Container() []byte {
 	// 使用内存池
 	if MsgOptions.Pool {
 		//return mpool.GetMemoryPool(mpool.SystemMemoryPoolKey).Get(mb.actualDataLen)
 		outBuf := bufPool.Get().([]byte)
-		_, outBuf = sliceForAppend(outBuf[:0], mb.actualDataLen)
+		_, outBuf = sliceForAppend(outBuf[:0], mb.ActualDataLen)
 		return outBuf
 	}
-	return make([]byte, mb.actualDataLen)
+	return make([]byte, mb.ActualDataLen)
 }
 
-func (mb *msgBase) Release(data []byte) {
+func (mb *MsgBase) Release(data []byte) {
 	if MsgOptions.Pool {
 		//mpool.GetMemoryPool(mpool.SystemMemoryPoolKey).Put(data)
 		bufPool.Put(data[:0])

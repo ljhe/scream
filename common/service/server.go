@@ -52,8 +52,8 @@ func StartUp() {
 		nodes = append(nodes, CreateWebSocketAcceptor())
 	}
 
+	multiNode := plugins.NewMultiServerNode()
 	for _, connect := range config.SConf.Node.Connect {
-		multiNode := plugins.NewMultiServerNode()
 		CreateConnector(connect, multiNode)
 	}
 	logrus.Log(logrus.LogsSystem).Info(fmt.Sprintf("[ %s ] start success ...", config.SConf.Node.Name))

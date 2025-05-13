@@ -13,6 +13,7 @@ type NetProcessorRPC struct {
 	Hooker    iface.HookEvent        // 不进入主消息队列 直接操作
 	MsgHandle iface.IMsgHandle
 	MsgRouter iface.EventCallBack
+	count     int // 记录当前队列中消息数量
 }
 
 func (n *NetProcessorRPC) SetMessageProc(v iface.MessageProcessor) {
@@ -36,6 +37,7 @@ func (n *NetProcessorRPC) GetRPC() *NetProcessorRPC {
 }
 
 func (n *NetProcessorRPC) ProcEvent(e iface.IProcEvent) {
+	n.count++
 	if n.Hooker != nil {
 		e = n.Hooker.InEvent(e)
 	}
@@ -49,6 +51,7 @@ func (n *NetProcessorRPC) ProcEvent(e iface.IProcEvent) {
 			})
 		}
 	}
+	fmt.Printf("proc event msg count:%d \n", n.count)
 }
 
 func (n *NetProcessorRPC) ReadMsg(s iface.ISession) (interface{}, error) {
