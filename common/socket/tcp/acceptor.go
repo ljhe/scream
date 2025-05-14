@@ -13,13 +13,13 @@ import (
 )
 
 type tcpAcceptor struct {
-	socket.NetRuntimeTag         // 节点运行状态相关
-	socket.NetTCPSocketOption    // socket相关设置
-	socket.NetProcessorRPC       // 事件处理相关
-	socket.NetServerNodeProperty // 节点配置属性相关
-	socket.NetContextSet         // 节点上下文相关
-	socket.SessionManager        // 会话管理
-	listener                     net.Listener
+	socket.RuntimeTag         // 节点运行状态相关
+	socket.TCPSocketOption    // socket相关设置
+	socket.Processor          // 事件处理相关
+	socket.ServerNodeProperty // 节点配置属性相关
+	socket.ContextSet         // 节点上下文相关
+	socket.SessionManager     // 会话管理
+	listener                  net.Listener
 }
 
 func (t *tcpAcceptor) Start() iface.INetNode {
@@ -78,7 +78,7 @@ func init() {
 		node := &tcpAcceptor{
 			SessionManager: socket.NewNetSessionManager(),
 		}
-		node.NetTCPSocketOption.Init()
+		node.TCPSocketOption.Init()
 		return node
 	})
 	log.Println("tcp acceptor register success.")

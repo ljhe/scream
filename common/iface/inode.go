@@ -10,27 +10,27 @@ type INetNode interface {
 	GetTyp() string
 }
 
-type RuntimeTag interface {
+type IRuntimeTag interface {
 	SetCloseFlag(b bool)
 	GetCloseFlag() bool
 	SetRunState(b bool)
 	GetRunState() bool
 }
 
-// TCPSocketOption socket相关设置
-type TCPSocketOption interface {
+// ITCPSocketOption socket相关设置
+type ITCPSocketOption interface {
 	SetSocketBuff(read, write int, noDelay bool)
 	SetSocketDeadline(read, write time.Duration)
 }
 
-type ProcessorRPCBundle interface {
-	SetMessageProc(v MessageProcessor)
-	SetHooker(v HookEvent)
+type IProcessor interface {
+	SetMessageProc(v IMessageProcessor)
+	SetHooker(v IHookEvent)
 	SetMsgHandle(v IMsgHandle)
 	SetMsgRouter(v EventCallBack)
 }
 
-type ServerNodeProperty interface {
+type IServerNodeProperty interface {
 	SetAddr(a string)
 	GetAddr() string
 	SetName(s string)
@@ -44,7 +44,7 @@ type ServerNodeProperty interface {
 	SetServerNodeProperty()
 }
 
-type ContextSet interface {
+type IContextSet interface {
 	SetContextData(key, val interface{})
 	GetContextData(key interface{}) (interface{}, bool)
 	RawContextData(key interface{}, ptr interface{}) bool

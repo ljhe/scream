@@ -6,7 +6,7 @@ import (
 )
 
 // GenServiceId 生成服务器id
-func GenServiceId(prop iface.ServerNodeProperty) string {
+func GenServiceId(prop iface.IServerNodeProperty) string {
 	return fmt.Sprintf("%s#%d@%d@%d",
 		prop.GetName(),
 		prop.GetZone(),

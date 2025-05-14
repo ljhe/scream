@@ -1,7 +1,6 @@
 package websocket
 
 import (
-	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/ljhe/scream/common/iface"
 	"github.com/ljhe/scream/common/socket"
@@ -12,26 +11,23 @@ import (
 )
 
 var sendQueueMaxLen = 2000
-var rcvQueueMaxLen = 2000
 
 type wsSession struct {
 	sync.Mutex
-	*socket.NetProcessorRPC // 事件处理相关 procrpc.go
-	socket.NetContextSet    // 记录session绑定信息 nodeproperty.go
-	node                    iface.INetNode
-	conn                    *websocket.Conn
+	*socket.Processor // 事件处理相关 processor.go
+	socket.ContextSet // 记录session绑定信息 nodeproperty.go
+	node              iface.INetNode
+	conn              *websocket.Conn
 
 	exitWg      sync.WaitGroup
 	id          uint64
 	endCallback func()
 	close       int64
 
-	sessionOpt socket.NetTCPSocketOption
+	sessionOpt socket.TCPSocketOption
 
 	sendQueue       chan interface{} // 消息发送队列
-	rcvQueue        chan interface{} // 消息接收队列
 	sendQueueMaxLen int
-	rcvQueueMaxLen  int
 }
 
 func (s *wsSession) SetConn(c *websocket.Conn) {
@@ -110,19 +106,16 @@ func (s *wsSession) start() {
 	atomic.StoreInt64(&s.close, 0)
 
 	s.sendQueueMaxLen = sendQueueMaxLen
-	s.rcvQueueMaxLen = rcvQueueMaxLen
 	// todo 暂时默认发送 接收队列长度2000
 	s.sendQueue = make(chan interface{}, s.sendQueueMaxLen+1)
-	s.rcvQueue = make(chan interface{}, s.rcvQueueMaxLen+1)
 
-	s.exitWg.Add(3)
+	s.exitWg.Add(2)
 	s.node.(socket.SessionManager).Add(s)
 
 	go func() {
 		s.exitWg.Wait()
 		// 结束操作处理
 		close(s.sendQueue)
-		close(s.rcvQueue)
 
 		s.node.(socket.SessionManager).Remove(s)
 		if s.endCallback != nil {
@@ -132,7 +125,6 @@ func (s *wsSession) start() {
 
 	go s.RunRcv()
 	go s.RunSend()
-	go s.RunRcvQueue()
 }
 
 func (s *wsSession) RunRcv() {
@@ -157,16 +149,12 @@ func (s *wsSession) RunRcv() {
 			}
 
 			// 抛出关闭事件
-			//s.ProcEvent(&socket.RcvMsgEvent{Sess: s, Message: &socket.SessionClosed{}, Err: err})
-			s.rcvQueue <- nil
+			s.ProcEvent(&socket.RcvMsgEvent{Sess: s, Message: &socket.SessionClosed{}, Err: err})
 			break
 		}
 
 		// 接收数据事件放到队列中(需要放到队列中，否则会有线程冲突)
-		// 单线程
-		//s.ProcEvent(&socket.RcvMsgEvent{Sess: s, Message: msg, Err: nil})
-		// 多线程
-		s.rcvQueue <- msg
+		s.ProcEvent(&socket.RcvMsgEvent{Sess: s, Message: msg, Err: nil})
 	}
 
 	logrus.Log(logrus.LogsSystem).Infof("wsSession exit addr:%v", s.conn.LocalAddr())
@@ -202,40 +190,16 @@ func (s *wsSession) RunSend() {
 	s.exitWg.Done()
 }
 
-func (s *wsSession) RunRcvQueue() {
-	defer func() {
-		// 打印堆栈信息
-		if err := recover(); err != nil {
-			logrus.Log(logrus.LogsSystem).Errorf("wsSession Stack---::%v\n %s\n", err, string(debug.Stack()))
-			debug.PrintStack()
-		}
-	}()
-
-	for data := range s.rcvQueue {
-		if data == nil {
-			break
-		}
-		fmt.Println(fmt.Sprintf("rcv queue data:%v \n", data))
-		// TODO 根据消息的不同类型来转发到不同的地方
-		//err := s.SendMsg(&socket.SendMsgEvent{Sess: s, Message: data})
-		//if err != nil {
-		//	logrus.Log(logrus.LogsSystem).Errorf("wsSession RunSend SendMsg err:%v \n", err)
-		//	break
-		//}
-	}
-
-	logrus.Log(logrus.LogsSystem).Infof("wsSession RunRcvQueue exit. sessionId=%d", s.id)
-	s.exitWg.Done()
-}
-
 func newWebSocketSession(conn *websocket.Conn, node iface.INetNode, endCallback func()) *wsSession {
 	session := &wsSession{
 		conn:        conn,
 		node:        node,
 		endCallback: endCallback,
-		NetProcessorRPC: node.(interface {
-			GetRPC() *socket.NetProcessorRPC
-		}).GetRPC(), // 使用外层node的RPC处理接口
+		// 在session中初始化 每一个session 一个处理消息的队列 实现多进程
+		Processor: &socket.Processor{
+			MsgProc: new(socket.WSMessageProcessor),
+			Hooker:  new(socket.WsHookEvent),
+		},
 	}
 	node.(socket.Option).CopyOpt(&session.sessionOpt)
 	return session

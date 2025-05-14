@@ -3,7 +3,6 @@ package tests
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
-	"github.com/ljhe/scream/common/config"
 	"github.com/ljhe/scream/common/encryption"
 	"github.com/ljhe/scream/common/service"
 	"github.com/ljhe/scream/common/socket"
@@ -13,11 +12,6 @@ import (
 	"testing"
 	"time"
 )
-
-func TestWSAcceptor(t *testing.T) {
-	*config.ServerConfigPath = "./config.yaml"
-	service.StartUp()
-}
 
 func TestWSConnector(t *testing.T) {
 	for i := 0; i < 10; i++ {

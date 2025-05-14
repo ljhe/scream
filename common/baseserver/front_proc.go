@@ -11,7 +11,7 @@ var ErrUserHasBeenBind = errors.New(fmt.Sprintf("user has been bind"))
 func CreateUser(cliSession iface.ISession, openId, platform string) *ClientUser {
 	user := ClientUserManager.AddClient(cliSession, openId, platform)
 	// 绑定到对应的session上 一个session对应一个玩家
-	cliSession.(iface.ContextSet).SetContextData("user", user)
+	cliSession.(iface.IContextSet).SetContextData("user", user)
 	return user
 }
 
@@ -19,7 +19,7 @@ func SessionUser(cliSession iface.ISession) *ClientUser {
 	if cliSession == nil {
 		return nil
 	}
-	if data, ok := cliSession.(iface.ContextSet).GetContextData("user"); ok {
+	if data, ok := cliSession.(iface.IContextSet).GetContextData("user"); ok {
 		if data == nil {
 			return nil
 		}

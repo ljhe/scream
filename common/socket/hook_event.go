@@ -1,10 +1,9 @@
-package service
+package socket
 
 import (
 	"github.com/ljhe/scream/common"
 	"github.com/ljhe/scream/common/baseserver"
 	"github.com/ljhe/scream/common/iface"
-	"github.com/ljhe/scream/common/socket"
 	"github.com/ljhe/scream/common/util"
 	"github.com/ljhe/scream/pbgo"
 	plugins "github.com/ljhe/scream/plugins/etcd"
@@ -18,15 +17,15 @@ type ServerHookEvent struct {
 
 func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	switch msg := iv.Msg().(type) {
-	case *socket.SessionAccepted:
+	case *SessionAccepted:
 		logrus.Log(logrus.LogsSystem).Printf("receive SessionAccepted success. session:%d \n", iv.Session().GetId())
 		return nil
-	case *socket.SessionConnected:
+	case *SessionConnected:
 		// 从内存中的etcd获取服务器信息
-		ctx := iv.Session().Node().(iface.ContextSet)
+		ctx := iv.Session().Node().(iface.IContextSet)
 		var ed *plugins.ETCDServiceDesc
 		if ctx.RawContextData(common.ContextSetEtcdKey, &ed) {
-			prop := iv.Session().Node().(iface.ServerNodeProperty)
+			prop := iv.Session().Node().(iface.IServerNodeProperty)
 			// 连接上服务器节点后 发送确认信息 告诉对端自己的服务器信息
 			iv.Session().Send(&pbgo.ServiceIdentifyACK{
 				ServiceId:       util.GenServiceId(prop),
@@ -57,7 +56,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		return nil
 	case *pbgo.PingReq:
 		// 来自ServiceIdentifyACK接收端的服务器信息
-		ctx := iv.Session().(iface.ContextSet)
+		ctx := iv.Session().(iface.IContextSet)
 		var ed *plugins.ETCDServiceDesc
 		iv.Session().IncRcvPingNum(1)
 		if iv.Session().RcvPingNum() >= 10 {
@@ -69,7 +68,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		iv.Session().Send(&pbgo.PingAck{Ms: time.Now().UnixMilli()})
 		return nil
 	case *pbgo.PingAck:
-		ctx := iv.Session().(iface.ContextSet)
+		ctx := iv.Session().(iface.IContextSet)
 		var ed *plugins.ETCDServiceDesc
 		iv.Session().IncRcvPingNum(1)
 		if iv.Session().RcvPingNum() >= 10 {
@@ -79,7 +78,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 			}
 		}
 		return nil
-	case *socket.SessionClosed:
+	case *SessionClosed:
 		sid := baseserver.RemoveServiceNode(iv.Session())
 		logrus.Log(logrus.LogsSystem).Printf("SessionClosed sessionId=%v sid=%v \n", iv.Session().GetId(), sid)
 		return nil
@@ -101,17 +100,18 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	case *pbgo.CSPingReq:
 		iv.Session().Send(&pbgo.SCPingAck{})
 		return nil
-	case *socket.SessionClosed:
-		e := iv.(*socket.RcvMsgEvent)
+	case *SessionClosed:
+		e := iv.(*RcvMsgEvent)
 		if e.Err != nil {
 			logrus.Log(logrus.LogsSystem).Infof("ws session closed. err:%v", e.Err)
 		}
 		return nil
-	case *socket.SessionAccepted:
+	case *SessionAccepted:
 		logrus.Log(logrus.LogsSystem).Infof("WS-SessionConnected cliId=%v", iv.Session().GetId())
 		return nil
 	case *pbgo.CSSendMsgReq:
 		m := iv.Msg().(*pbgo.CSSendMsgReq)
+		logrus.Log(logrus.LogsSystem).Infof("receive client msg. sessionId:%d msg:%v", iv.Session().GetId(), m.Msg)
 		iv.Session().Send(&pbgo.SCSendMsgAck{Msg: m.Msg})
 		return nil
 	case *pbgo.CSLoginReq:

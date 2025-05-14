@@ -15,11 +15,11 @@ import (
 )
 
 type tcpWebSocketAcceptor struct {
-	socket.NetRuntimeTag      // 运行状态
-	socket.NetTCPSocketOption // socket相关设置
-	socket.NetProcessorRPC    // 事件处理相关
-	socket.NetServerNodeProperty
-	socket.NetContextSet
+	socket.RuntimeTag      // 运行状态
+	socket.TCPSocketOption // socket相关设置
+	socket.Processor       // 事件处理相关
+	socket.ServerNodeProperty
+	socket.ContextSet
 	socket.SessionManager // 会话管理
 
 	listener net.Listener // 保存端口
@@ -142,7 +142,7 @@ func init() {
 				},
 			},
 		}
-		node.NetTCPSocketOption.Init()
+		node.TCPSocketOption.Init()
 		return node
 	})
 	log.Println("ws acceptor register success.")

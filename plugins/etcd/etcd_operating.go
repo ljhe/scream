@@ -34,7 +34,7 @@ func (e *ETCDServiceDesc) String() string {
 }
 
 func ETCDRegister(node iface.INetNode) *ETCDServiceDesc {
-	property := node.(iface.ServerNodeProperty)
+	property := node.(iface.IServerNodeProperty)
 	ed := &ETCDServiceDesc{
 		Id:    util.GenServiceId(property),
 		Name:  property.GetName(),

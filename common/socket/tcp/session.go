@@ -15,18 +15,18 @@ import (
 var sendQueueMaxLen = 2000
 
 type tcpSession struct {
-	*socket.NetProcessorRPC // 事件处理相关
-	socket.NetContextSet    // 记录session绑定信息
-	node                    iface.INetNode
-	conn                    net.Conn
-	close                   int64
-	sendQueue               chan interface{}
-	sendQueueMaxLen         int
-	sessionOpt              socket.NetTCPSocketOption
-	exitWg                  sync.WaitGroup
-	id                      uint64
-	rcvPingNum              int
-	mu                      sync.Mutex
+	*socket.Processor // 事件处理相关
+	socket.ContextSet // 记录session绑定信息
+	node              iface.INetNode
+	conn              net.Conn
+	close             int64
+	sendQueue         chan interface{}
+	sendQueueMaxLen   int
+	sessionOpt        socket.TCPSocketOption
+	exitWg            sync.WaitGroup
+	id                uint64
+	rcvPingNum        int
+	mu                sync.Mutex
 }
 
 func (ts *tcpSession) SetConn(c net.Conn) {
@@ -75,8 +75,8 @@ func newTcpSession(c net.Conn, node iface.INetNode) *tcpSession {
 		node:            node,
 		sendQueueMaxLen: sendQueueMaxLen,
 		sendQueue:       make(chan interface{}, sendQueueMaxLen),
-		NetProcessorRPC: node.(interface {
-			GetRPC() *socket.NetProcessorRPC
+		Processor: node.(interface {
+			GetRPC() *socket.Processor
 		}).GetRPC(),
 	}
 	node.(socket.Option).CopyOpt(&sess.sessionOpt)

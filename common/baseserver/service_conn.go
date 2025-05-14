@@ -23,7 +23,7 @@ func AddServiceNode(session iface.ISession, sid, name string, from string) {
 		log.Println("AddServiceNode error:", err)
 		return
 	}
-	session.(iface.ContextSet).SetContextData(common.ContextSetCtxKey, &plugins.ETCDServiceDesc{
+	session.(iface.IContextSet).SetContextData(common.ContextSetCtxKey, &plugins.ETCDServiceDesc{
 		Id:    sid,
 		Name:  name,
 		Typ:   typ,
@@ -74,7 +74,7 @@ func GetServiceNode(sid string) iface.ISession {
 }
 
 func SessionContextEtcd(session iface.ISession) *plugins.ETCDServiceDesc {
-	if ed, ok := session.(iface.ContextSet).GetContextData(common.ContextSetCtxKey); ok {
+	if ed, ok := session.(iface.IContextSet).GetContextData(common.ContextSetCtxKey); ok {
 		return ed.(*plugins.ETCDServiceDesc)
 	}
 	return nil
@@ -144,7 +144,7 @@ func selectServiceNode(serviceName string, id uint64) string {
 
 	var retIDList []string
 	for _, node := range serviceConnBySid {
-		if raw, ok := node.(iface.ContextSet).GetContextData("ctx"); ok {
+		if raw, ok := node.(iface.IContextSet).GetContextData("ctx"); ok {
 			sid := raw.(*plugins.ETCDServiceDesc)
 			if sid.Name == serviceName {
 				retIDList = append(retIDList, sid.Id)
