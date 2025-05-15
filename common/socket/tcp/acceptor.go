@@ -18,7 +18,7 @@ type tcpAcceptor struct {
 	socket.Processor          // 事件处理相关
 	socket.ServerNodeProperty // 节点配置属性相关
 	socket.ContextSet         // 节点上下文相关
-	socket.SessionManager     // 会话管理
+	iface.ISessionManager     // 会话管理
 	listener                  net.Listener
 }
 
@@ -76,7 +76,7 @@ func (t *tcpAcceptor) GetTyp() string {
 func init() {
 	socket.RegisterServerNode(func() iface.INetNode {
 		node := &tcpAcceptor{
-			SessionManager: socket.NewNetSessionManager(),
+			ISessionManager: socket.NewSessionManager(),
 		}
 		node.TCPSocketOption.Init()
 		return node
@@ -106,7 +106,7 @@ func (t *tcpAcceptor) tcpAccept() {
 		log.Println("tcp accept success. remoteAddr:", conn.RemoteAddr())
 		//go t.deal(conn)
 		func() {
-			session := newTcpSession(conn, t)
+			session := NewTcpSession(conn, t)
 			session.Start()
 			// 通知上层主事件 (将回调放入队列中 防止多线程冲突)
 			t.ProcEvent(&socket.RcvMsgEvent{Sess: session, Message: &socket.SessionAccepted{}})

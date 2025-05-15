@@ -8,77 +8,78 @@ import (
 	"time"
 )
 
-type SessionManager interface {
-	Add(s iface.ISession)
-	Remove(s iface.ISession)
-	SetUuidCreateKey(genKey int)
-	CloseAllSession()
-}
-
-type NetSessionManager struct {
+type SessionManager struct {
 	genKey        int
 	lastTimeStamp uint64
 	sequence      uint64
 	sessionMap    sync.Map
 }
 
-func NewNetSessionManager() *NetSessionManager {
-	return &NetSessionManager{
+func NewSessionManager() *SessionManager {
+	return &SessionManager{
 		lastTimeStamp: util.GetCurrentTimeMs(),
 	}
 }
 
-func (n *NetSessionManager) Add(s iface.ISession) {
-	id := n.genSessionId()
+func (sm *SessionManager) Add(s iface.ISession) {
+	id := sm.genSessionId()
 	s.SetId(id)
-	if _, ok := n.sessionMap.Load(id); ok {
+	if _, ok := sm.sessionMap.Load(id); ok {
 		log.Panic("session id already exists. id:", id)
 	}
-	n.sessionMap.Store(id, s)
+	sm.sessionMap.Store(id, s)
 }
 
-func (n *NetSessionManager) Remove(s iface.ISession) {
-	n.sessionMap.Delete(s.GetId())
+func (sm *SessionManager) Get(sessionId uint64) (iface.ISession, bool) {
+	val, ok := sm.sessionMap.Load(sessionId)
+	if !ok {
+		return nil, ok
+	}
+	return val.(iface.ISession), ok
 }
 
-func (n *NetSessionManager) CloseAllSession() {
-	n.sessionMap.Range(func(key, value interface{}) bool {
+func (sm *SessionManager) Remove(s iface.ISession) {
+	sm.sessionMap.Delete(s.GetId())
+}
+
+func (sm *SessionManager) CloseAllSession() {
+	sm.sessionMap.Range(func(key, value interface{}) bool {
 		value.(iface.ISession).Close()
 		return true
 	})
 }
 
-func (n *NetSessionManager) SetUuidCreateKey(genKey int) {
-	n.genKey = genKey
+func (sm *SessionManager) SetUuidCreateKey(genKey int) {
+	sm.genKey = genKey
 }
 
 // 临时使用的id 只保证同一个server内唯一 一秒钟最大产生65536个
-func (n *NetSessionManager) genSessionId() uint64 {
+func (sm *SessionManager) genSessionId() uint64 {
 	currentTimeStamp := uint64(time.Now().Unix())
-	if n.lastTimeStamp == 0 {
-		n.lastTimeStamp = currentTimeStamp
+	if sm.lastTimeStamp == 0 {
+		sm.lastTimeStamp = currentTimeStamp
 	}
 
-	if n.genKey > 0xff {
+	if sm.genKey > 0xff {
 		return 0
 	}
-	if n.lastTimeStamp == currentTimeStamp {
-		n.sequence++
-		if n.sequence > 0xffff {
+	if sm.lastTimeStamp == currentTimeStamp {
+		sm.sequence++
+		if sm.sequence > 0xffff {
 			// 一秒内尝试的数量超过上限
 			return 0
 		}
 	} else {
-		n.lastTimeStamp = currentTimeStamp
-		n.sequence = 1
+		sm.lastTimeStamp = currentTimeStamp
+		sm.sequence = 1
 	}
 
 	var uid uint64 = 0
 	// 前40位时间戳（秒）
-	uid |= n.lastTimeStamp << 24
+	uid |= sm.lastTimeStamp << 24
 	// 16位序列号
-	uid |= uint64(n.sequence&0xffff) << 8
+	uid |= uint64(sm.sequence&0xffff) << 8
 	// 左后是逻辑ID（服务器id）
-	uid |= uint64(n.genKey & 0xff)
+	uid |= uint64(sm.genKey & 0xff)
 	return uid
 }

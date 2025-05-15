@@ -32,3 +32,9 @@ message SCSendMsgAck {
   int32     error   = 1;  // 错误码 0表示无错误
   string    msg     = 2;
 }
+
+// 服务器之间带有sessionId的消息转发
+message MsgTransmitNtf {
+  uint64 sessionId = 1;
+  bytes data = 2;
+}

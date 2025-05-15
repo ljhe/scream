@@ -14,7 +14,7 @@ import (
 
 var sendQueueMaxLen = 2000
 
-type tcpSession struct {
+type session struct {
 	*socket.Processor // 事件处理相关
 	socket.ContextSet // 记录session绑定信息
 	node              iface.INetNode
@@ -29,35 +29,35 @@ type tcpSession struct {
 	mu                sync.Mutex
 }
 
-func (ts *tcpSession) SetConn(c net.Conn) {
+func (ts *session) SetConn(c net.Conn) {
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
 	ts.conn = c
 }
 
-func (ts *tcpSession) GetConn() net.Conn {
+func (ts *session) GetConn() net.Conn {
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
 	return ts.conn
 }
 
-func (ts *tcpSession) SetId(id uint64) {
+func (ts *session) SetId(id uint64) {
 	ts.id = id
 }
 
-func (ts *tcpSession) GetId() uint64 {
+func (ts *session) GetId() uint64 {
 	return ts.id
 }
 
-func (ts *tcpSession) Raw() interface{} {
+func (ts *session) Raw() interface{} {
 	return ts.GetConn()
 }
 
-func (ts *tcpSession) Node() iface.INetNode {
+func (ts *session) Node() iface.INetNode {
 	return ts.node
 }
 
-func (ts *tcpSession) IncRcvPingNum(inc int) {
+func (ts *session) IncRcvPingNum(inc int) {
 	if inc <= 0 {
 		ts.rcvPingNum = inc
 		return
@@ -65,12 +65,12 @@ func (ts *tcpSession) IncRcvPingNum(inc int) {
 	ts.rcvPingNum += inc
 }
 
-func (ts *tcpSession) RcvPingNum() int {
+func (ts *session) RcvPingNum() int {
 	return ts.rcvPingNum
 }
 
-func newTcpSession(c net.Conn, node iface.INetNode) *tcpSession {
-	sess := &tcpSession{
+func NewTcpSession(c net.Conn, node iface.INetNode) *session {
+	sess := &session{
 		conn:            c,
 		node:            node,
 		sendQueueMaxLen: sendQueueMaxLen,
@@ -83,21 +83,21 @@ func newTcpSession(c net.Conn, node iface.INetNode) *tcpSession {
 	return sess
 }
 
-func (ts *tcpSession) Start() {
+func (ts *session) Start() {
 	atomic.StoreInt64(&ts.close, 0)
 	ts.exitWg.Add(2)
 	// 添加到session管理器中
-	ts.node.(socket.SessionManager).Add(ts)
+	ts.node.(iface.ISessionManager).Add(ts)
 	go func() {
 		ts.exitWg.Wait()
 		close(ts.sendQueue)
-		ts.node.(socket.SessionManager).Remove(ts)
+		ts.node.(iface.ISessionManager).Remove(ts)
 	}()
 	go ts.RunRcv()
 	go ts.RunSend()
 }
 
-func (ts *tcpSession) Close() {
+func (ts *session) Close() {
 	// 已经关闭
 	if ok := atomic.SwapInt64(&ts.close, 1); ok != 0 {
 		return
@@ -108,7 +108,7 @@ func (ts *tcpSession) Close() {
 	}
 }
 
-func (ts *tcpSession) RunRcv() {
+func (ts *session) RunRcv() {
 	defer func() {
 		if err := recover(); err != nil {
 			logrus.Log(logrus.LogsSystem).Errorf("tcpSession Stack---::%v\n %s\n", err, string(debug.Stack()))
@@ -137,7 +137,7 @@ func (ts *tcpSession) RunRcv() {
 	ts.exitWg.Done()
 }
 
-func (ts *tcpSession) RunSend() {
+func (ts *session) RunSend() {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Printf("Stack---::%v\n %s\n", err, string(debug.Stack()))
@@ -166,7 +166,7 @@ func (ts *tcpSession) RunSend() {
 }
 
 // HeartBeat 服务器之间的心跳检测
-func (ts *tcpSession) HeartBeat(msg interface{}) {
+func (ts *session) HeartBeat(msg interface{}) {
 	if atomic.LoadInt64(&ts.close) != 0 {
 		return
 	}
@@ -186,7 +186,7 @@ func (ts *tcpSession) HeartBeat(msg interface{}) {
 	}()
 }
 
-func (ts *tcpSession) Send(msg interface{}) {
+func (ts *session) Send(msg interface{}) {
 	if atomic.LoadInt64(&ts.close) != 0 {
 		return
 	}

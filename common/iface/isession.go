@@ -2,7 +2,6 @@ package iface
 
 type ISession interface {
 	Raw() interface{} // 获得conn
-
 	Node() INetNode
 	Send(msg interface{})
 	Close()
@@ -11,4 +10,12 @@ type ISession interface {
 	HeartBeat(msg interface{})
 	IncRcvPingNum(inc int)
 	RcvPingNum() int
+}
+
+type ISessionManager interface {
+	Add(s ISession)
+	Get(sessionId uint64) (ISession, bool)
+	Remove(s ISession)
+	SetUuidCreateKey(genKey int)
+	CloseAllSession()
 }

@@ -404,8 +404,7 @@ func savePbBindGo(sortMsg *sortMsgData) {
 	mhead := fmt.Sprintf(`package %s
 
 import (
-	"common"
-	"common/iface"
+	"github.com/ljhe/scream/common/iface"
 	"log"
 	"reflect"
 )
@@ -418,7 +417,7 @@ func registerInfo(id uint16, msgType reflect.Type) {
 	// 具体每个协议的定义
 	mhanderDef := ""
 	mhandlerDetail := ""
-	mhandler := "\nfunc GetMessageHandler(sreviceName string) common.EventCallBack {\n\tswitch sreviceName { //note.serviceName must be lower words"
+	mhandler := "\nfunc GetMessageHandler(sreviceName string) iface.EventCallBack {\n\tswitch sreviceName { //note.serviceName must be lower words"
 	for _, p := range projects {
 		upper := strings.ToUpper(p)
 		lower := strings.ToLower(p)

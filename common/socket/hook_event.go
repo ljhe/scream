@@ -18,7 +18,7 @@ type ServerHookEvent struct {
 func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	switch msg := iv.Msg().(type) {
 	case *SessionAccepted:
-		logrus.Log(logrus.LogsSystem).Printf("receive SessionAccepted success. session:%d \n", iv.Session().GetId())
+		logrus.Log(logrus.LogsSystem).Printf("receive SessionAccepted success. session:%d", iv.Session().GetId())
 		return nil
 	case *SessionConnected:
 		// 从内存中的etcd获取服务器信息
@@ -34,15 +34,19 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 			})
 			// 添加远程的服务器节点信息到本地
 			baseserver.AddServiceNode(iv.Session(), ed.Id, ed.Name, "local")
-			logrus.Log(logrus.LogsSystem).Printf("send ServiceIdentifyACK [%v]->[%v] sessionId=%v \n",
+			logrus.Log(logrus.LogsSystem).Printf("send ServiceIdentifyACK [%v]->[%v] sessionId=%v",
 				util.GenServiceId(prop), ed.Id, iv.Session().GetId())
 		} else {
 			logrus.Log(logrus.LogsSystem).Println("connector connect err. etcd not exist", msg)
 		}
 		return nil
+	case *SessionClosed:
+		sid := baseserver.RemoveServiceNode(iv.Session())
+		logrus.Log(logrus.LogsSystem).Printf("SessionClosed sessionId=%v sid=%v", iv.Session().GetId(), sid)
+		return nil
 	case *pbgo.ServiceIdentifyACK:
 		// 来自其他服务器的连接确认信息
-		logrus.Log(logrus.LogsSystem).Printf("receive ServiceIdentifyACK from [%v]  sessionId:%v \n", msg.ServiceId, iv.Session().GetId())
+		logrus.Log(logrus.LogsSystem).Printf("receive ServiceIdentifyACK from [%v]  sessionId:%v", msg.ServiceId, iv.Session().GetId())
 		// 重连时会有问题 重连上来时 但是上一个连接还未移除(正在移除中) 导致重连失败(想连接的没连接上 该移除的正在移除)
 		// 通过PingReq超时断开连接 来触发断线重连
 		if serviceNode := baseserver.GetServiceNode(msg.ServiceId); serviceNode == nil {
@@ -62,7 +66,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		if iv.Session().RcvPingNum() >= 10 {
 			iv.Session().IncRcvPingNum(-1)
 			if ctx.RawContextData(common.ContextSetCtxKey, &ed) {
-				logrus.Log(logrus.LogsSystem).Printf("receive PingReq from [%v] session=%v \n", ed.Id, iv.Session().GetId())
+				logrus.Log(logrus.LogsSystem).Printf("receive PingReq from [%v] session=%v", ed.Id, iv.Session().GetId())
 			}
 		}
 		iv.Session().Send(&pbgo.PingAck{Ms: time.Now().UnixMilli()})
@@ -74,16 +78,25 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		if iv.Session().RcvPingNum() >= 10 {
 			iv.Session().IncRcvPingNum(-1)
 			if ctx.RawContextData(common.ContextSetCtxKey, &ed) {
-				logrus.Log(logrus.LogsSystem).Printf("receive PingAck from [%v] session=%v \n", ed.Id, iv.Session().GetId())
+				logrus.Log(logrus.LogsSystem).Printf("receive PingAck from [%v] session=%v", ed.Id, iv.Session().GetId())
 			}
 		}
 		return nil
-	case *SessionClosed:
-		sid := baseserver.RemoveServiceNode(iv.Session())
-		logrus.Log(logrus.LogsSystem).Printf("SessionClosed sessionId=%v sid=%v \n", iv.Session().GetId(), sid)
+	case *pbgo.MsgTransmitNtf:
+		logrus.Log(logrus.LogsSystem).Printf("receive MsgTransmitNtf msg. main_session:%d client_session:%d data:%v",
+			iv.Session().GetId(), msg.SessionId, msg.Data)
+		// 判断session是否存在 如果不存在 新建session队列
+		// 根据主session来获取node
+		s, ok := iv.Session().Node().(iface.ISessionManager).Get(msg.SessionId)
+		if !ok {
+			//循环引用
+			//s = tcp.NewTcpSession(iv.Session().Raw().(net.Conn), iv.Session().Node())
+		}
+		s.Send(msg.Data)
 		return nil
 	default:
-		logrus.Log(logrus.LogsSystem).Printf("receive unknown msg %v msgT:%v ivM %v \n", msg, reflect.TypeOf(msg), iv.Msg())
+		logrus.Log(logrus.LogsSystem).Printf("receive unknown msg %v msgT:%v ivM %v sessionId:%d",
+			msg, reflect.TypeOf(msg), iv.Msg(), iv.Session().GetId())
 	}
 	return iv
 }
@@ -97,8 +110,8 @@ type WsHookEvent struct {
 
 func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	switch msg := iv.Msg().(type) {
-	case *pbgo.CSPingReq:
-		iv.Session().Send(&pbgo.SCPingAck{})
+	case *SessionAccepted:
+		logrus.Log(logrus.LogsSystem).Infof("WS-SessionConnected cliId=%v", iv.Session().GetId())
 		return nil
 	case *SessionClosed:
 		e := iv.(*RcvMsgEvent)
@@ -106,12 +119,30 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 			logrus.Log(logrus.LogsSystem).Infof("ws session closed. err:%v", e.Err)
 		}
 		return nil
-	case *SessionAccepted:
-		logrus.Log(logrus.LogsSystem).Infof("WS-SessionConnected cliId=%v", iv.Session().GetId())
+	case *pbgo.CSPingReq:
+		iv.Session().Send(&pbgo.SCPingAck{})
 		return nil
 	case *pbgo.CSSendMsgReq:
 		m := iv.Msg().(*pbgo.CSSendMsgReq)
 		logrus.Log(logrus.LogsSystem).Infof("receive client msg. sessionId:%d msg:%v", iv.Session().GetId(), m.Msg)
+
+		// 测试消息转发
+		node, _ := baseserver.GetServiceNodeAndSession("", common.ServiceNodeTypeGameStr, 0)
+		service := baseserver.GetServiceNode(node)
+		if service == nil {
+			panic("server not exist")
+		}
+		// 服务器间通信 增加特有结构体 里面包含sessionId
+		bytes, _, err := EncodeMessage(iv.Msg())
+		if err != nil {
+			panic(err)
+		}
+		service.Send(&pbgo.MsgTransmitNtf{
+			SessionId: iv.Session().GetId(),
+			Data:      bytes,
+		})
+
+		// 返回给客户端消息
 		iv.Session().Send(&pbgo.SCSendMsgAck{Msg: m.Msg})
 		return nil
 	case *pbgo.CSLoginReq:
@@ -131,7 +162,7 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		}
 		return nil
 	default:
-		logrus.Log(logrus.LogsSystem).Infof("receive unknown msg %v msgT:%v ivM %v \n", msg, reflect.TypeOf(msg), iv.Msg())
+		logrus.Log(logrus.LogsSystem).Infof("receive unknown msg %v msgT:%v ivM %v", msg, reflect.TypeOf(msg), iv.Msg())
 	}
 	return iv
 }

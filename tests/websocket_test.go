@@ -6,8 +6,10 @@ import (
 	"github.com/ljhe/scream/common/encryption"
 	"github.com/ljhe/scream/common/service"
 	"github.com/ljhe/scream/common/socket"
+	"github.com/ljhe/scream/common/util"
 	"github.com/ljhe/scream/pbgo"
 	"log"
+	"math/rand"
 	"net/url"
 	"testing"
 	"time"
@@ -47,7 +49,9 @@ func createConnector() {
 	}()
 
 	// 4. 循环发送消息给服务端
-	ticker := time.NewTicker(time.Second)
+	rand.Seed(time.Now().UnixNano())
+	random := util.RandomIntRange(1, 5)
+	ticker := time.NewTicker(time.Duration(random) * time.Second)
 	defer ticker.Stop()
 	count := 0
 	for {

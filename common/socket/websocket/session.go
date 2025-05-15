@@ -10,9 +10,9 @@ import (
 	"sync/atomic"
 )
 
-var sendQueueMaxLen = 2000
+var sendQueueMaxLen = 200
 
-type wsSession struct {
+type session struct {
 	sync.Mutex
 	*socket.Processor // 事件处理相关 processor.go
 	socket.ContextSet // 记录session绑定信息 nodeproperty.go
@@ -30,27 +30,27 @@ type wsSession struct {
 	sendQueueMaxLen int
 }
 
-func (s *wsSession) SetConn(c *websocket.Conn) {
+func (s *session) SetConn(c *websocket.Conn) {
 	s.Lock()
 	defer s.Unlock()
 	s.conn = c
 }
 
-func (s *wsSession) GetConn() *websocket.Conn {
+func (s *session) GetConn() *websocket.Conn {
 	s.Lock()
 	defer s.Unlock()
 	return s.conn
 }
 
-func (s *wsSession) Raw() interface{} {
+func (s *session) Raw() interface{} {
 	return s.GetConn()
 }
 
-func (s *wsSession) Node() iface.INetNode {
+func (s *session) Node() iface.INetNode {
 	return s.node
 }
 
-func (s *wsSession) Send(msg interface{}) {
+func (s *session) Send(msg interface{}) {
 	if atomic.LoadInt64(&s.close) != 0 {
 		return
 	}
@@ -61,7 +61,7 @@ func (s *wsSession) Send(msg interface{}) {
 	}
 }
 
-func (s *wsSession) Close() {
+func (s *session) Close() {
 	//已经关闭
 	if ok := atomic.SwapInt64(&s.close, 1); ok != 0 {
 		return
@@ -76,48 +76,47 @@ func (s *wsSession) Close() {
 	}
 }
 
-func (s *wsSession) SetId(id uint64) {
+func (s *session) SetId(id uint64) {
 	s.id = id
 }
 
-func (s *wsSession) GetId() uint64 {
+func (s *session) GetId() uint64 {
 	return s.id
 }
 
-func (s *wsSession) HeartBeat(msg interface{}) {
+func (s *session) HeartBeat(msg interface{}) {
 
 }
 
-func (s *wsSession) IncRcvPingNum(inc int) {
+func (s *session) IncRcvPingNum(inc int) {
 
 }
 
-func (s *wsSession) RcvPingNum() int {
+func (s *session) RcvPingNum() int {
 	return 0
 }
 
-func (s *wsSession) setConn(c *websocket.Conn) {
+func (s *session) setConn(c *websocket.Conn) {
 	s.Lock()
 	defer s.Unlock()
 	s.conn = c
 }
 
-func (s *wsSession) start() {
+func (s *session) start() {
 	atomic.StoreInt64(&s.close, 0)
 
 	s.sendQueueMaxLen = sendQueueMaxLen
-	// todo 暂时默认发送 接收队列长度2000
 	s.sendQueue = make(chan interface{}, s.sendQueueMaxLen+1)
 
 	s.exitWg.Add(2)
-	s.node.(socket.SessionManager).Add(s)
+	s.node.(iface.ISessionManager).Add(s)
 
 	go func() {
 		s.exitWg.Wait()
 		// 结束操作处理
 		close(s.sendQueue)
 
-		s.node.(socket.SessionManager).Remove(s)
+		s.node.(iface.ISessionManager).Remove(s)
 		if s.endCallback != nil {
 			s.endCallback()
 		}
@@ -127,7 +126,7 @@ func (s *wsSession) start() {
 	go s.RunSend()
 }
 
-func (s *wsSession) RunRcv() {
+func (s *session) RunRcv() {
 	defer func() {
 		// 打印堆栈信息
 		if err := recover(); err != nil {
@@ -161,7 +160,7 @@ func (s *wsSession) RunRcv() {
 	s.exitWg.Done()
 }
 
-func (s *wsSession) RunSend() {
+func (s *session) RunSend() {
 	defer func() {
 		// 打印堆栈信息
 		if err := recover(); err != nil {
@@ -190,17 +189,17 @@ func (s *wsSession) RunSend() {
 	s.exitWg.Done()
 }
 
-func newWebSocketSession(conn *websocket.Conn, node iface.INetNode, endCallback func()) *wsSession {
-	session := &wsSession{
+func newWSSession(conn *websocket.Conn, node iface.INetNode, endCallback func()) *session {
+	sess := &session{
 		conn:        conn,
 		node:        node,
 		endCallback: endCallback,
-		// 在session中初始化 每一个session 一个处理消息的队列 实现多进程
+		// 在session中初始化 每一个session 一个处理消息的队列 实现多客户端之间并行
 		Processor: &socket.Processor{
 			MsgProc: new(socket.WSMessageProcessor),
 			Hooker:  new(socket.WsHookEvent),
 		},
 	}
-	node.(socket.Option).CopyOpt(&session.sessionOpt)
-	return session
+	node.(socket.Option).CopyOpt(&sess.sessionOpt)
+	return sess
 }

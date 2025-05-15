@@ -9,6 +9,7 @@ enum protoMsgId{
 	SC_PING_ACK                      = 5;		//	SCPingAck **SCPingAck **framework.proto ** [SCPingAck]
 	CS_SEND_MSG_REQ                  = 6;		//	CSSendMsgReq **CSSendMsgReq **framework.proto ** [CSSendMsgReq]
 	SC_SEND_MSG_ACK                  = 7;		//	SCSendMsgAck **SCSendMsgAck **framework.proto ** [SCSendMsgAck]
+	MSG_TRANSMIT_NTF                 = 8;		//	MsgTransmitNtf **MsgTransmitNtf **framework.proto ** [MsgTransmitNtf]
 	CS_LOGIN_REQ                     = 1000;		//	CSLoginReq **CSLoginReq **login.proto ** [CSLoginReq]
 	SC_LOGIN_ACK                     = 1001;		//	SCLoginAck **SCLoginAck **login.proto ** [SCLoginAck]
 	CS_CREATE_ROLE_REQ               = 5000;		//	CSCreateRoleReq **CSCreateRoleReq **user.proto ** [CSCreateRoleReq]

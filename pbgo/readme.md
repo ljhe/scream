@@ -4,4 +4,4 @@
 
 #编译单个*.go文件
     进入该目录下
-    go build proto_cmd.go
+    go build -o .\pbgo\proto_cmd .\pbgo\proto_cmd\proto_cmd.go

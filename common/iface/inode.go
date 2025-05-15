@@ -2,8 +2,6 @@ package iface
 
 import "time"
 
-type Option func(n INetNode)
-
 type INetNode interface {
 	Start() INetNode
 	Stop()

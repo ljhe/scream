@@ -20,7 +20,7 @@ type tcpWebSocketAcceptor struct {
 	socket.Processor       // 事件处理相关
 	socket.ServerNodeProperty
 	socket.ContextSet
-	socket.SessionManager // 会话管理
+	iface.ISessionManager // 会话管理
 
 	listener net.Listener // 保存端口
 	upgrader *websocket.Upgrader
@@ -124,17 +124,16 @@ func (ws *tcpWebSocketAcceptor) handleConn(w http.ResponseWriter, r *http.Reques
 	}
 
 	ws.SocketOptWebSocket(conn)
-	session := newWebSocketSession(conn, ws, nil)
-	session.SetContextData("request", r)
-	session.start()
+	sess := newWSSession(conn, ws, nil)
+	sess.start()
 	// 通知上层事件(这边的回调要放到队列中，否则会有多线程冲突)
-	ws.ProcEvent(&socket.RcvMsgEvent{Sess: session, Message: &socket.SessionAccepted{}})
+	ws.ProcEvent(&socket.RcvMsgEvent{Sess: sess, Message: &socket.SessionAccepted{}})
 }
 
 func init() {
 	socket.RegisterServerNode(func() iface.INetNode {
 		node := &tcpWebSocketAcceptor{
-			SessionManager: socket.NewNetSessionManager(),
+			ISessionManager: socket.NewSessionManager(),
 			upgrader: &websocket.Upgrader{
 				CheckOrigin: func(r *http.Request) bool {
 					// 允许所有跨域请求 实际使用时需要谨慎设置

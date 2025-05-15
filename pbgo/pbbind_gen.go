@@ -10,28 +10,26 @@ func registerInfo(id uint16, msgType reflect.Type) {
 	RegisterMessageInfo(&MessageInfo{ID: id, Codec: GetCodec(), Type: msgType})
 }
 
-// GATE
+//GATE
 var (
-	Handle_GATE_CSLoginReq = func(e iface.IProcEvent) { panic("CSLoginReq not implements") }
-	Handle_GATE_SCLoginAck = func(e iface.IProcEvent) { panic("SCLoginAck not implements") }
-	Handle_GATE_Default    func(e iface.IProcEvent)
+	Handle_GATE_CSLoginReq  = func(e  iface.IProcEvent){panic("CSLoginReq not implements")}
+	Handle_GATE_SCLoginAck  = func(e  iface.IProcEvent){panic("SCLoginAck not implements")}
+	Handle_GATE_Default		func(e  iface.IProcEvent)
 )
 
-// GAME
+//GAME
 var (
-	Handle_GAME_CSLoginReq = func(e iface.IProcEvent) { panic("CSLoginReq not implements") }
-	Handle_GAME_Default    func(e iface.IProcEvent)
+	Handle_GAME_CSLoginReq  = func(e  iface.IProcEvent){panic("CSLoginReq not implements")}
+	Handle_GAME_Default		func(e  iface.IProcEvent)
 )
 
 func GetMessageHandler(sreviceName string) iface.EventCallBack {
 	switch sreviceName { //note.serviceName must be lower words
-	case "gate": //GATE message process part
+	case "gate":	//GATE message process part
 		return func(e iface.IProcEvent) {
 			switch e.Msg().(type) {
-			case *CSLoginReq:
-				Handle_GATE_CSLoginReq(e)
-			case *SCLoginAck:
-				Handle_GATE_SCLoginAck(e)
+			case *CSLoginReq: Handle_GATE_CSLoginReq(e)
+			case *SCLoginAck: Handle_GATE_SCLoginAck(e)
 			default:
 				if Handle_GATE_Default != nil {
 					Handle_GATE_Default(e)
@@ -39,11 +37,10 @@ func GetMessageHandler(sreviceName string) iface.EventCallBack {
 			}
 		}
 
-	case "game": //GAME message process part
+	case "game":	//GAME message process part
 		return func(e iface.IProcEvent) {
 			switch e.Msg().(type) {
-			case *CSLoginReq:
-				Handle_GAME_CSLoginReq(e)
+			case *CSLoginReq: Handle_GAME_CSLoginReq(e)
 			default:
 				if Handle_GAME_Default != nil {
 					Handle_GAME_Default(e)
@@ -51,7 +48,7 @@ func GetMessageHandler(sreviceName string) iface.EventCallBack {
 			}
 		}
 
-	default:
+	default: 
 		return nil
 	}
 }
@@ -66,6 +63,7 @@ func init() {
 	registerInfo(5, reflect.TypeOf((*SCPingAck)(nil)).Elem())
 	registerInfo(6, reflect.TypeOf((*CSSendMsgReq)(nil)).Elem())
 	registerInfo(7, reflect.TypeOf((*SCSendMsgAck)(nil)).Elem())
+	registerInfo(8, reflect.TypeOf((*MsgTransmitNtf)(nil)).Elem())
 	registerInfo(1000, reflect.TypeOf((*CSLoginReq)(nil)).Elem())
 	registerInfo(1001, reflect.TypeOf((*SCLoginAck)(nil)).Elem())
 	registerInfo(5000, reflect.TypeOf((*CSCreateRoleReq)(nil)).Elem())
