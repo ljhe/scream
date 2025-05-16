@@ -10,6 +10,14 @@ type ISession interface {
 	HeartBeat(msg interface{})
 	IncRcvPingNum(inc int)
 	RcvPingNum() int
+	SetSessionChild(sessionId uint64, data interface{})
+	Start()
+}
+
+type ISessionChild interface {
+	Start(sessionId uint64)
+	Stop(sessionId uint64)
+	Rcv(msg interface{})
 }
 
 type ISessionManager interface {

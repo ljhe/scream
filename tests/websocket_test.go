@@ -71,6 +71,9 @@ func createConnector() {
 			}
 			buf := mb.MarshalBytes(encryptStr)
 			err = c.WriteMessage(websocket.BinaryMessage, buf)
+			if count > 3 {
+				return
+			}
 			count++
 		}
 	}

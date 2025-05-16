@@ -11,4 +11,7 @@ func init() {
 	pbgo.Handle_GAME_CSLoginReq = HandleMessage(func(ev iface.IProcEvent, cliId baseserver.ClientID) {
 		log.Println("CSLoginReq implements")
 	})
+	pbgo.Handle_GAME_CSSendMsgReq = HandleMessage(func(ev iface.IProcEvent, cliId baseserver.ClientID) {
+		log.Println("CSSendMsgReq implements")
+	})
 }

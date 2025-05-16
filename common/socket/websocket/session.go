@@ -102,7 +102,7 @@ func (s *session) setConn(c *websocket.Conn) {
 	s.conn = c
 }
 
-func (s *session) start() {
+func (s *session) Start() {
 	atomic.StoreInt64(&s.close, 0)
 
 	s.sendQueueMaxLen = sendQueueMaxLen
@@ -187,6 +187,10 @@ func (s *session) RunSend() {
 	}
 
 	s.exitWg.Done()
+}
+
+func (s *session) SetSessionChild(sessionId uint64, data interface{}) {
+
 }
 
 func newWSSession(conn *websocket.Conn, node iface.INetNode, endCallback func()) *session {

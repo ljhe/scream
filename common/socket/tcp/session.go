@@ -26,6 +26,7 @@ type session struct {
 	exitWg            sync.WaitGroup
 	id                uint64
 	rcvPingNum        int
+	children          sync.Map
 	mu                sync.Mutex
 }
 
@@ -194,4 +195,15 @@ func (ts *session) Send(msg interface{}) {
 	case ts.sendQueue <- msg:
 	default:
 	}
+}
+
+func (ts *session) SetSessionChild(sessionId uint64, data interface{}) {
+	var sc *SessionChild
+	if val, ok := ts.children.Load(sessionId); !ok {
+		sc = NewSessionChild(sessionId, ts)
+		sc.Start(sessionId)
+	} else {
+		sc = val.(*SessionChild)
+	}
+	sc.Rcv(data)
 }

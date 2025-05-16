@@ -24,7 +24,7 @@ message CSPingReq {}
 // SCPingAck 服务端收到客户端的ping消息后返回
 message SCPingAck {}
 
-message CSSendMsgReq {
+message CSSendMsgReq { //project gate|game
   string msg = 1;
 }
 
@@ -36,5 +36,6 @@ message SCSendMsgAck {
 // 服务器之间带有sessionId的消息转发
 message MsgTransmitNtf {
   uint64 sessionId = 1;
-  bytes data = 2;
+  uint32 msgId = 2;
+  bytes data = 3;
 }

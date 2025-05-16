@@ -85,14 +85,13 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	case *pbgo.MsgTransmitNtf:
 		logrus.Log(logrus.LogsSystem).Printf("receive MsgTransmitNtf msg. main_session:%d client_session:%d data:%v",
 			iv.Session().GetId(), msg.SessionId, msg.Data)
-		// 判断session是否存在 如果不存在 新建session队列
-		// 根据主session来获取node
-		s, ok := iv.Session().Node().(iface.ISessionManager).Get(msg.SessionId)
-		if !ok {
-			//循环引用
-			//s = tcp.NewTcpSession(iv.Session().Raw().(net.Conn), iv.Session().Node())
+
+		data, err := DecodeMessage(uint16(msg.MsgId), msg.Data)
+		if err != nil {
+			panic(err)
 		}
-		s.Send(msg.Data)
+
+		iv.Session().SetSessionChild(msg.SessionId, data)
 		return nil
 	default:
 		logrus.Log(logrus.LogsSystem).Printf("receive unknown msg %v msgT:%v ivM %v sessionId:%d",
@@ -130,15 +129,16 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		node, _ := baseserver.GetServiceNodeAndSession("", common.ServiceNodeTypeGameStr, 0)
 		service := baseserver.GetServiceNode(node)
 		if service == nil {
-			panic("server not exist")
+			return nil
 		}
 		// 服务器间通信 增加特有结构体 里面包含sessionId
-		bytes, _, err := EncodeMessage(iv.Msg())
+		bytes, info, err := EncodeMessage(iv.Msg())
 		if err != nil {
 			panic(err)
 		}
 		service.Send(&pbgo.MsgTransmitNtf{
 			SessionId: iv.Session().GetId(),
+			MsgId:     uint32(info.ID),
 			Data:      bytes,
 		})
 

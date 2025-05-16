@@ -125,7 +125,7 @@ func (ws *tcpWebSocketAcceptor) handleConn(w http.ResponseWriter, r *http.Reques
 
 	ws.SocketOptWebSocket(conn)
 	sess := newWSSession(conn, ws, nil)
-	sess.start()
+	sess.Start()
 	// 通知上层事件(这边的回调要放到队列中，否则会有多线程冲突)
 	ws.ProcEvent(&socket.RcvMsgEvent{Sess: sess, Message: &socket.SessionAccepted{}})
 }

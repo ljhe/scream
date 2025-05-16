@@ -52,7 +52,7 @@ func init() {
 	socket.RegisterServerNode(func() iface.INetNode {
 		node := new(tcpConnector)
 		node.ISessionManager = socket.NewSessionManager()
-		//node.session = newTcpSession(nil, node)
+		node.session = NewTcpSession(nil, node)
 		node.TCPSocketOption.Init()
 		return node
 	})
@@ -74,7 +74,7 @@ func (t *tcpConnector) connect() {
 				continue
 			}
 		}
-		fmt.Printf("connect success. addr:%v time:%d \n", t.GetAddr(), time.Now().Unix())
+		log.Printf("connect success. addr:%v time:%d \n", t.GetAddr(), time.Now().Unix())
 		t.wg.Add(1)
 		t.session.SetConn(conn)
 		t.session.Start()
