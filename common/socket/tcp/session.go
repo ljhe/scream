@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-var sendQueueMaxLen = 2000
+var sendQueueMaxLen = 200
 
 type session struct {
 	*socket.Processor // 事件处理相关
@@ -201,9 +201,17 @@ func (ts *session) SetSessionChild(sessionId uint64, data interface{}) {
 	var sc *SessionChild
 	if val, ok := ts.children.Load(sessionId); !ok {
 		sc = NewSessionChild(sessionId, ts)
-		sc.Start(sessionId)
+		sc.Start()
+		ts.children.Store(sessionId, sc)
 	} else {
 		sc = val.(*SessionChild)
 	}
 	sc.Rcv(data)
+}
+
+func (ts *session) DelSessionChild(sessionId uint64) {
+	if val, ok := ts.children.Load(sessionId); ok {
+		val.(*SessionChild).Stop()
+		ts.children.Delete(sessionId)
+	}
 }

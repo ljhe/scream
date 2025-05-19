@@ -39,3 +39,5 @@ message MsgTransmitNtf {
   uint32 msgId = 2;
   bytes data = 3;
 }
+
+message WSSessionClosedNtf {}

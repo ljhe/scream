@@ -432,7 +432,7 @@ func registerInfo(id uint16, msgType reflect.Type) {
 			mhanderDef += "\n\tHandle_" + upper + "_" + data.name + "  = func(e  iface.IProcEvent){panic(\"" + data.name + " not implements\")}"
 			mhandlerDetail += "\n\t\t\tcase *" + data.name + ": Handle_" + upper + "_" + data.name + "(e)"
 		}
-		mhanderDef += "\n\tHandle_" + upper + "_Default	 	= func(e  iface.IProcEvent){panic(\"can't find handler\")}\n)\n"
+		mhanderDef += "\n\tHandle_" + upper + "_Default	 	= func(e  iface.IProcEvent){panic(\"Can't find handler\")}\n)\n"
 		mhandlerDetail += "\n\t\t\tdefault:\n\t\t\t\tif Handle_" + upper + "_Default != nil {\n\t\t\t\t\tHandle_" + upper + "_Default(e)\n\t\t\t\t}\n\t\t\t}\n\t\t}\n"
 		mhandler += mhandlerDetail
 	}

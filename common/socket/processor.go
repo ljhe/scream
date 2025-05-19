@@ -40,13 +40,18 @@ func (n *Processor) ProcEvent(e iface.IProcEvent) {
 		e = n.Hooker.InEvent(e)
 	}
 	if e != nil {
-		if n.MsgHandle != nil {
-			n.MsgHandle.PostCb(func() {
-				start := time.Now()
-				n.MsgRouter(e)
-				duration := time.Since(start)
-				log.Printf("%+v 方法 耗时: %s (%dμs / %dns)\n", reflect.TypeOf(e.Msg()), duration, duration.Microseconds(), duration.Nanoseconds())
-			})
+		switch n.Hooker.(type) {
+		case *SessionChildHookEvent:
+			n.MsgRouter(e)
+		default:
+			if n.MsgHandle != nil {
+				n.MsgHandle.PostCb(func() {
+					start := time.Now()
+					n.MsgRouter(e)
+					duration := time.Since(start)
+					log.Printf("%+v 方法 耗时: %s (%dμs / %dns)\n", reflect.TypeOf(e.Msg()), duration, duration.Microseconds(), duration.Nanoseconds())
+				})
+			}
 		}
 	}
 }

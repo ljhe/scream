@@ -10,6 +10,7 @@ import (
 type SessionChild struct {
 	sessionId uint64
 	*session
+	socket.Processor
 	close    int64
 	rcvQueue chan interface{}
 }
@@ -18,16 +19,22 @@ func NewSessionChild(sessionId uint64, s *session) *SessionChild {
 	return &SessionChild{
 		sessionId: sessionId,
 		session:   s,
-		rcvQueue:  make(chan interface{}, 500),
+		Processor: socket.Processor{
+			MsgProc:   new(socket.WSMessageProcessor),
+			Hooker:    new(socket.SessionChildHookEvent),
+			MsgRouter: s.MsgRouter,
+		},
+		rcvQueue: make(chan interface{}, 500),
 	}
 }
 
-func (sc *SessionChild) Start(sessionId uint64) {
+func (sc *SessionChild) Start() {
 	atomic.StoreInt64(&sc.close, 0)
 	go sc.RunRcv()
 }
 
-func (sc *SessionChild) Stop(sessionId uint64) {
+func (sc *SessionChild) Stop() {
+	sc.Rcv(nil)
 	atomic.StoreInt64(&sc.close, 1)
 }
 
@@ -41,6 +48,10 @@ func (sc *SessionChild) Rcv(msg interface{}) {
 	}
 }
 
+func (sc *SessionChild) GetSessionId() uint64 {
+	return sc.sessionId
+}
+
 func (sc *SessionChild) RunRcv() {
 	defer func() {
 		if err := recover(); err != nil {
@@ -49,15 +60,14 @@ func (sc *SessionChild) RunRcv() {
 		}
 	}()
 
-	for {
-		for data := range sc.rcvQueue {
-			if atomic.LoadInt64(&sc.close) == 1 {
-				break
-			}
-			if data == nil {
-				continue
-			}
-			sc.MsgRouter(&socket.RcvMsgEvent{Sess: sc.session, Message: data, Err: nil})
+	for data := range sc.rcvQueue {
+		if atomic.LoadInt64(&sc.close) == 1 {
+			break
 		}
+		if data == nil {
+			break
+		}
+		sc.Processor.ProcEvent(&socket.RcvMsgEvent{Sess: sc, Message: data, Err: nil})
 	}
+	logrus.Log(logrus.LogsSystem).Infof("session children close. sessionId:%d", sc.sessionId)
 }

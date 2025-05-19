@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/ljhe/scream/common/encryption"
-	"github.com/ljhe/scream/common/service"
 	"github.com/ljhe/scream/common/socket"
 	"github.com/ljhe/scream/common/util"
 	"github.com/ljhe/scream/pbgo"
@@ -16,10 +15,10 @@ import (
 )
 
 func TestWSConnector(t *testing.T) {
-	for i := 0; i < 10; i++ {
-		go createConnector()
-	}
-	service.WaitExitSignal()
+	//for i := 0; i < 10; i++ {
+	createConnector()
+	//}
+	//service.WaitExitSignal()
 }
 
 func createConnector() {
@@ -32,7 +31,12 @@ func createConnector() {
 	if err != nil {
 		log.Fatal("dial error:", err)
 	}
-	defer c.Close()
+	defer func(c *websocket.Conn) {
+		err := c.Close()
+		if err != nil {
+			log.Println("close error:", err)
+		}
+	}(c)
 
 	// 3. 启动 goroutine 接收服务端消息
 	done := make(chan struct{})
@@ -71,10 +75,14 @@ func createConnector() {
 			}
 			buf := mb.MarshalBytes(encryptStr)
 			err = c.WriteMessage(websocket.BinaryMessage, buf)
-			if count > 3 {
+			count++
+			if count >= 3 {
+				err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+				if err != nil {
+					panic(err)
+				}
 				return
 			}
-			count++
 		}
 	}
 }

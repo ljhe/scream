@@ -112,11 +112,26 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	case *SessionAccepted:
 		logrus.Log(logrus.LogsSystem).Infof("WS-SessionConnected cliId=%v", iv.Session().GetId())
 		return nil
-	case *SessionClosed:
-		e := iv.(*RcvMsgEvent)
-		if e.Err != nil {
-			logrus.Log(logrus.LogsSystem).Infof("ws session closed. err:%v", e.Err)
+	case *pbgo.WSSessionClosedNtf:
+		logrus.Log(logrus.LogsSystem).Infof("ws session closed. sessionId:%d", iv.Session().GetId())
+
+		// 测试消息转发关闭
+		node, _ := baseserver.GetServiceNodeAndSession("", common.ServiceNodeTypeGameStr, 0)
+		service := baseserver.GetServiceNode(node)
+		if service == nil {
+			return nil
 		}
+		// 服务器间通信 增加特有结构体 里面包含sessionId
+		bytes, info, err := EncodeMessage(&pbgo.WSSessionClosedNtf{})
+		if err != nil {
+			panic(err)
+		}
+		service.Send(&pbgo.MsgTransmitNtf{
+			SessionId: iv.Session().GetId(),
+			MsgId:     uint32(info.ID),
+			Data:      bytes,
+		})
+
 		return nil
 	case *pbgo.CSPingReq:
 		iv.Session().Send(&pbgo.SCPingAck{})
@@ -168,5 +183,27 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 }
 
 func (wh *WsHookEvent) OutEvent(ov iface.IProcEvent) iface.IProcEvent {
+	return ov
+}
+
+type SessionChildHookEvent struct{}
+
+func (sc *SessionChildHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
+	s, ok := iv.Session().(iface.ISessionChild)
+	if !ok {
+		panic("")
+	}
+	switch msg := iv.Msg().(type) {
+	case *pbgo.WSSessionClosedNtf:
+		logrus.Log(logrus.LogsSystem).Infof("SessionChildHookEvent session closed. sessionId:%d", s.GetSessionId())
+		iv.Session().DelSessionChild(s.GetSessionId())
+		return nil
+	default:
+		logrus.Log(logrus.LogsSystem).Infof("receive unknown msg %v msgT:%v ivM %v", msg, reflect.TypeOf(msg), iv.Msg())
+	}
+	return iv
+}
+
+func (sc *SessionChildHookEvent) OutEvent(ov iface.IProcEvent) iface.IProcEvent {
 	return ov
 }

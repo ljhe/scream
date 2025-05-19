@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/ljhe/scream/common/iface"
 	"github.com/ljhe/scream/common/socket"
+	"github.com/ljhe/scream/pbgo"
 	"github.com/ljhe/scream/plugins/logrus"
 	"runtime/debug"
 	"sync"
@@ -138,7 +139,10 @@ func (s *session) RunRcv() {
 	for {
 		msg, err := s.ReadMsg(s)
 		if err != nil {
-			logrus.Log(logrus.LogsSystem).Errorf("RunRcv ReadMsg err:%v sessionId:%d \n", err, s.GetId())
+			// 检测是否正常关闭
+			if !websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+				logrus.Log(logrus.LogsSystem).Errorf("RunRcv ReadMsg err:%v sessionId:%d \n", err, s.GetId())
+			}
 			// 做关闭处理 发送数据时已经无法发送
 			atomic.StoreInt64(&s.close, 1)
 			select {
@@ -148,7 +152,7 @@ func (s *session) RunRcv() {
 			}
 
 			// 抛出关闭事件
-			s.ProcEvent(&socket.RcvMsgEvent{Sess: s, Message: &socket.SessionClosed{}, Err: err})
+			s.ProcEvent(&socket.RcvMsgEvent{Sess: s, Message: &pbgo.WSSessionClosedNtf{}, Err: err})
 			break
 		}
 
@@ -191,6 +195,10 @@ func (s *session) RunSend() {
 
 func (s *session) SetSessionChild(sessionId uint64, data interface{}) {
 
+}
+
+func (s *session) DelSessionChild(sessionId uint64) {
+	
 }
 
 func newWSSession(conn *websocket.Conn, node iface.INetNode, endCallback func()) *session {

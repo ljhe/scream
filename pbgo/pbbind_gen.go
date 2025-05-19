@@ -15,14 +15,14 @@ var (
 	Handle_GATE_CSSendMsgReq  = func(e  iface.IProcEvent){panic("CSSendMsgReq not implements")}
 	Handle_GATE_CSLoginReq  = func(e  iface.IProcEvent){panic("CSLoginReq not implements")}
 	Handle_GATE_SCLoginAck  = func(e  iface.IProcEvent){panic("SCLoginAck not implements")}
-	Handle_GATE_Default	 	= func(e  iface.IProcEvent){panic("can't find handler")}
+	Handle_GATE_Default	 	= func(e  iface.IProcEvent){panic("Can't find handler")}
 )
 
 //GAME
 var (
 	Handle_GAME_CSSendMsgReq  = func(e  iface.IProcEvent){panic("CSSendMsgReq not implements")}
 	Handle_GAME_CSLoginReq  = func(e  iface.IProcEvent){panic("CSLoginReq not implements")}
-	Handle_GAME_Default	 	= func(e  iface.IProcEvent){panic("can't find handler")}
+	Handle_GAME_Default	 	= func(e  iface.IProcEvent){panic("Can't find handler")}
 )
 
 func GetMessageHandler(sreviceName string) iface.EventCallBack {
@@ -68,6 +68,7 @@ func init() {
 	registerInfo(6, reflect.TypeOf((*CSSendMsgReq)(nil)).Elem())
 	registerInfo(7, reflect.TypeOf((*SCSendMsgAck)(nil)).Elem())
 	registerInfo(8, reflect.TypeOf((*MsgTransmitNtf)(nil)).Elem())
+	registerInfo(9, reflect.TypeOf((*WSSessionClosedNtf)(nil)).Elem())
 	registerInfo(1000, reflect.TypeOf((*CSLoginReq)(nil)).Elem())
 	registerInfo(1001, reflect.TypeOf((*SCLoginAck)(nil)).Elem())
 	registerInfo(5000, reflect.TypeOf((*CSCreateRoleReq)(nil)).Elem())

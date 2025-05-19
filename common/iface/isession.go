@@ -11,13 +11,15 @@ type ISession interface {
 	IncRcvPingNum(inc int)
 	RcvPingNum() int
 	SetSessionChild(sessionId uint64, data interface{})
+	DelSessionChild(sessionId uint64)
 	Start()
 }
 
 type ISessionChild interface {
-	Start(sessionId uint64)
-	Stop(sessionId uint64)
+	Start()
+	Stop()
 	Rcv(msg interface{})
+	GetSessionId() uint64
 }
 
 type ISessionManager interface {
