@@ -6,6 +6,7 @@ import (
 	"github.com/ljhe/scream/common"
 	"github.com/ljhe/scream/common/iface"
 	"github.com/ljhe/scream/common/socket"
+	"github.com/ljhe/scream/common/socket/sessions"
 	"log"
 	"net"
 	"syscall"
@@ -76,7 +77,7 @@ func (t *tcpAcceptor) GetTyp() string {
 func init() {
 	socket.RegisterServerNode(func() iface.INetNode {
 		node := &tcpAcceptor{
-			ISessionManager: socket.NewSessionManager(),
+			ISessionManager: sessions.NewSessionManager(),
 		}
 		node.TCPSocketOption.Init()
 		return node
@@ -106,7 +107,7 @@ func (t *tcpAcceptor) tcpAccept() {
 		log.Println("tcp accept success. remoteAddr:", conn.RemoteAddr())
 		//go t.deal(conn)
 		func() {
-			session := NewTcpSession(conn, t)
+			session := sessions.NewTcpSession(conn, t)
 			session.Start()
 			// 通知上层主事件 (将回调放入队列中 防止多线程冲突)
 			t.ProcEvent(&socket.RcvMsgEvent{Sess: session, Message: &socket.SessionAccepted{}})

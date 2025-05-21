@@ -1,4 +1,4 @@
-package tcp
+package sessions
 
 import (
 	"github.com/ljhe/scream/common/socket"
@@ -9,16 +9,16 @@ import (
 
 type SessionChild struct {
 	sessionId uint64
-	*session
+	*Session
 	socket.Processor
 	close    int64
 	rcvQueue chan interface{}
 }
 
-func NewSessionChild(sessionId uint64, s *session) *SessionChild {
+func NewSessionChild(sessionId uint64, s *Session) *SessionChild {
 	return &SessionChild{
 		sessionId: sessionId,
-		session:   s,
+		Session:   s,
 		Processor: socket.Processor{
 			MsgProc:   new(socket.WSMessageProcessor),
 			Hooker:    new(socket.SessionChildHookEvent),

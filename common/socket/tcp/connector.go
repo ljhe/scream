@@ -5,6 +5,7 @@ import (
 	"github.com/ljhe/scream/common"
 	"github.com/ljhe/scream/common/iface"
 	"github.com/ljhe/scream/common/socket"
+	"github.com/ljhe/scream/common/socket/sessions"
 	"log"
 	"net"
 	"sync"
@@ -12,13 +13,13 @@ import (
 )
 
 type tcpConnector struct {
-	socket.RuntimeTag                  // 节点运行状态相关
-	socket.TCPSocketOption             // socket相关设置
-	socket.Processor                   // 事件处理相关
-	socket.ServerNodeProperty          // 节点配置属性相关
-	socket.ContextSet                  // 节点上下文相关
-	iface.ISessionManager              // 会话管理
-	session                   *session // 连接会话
+	socket.RuntimeTag                              // 节点运行状态相关
+	socket.TCPSocketOption                         // socket相关设置
+	socket.Processor                               // 事件处理相关
+	socket.ServerNodeProperty                      // 节点配置属性相关
+	socket.ContextSet                              // 节点上下文相关
+	iface.ISessionManager                          // 会话管理
+	session                   *sessions.TCPSession // 连接会话
 	wg                        sync.WaitGroup
 }
 
@@ -51,8 +52,8 @@ func (t *tcpConnector) GetTyp() string {
 func init() {
 	socket.RegisterServerNode(func() iface.INetNode {
 		node := new(tcpConnector)
-		node.ISessionManager = socket.NewSessionManager()
-		node.session = NewTcpSession(nil, node)
+		node.ISessionManager = sessions.NewSessionManager()
+		node.session = sessions.NewTcpSession(nil, node)
 		node.TCPSocketOption.Init()
 		return node
 	})

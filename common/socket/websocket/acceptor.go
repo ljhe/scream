@@ -6,6 +6,7 @@ import (
 	"github.com/ljhe/scream/common"
 	"github.com/ljhe/scream/common/iface"
 	"github.com/ljhe/scream/common/socket"
+	"github.com/ljhe/scream/common/socket/sessions"
 	"github.com/ljhe/scream/common/util"
 	"github.com/ljhe/scream/plugins/logrus"
 	"log"
@@ -124,7 +125,7 @@ func (ws *tcpWebSocketAcceptor) handleConn(w http.ResponseWriter, r *http.Reques
 	}
 
 	ws.SocketOptWebSocket(conn)
-	sess := newWSSession(conn, ws, nil)
+	sess := sessions.NewWSSession(conn, ws)
 	sess.Start()
 	// 通知上层事件(这边的回调要放到队列中，否则会有多线程冲突)
 	ws.ProcEvent(&socket.RcvMsgEvent{Sess: sess, Message: &socket.SessionAccepted{}})
@@ -133,7 +134,7 @@ func (ws *tcpWebSocketAcceptor) handleConn(w http.ResponseWriter, r *http.Reques
 func init() {
 	socket.RegisterServerNode(func() iface.INetNode {
 		node := &tcpWebSocketAcceptor{
-			ISessionManager: socket.NewSessionManager(),
+			ISessionManager: sessions.NewSessionManager(),
 			upgrader: &websocket.Upgrader{
 				CheckOrigin: func(r *http.Request) bool {
 					// 允许所有跨域请求 实际使用时需要谨慎设置

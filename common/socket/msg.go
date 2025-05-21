@@ -58,7 +58,7 @@ type WsDataPacket struct {
 }
 
 func (t *TcpDataPacket) ReadMessage(s iface.ISession) (interface{}, error) {
-	reader, ok := s.Raw().(io.Reader)
+	reader, ok := s.Conn().(io.Reader)
 	if !ok || reader == nil {
 		return nil, fmt.Errorf("TcpDataPacket ReadMessage get io.Reader err")
 	}
@@ -75,7 +75,7 @@ func (t *TcpDataPacket) ReadMessage(s iface.ISession) (interface{}, error) {
 }
 
 func (t *TcpDataPacket) SendMessage(s iface.ISession, msg interface{}) (err error) {
-	writer, ok := s.Raw().(io.Writer)
+	writer, ok := s.Conn().(io.Writer)
 	if !ok || writer == nil {
 		return fmt.Errorf("TcpDataPacket SendMessage get io.Writer err")
 	}
@@ -108,7 +108,7 @@ func (t *TcpDataPacket) SendMessage(s iface.ISession, msg interface{}) (err erro
 }
 
 func (w *WsDataPacket) ReadMessage(s iface.ISession) (interface{}, error) {
-	conn, ok := s.Raw().(*websocket.Conn)
+	conn, ok := s.Conn().(*websocket.Conn)
 	if !ok || conn == nil {
 		return nil, fmt.Errorf("WsDataPacket ReadMessage get websocket.Conn err")
 	}
@@ -135,7 +135,7 @@ func (w *WsDataPacket) ReadMessage(s iface.ISession) (interface{}, error) {
 }
 
 func (w *WsDataPacket) SendMessage(s iface.ISession, msg interface{}) (err error) {
-	conn, ok := s.Raw().(*websocket.Conn)
+	conn, ok := s.Conn().(*websocket.Conn)
 	if !ok || conn == nil {
 		return fmt.Errorf("WsDataPacket SendMessage get websocket.Conn err")
 	}

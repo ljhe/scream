@@ -1,7 +1,7 @@
 package iface
 
 type ISession interface {
-	Raw() interface{} // 获得conn
+	Conn() interface{} // 获得conn
 	Node() INetNode
 	Send(msg interface{})
 	Close()
@@ -13,6 +13,15 @@ type ISession interface {
 	SetSessionChild(sessionId uint64, data interface{})
 	DelSessionChild(sessionId uint64)
 	Start()
+}
+
+type ISessionSpecific interface {
+	Conn() interface{}
+	SetConn(c interface{})
+	RunRcv()
+	SetSessionChild(sessionId uint64, data interface{})
+	DelSessionChild(sessionId uint64)
+	HeartBeat(msg interface{})
 }
 
 type ISessionChild interface {

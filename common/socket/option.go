@@ -43,20 +43,20 @@ func (no *TCPSocketOption) MaxMsgLen() int {
 }
 
 func (no *TCPSocketOption) SocketReadTimeout(s iface.ISession, callback func()) {
-	switch s.Raw().(type) {
+	switch s.Conn().(type) {
 	case net.Conn:
 		if no.readTimeout > 0 {
-			s.Raw().(net.Conn).SetReadDeadline(time.Now().Add(no.readTimeout))
+			s.Conn().(net.Conn).SetReadDeadline(time.Now().Add(no.readTimeout))
 			callback()
-			s.Raw().(net.Conn).SetReadDeadline(time.Time{})
+			s.Conn().(net.Conn).SetReadDeadline(time.Time{})
 		} else {
 			callback()
 		}
 	case *websocket.Conn:
 		if no.readTimeout > 0 {
-			s.Raw().(*websocket.Conn).SetReadDeadline(time.Now().Add(no.readTimeout))
+			s.Conn().(*websocket.Conn).SetReadDeadline(time.Now().Add(no.readTimeout))
 			callback()
-			s.Raw().(*websocket.Conn).SetReadDeadline(time.Time{})
+			s.Conn().(*websocket.Conn).SetReadDeadline(time.Time{})
 		} else {
 			callback()
 		}
@@ -64,20 +64,20 @@ func (no *TCPSocketOption) SocketReadTimeout(s iface.ISession, callback func()) 
 }
 
 func (no *TCPSocketOption) SocketWriteTimeout(s iface.ISession, callback func()) {
-	switch s.Raw().(type) {
+	switch s.Conn().(type) {
 	case net.Conn:
 		if no.readTimeout > 0 {
-			s.Raw().(net.Conn).SetWriteDeadline(time.Now().Add(no.readTimeout))
+			s.Conn().(net.Conn).SetWriteDeadline(time.Now().Add(no.readTimeout))
 			callback()
-			s.Raw().(net.Conn).SetWriteDeadline(time.Time{})
+			s.Conn().(net.Conn).SetWriteDeadline(time.Time{})
 		} else {
 			callback()
 		}
 	case *websocket.Conn:
 		if no.readTimeout > 0 {
-			s.Raw().(*websocket.Conn).SetWriteDeadline(time.Now().Add(no.readTimeout))
+			s.Conn().(*websocket.Conn).SetWriteDeadline(time.Now().Add(no.readTimeout))
 			callback()
-			s.Raw().(*websocket.Conn).SetWriteDeadline(time.Time{})
+			s.Conn().(*websocket.Conn).SetWriteDeadline(time.Time{})
 		} else {
 			callback()
 		}

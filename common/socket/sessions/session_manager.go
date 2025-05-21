@@ -1,4 +1,4 @@
-package socket
+package sessions
 
 import (
 	"github.com/ljhe/scream/common/iface"

@@ -31,7 +31,7 @@ func (n *Processor) SetMsgRouter(msgr iface.EventCallBack) {
 	n.MsgRouter = msgr
 }
 
-func (n *Processor) GetRPC() *Processor {
+func (n *Processor) GetProc() *Processor {
 	return n
 }
 
