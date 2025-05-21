@@ -3,10 +3,10 @@ package tests
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
-	"github.com/ljhe/scream/common/encryption"
-	"github.com/ljhe/scream/common/socket"
-	"github.com/ljhe/scream/common/util"
+	"github.com/ljhe/scream/core/socket"
 	"github.com/ljhe/scream/pbgo"
+	"github.com/ljhe/scream/utils"
+	"github.com/ljhe/scream/utils/encryption"
 	"log"
 	"math/rand"
 	"net/url"
@@ -54,7 +54,7 @@ func createConnector() {
 
 	// 4. 循环发送消息给服务端
 	rand.Seed(time.Now().UnixNano())
-	random := util.RandomIntRange(1, 5)
+	random := utils.RandomIntRange(1, 5)
 	ticker := time.NewTicker(time.Duration(random) * time.Second)
 	defer ticker.Stop()
 	count := 0

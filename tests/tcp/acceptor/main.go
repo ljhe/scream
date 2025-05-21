@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/ljhe/scream/common/config"
-	"github.com/ljhe/scream/common/service"
+	"github.com/ljhe/scream/core/config"
+	"github.com/ljhe/scream/core/service"
 )
 
 func main() {

@@ -404,7 +404,7 @@ func savePbBindGo(sortMsg *sortMsgData) {
 	mhead := fmt.Sprintf(`package %s
 
 import (
-	"github.com/ljhe/scream/common/iface"
+	"github.com/ljhe/scream/core/iface"
 	"log"
 	"reflect"
 )
