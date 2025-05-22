@@ -19,7 +19,7 @@ type tcpWebSocketAcceptor struct {
 	socket.RuntimeTag      // 运行状态
 	socket.TCPSocketOption // socket相关设置
 	socket.Processor       // 事件处理相关
-	socket.ServerNodeProperty
+	socket.NodeProp
 	socket.ContextSet
 	iface.ISessionManager // 会话管理
 
@@ -128,7 +128,7 @@ func (ws *tcpWebSocketAcceptor) handleConn(w http.ResponseWriter, r *http.Reques
 	sess := sessions.NewWSSession(conn, ws)
 	sess.Start()
 	// 通知上层事件(这边的回调要放到队列中，否则会有多线程冲突)
-	ws.ProcEvent(&socket.RcvMsgEvent{Sess: sess, Message: &socket.SessionAccepted{}})
+	ws.ProcEvent(&socket.RcvProcEvent{Sess: sess, Message: &socket.SessionAccepted{}})
 }
 
 func init() {

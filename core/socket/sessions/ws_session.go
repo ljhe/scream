@@ -37,10 +37,7 @@ func (ws *WSSession) RunRcv() {
 	for {
 		msg, err := ws.ReadMsg(ws)
 		if err != nil {
-			// 检测是否正常关闭
-			if !websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-				logrus.Log(logrus.LogsSystem).Errorf("RunRcv ReadMsg err:%v sessionId:%d \n", err, ws.GetId())
-			}
+			logrus.Log(logrus.LogsSystem).Errorf("RunRcv ReadMsg err:%v sessionId:%d \n", err, ws.GetId())
 			// 做关闭处理 发送数据时已经无法发送
 			atomic.StoreInt64(&ws.close, 1)
 			select {
@@ -50,15 +47,15 @@ func (ws *WSSession) RunRcv() {
 			}
 
 			// 抛出关闭事件
-			ws.ProcEvent(&socket.RcvMsgEvent{Sess: ws, Message: &pbgo.WSSessionClosedNtf{}, Err: err})
+			ws.ProcEvent(&socket.RcvProcEvent{Sess: ws, Message: &pbgo.WSSessionClosedNtf{}, Err: err})
 			break
 		}
 
 		// 接收数据事件放到队列中(需要放到队列中，否则会有线程冲突)
-		ws.ProcEvent(&socket.RcvMsgEvent{Sess: ws, Message: msg, Err: nil})
+		ws.ProcEvent(&socket.RcvProcEvent{Sess: ws, Message: msg, Err: nil})
 	}
 
-	logrus.Log(logrus.LogsSystem).Infof("wsSession exit addr:%v", ws.conn.LocalAddr())
+	logrus.Log(logrus.LogsSystem).Infof("wsSession exit sessionId:%d", ws.GetId())
 	ws.exitWg.Done()
 }
 

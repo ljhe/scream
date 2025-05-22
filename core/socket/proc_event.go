@@ -4,35 +4,29 @@ import (
 	"github.com/ljhe/scream/core/iface"
 )
 
-type RcvMsgEvent struct {
+type RcvProcEvent struct {
 	Sess    iface.ISession
 	Message interface{}
 	Err     error
 }
 
-func (re *RcvMsgEvent) Session() iface.ISession {
+func (re *RcvProcEvent) Session() iface.ISession {
 	return re.Sess
 }
 
-func (re *RcvMsgEvent) Msg() interface{} {
+func (re *RcvProcEvent) Msg() interface{} {
 	return re.Message
 }
 
-type SendMsgEvent struct {
+type SendProcEvent struct {
 	Sess    iface.ISession
 	Message interface{}
 }
 
-func (se *SendMsgEvent) Session() iface.ISession {
+func (se *SendProcEvent) Session() iface.ISession {
 	return se.Sess
 }
 
-func (se *SendMsgEvent) Msg() interface{} {
+func (se *SendProcEvent) Msg() interface{} {
 	return se.Message
-}
-
-// DataPacket 收发数据
-type DataPacket interface {
-	ReadMessage(s iface.ISession) (interface{}, error)
-	SendMessage(s iface.ISession, msg interface{}) (err error)
 }

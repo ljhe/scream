@@ -2,10 +2,10 @@ package socket
 
 import "github.com/ljhe/scream/core/iface"
 
-type TCPMessageProcessor struct {
+type TCPMsgFlow struct {
 }
 
-func (tp *TCPMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, err error) {
+func (tp *TCPMsgFlow) OnRcvMsg(s iface.ISession) (msg interface{}, err error) {
 	opt := s.Node().(Option)
 	opt.SocketReadTimeout(s, func() {
 		p := TcpDataPacket{}
@@ -14,7 +14,7 @@ func (tp *TCPMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, err 
 	return
 }
 
-func (tp *TCPMessageProcessor) OnSendMsg(s iface.ISession, msg interface{}) (err error) {
+func (tp *TCPMsgFlow) OnSendMsg(s iface.ISession, msg interface{}) (err error) {
 	opt := s.Node().(Option)
 	opt.SocketWriteTimeout(s, func() {
 		p := TcpDataPacket{}
@@ -23,10 +23,10 @@ func (tp *TCPMessageProcessor) OnSendMsg(s iface.ISession, msg interface{}) (err
 	return err
 }
 
-type WSMessageProcessor struct {
+type WSMsgFlow struct {
 }
 
-func (tp *WSMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, err error) {
+func (tp *WSMsgFlow) OnRcvMsg(s iface.ISession) (msg interface{}, err error) {
 	opt := s.Node().(Option)
 	opt.SocketReadTimeout(s, func() {
 		p := WsDataPacket{}
@@ -35,7 +35,7 @@ func (tp *WSMessageProcessor) OnRcvMsg(s iface.ISession) (msg interface{}, err e
 	return
 }
 
-func (tp *WSMessageProcessor) OnSendMsg(s iface.ISession, msg interface{}) (err error) {
+func (tp *WSMsgFlow) OnSendMsg(s iface.ISession, msg interface{}) (err error) {
 	opt := s.Node().(Option)
 	opt.SocketWriteTimeout(s, func() {
 		p := WsDataPacket{}

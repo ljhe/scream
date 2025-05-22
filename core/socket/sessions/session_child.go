@@ -20,7 +20,7 @@ func NewSessionChild(sessionId uint64, s *Session) *SessionChild {
 		sessionId: sessionId,
 		Session:   s,
 		Processor: socket.Processor{
-			MsgProc: new(socket.WSMessageProcessor),
+			MsgFlow: new(socket.WSMsgFlow),
 			Hooker:  new(socket.SessionChildHookEvent),
 		},
 		rcvQueue: make(chan interface{}, 500),
@@ -66,7 +66,7 @@ func (sc *SessionChild) RunRcv() {
 		if data == nil {
 			break
 		}
-		sc.Processor.ProcEvent(&socket.RcvMsgEvent{Sess: sc, Message: data, Err: nil})
+		sc.Processor.ProcEvent(&socket.RcvProcEvent{Sess: sc, Message: data, Err: nil})
 	}
 	logrus.Log(logrus.LogsSystem).Infof("session children close. sessionId:%d", sc.sessionId)
 }

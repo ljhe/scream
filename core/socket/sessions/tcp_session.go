@@ -46,10 +46,10 @@ func (ts *TCPSession) RunRcv() {
 			}
 
 			// 抛出关闭事件
-			ts.ProcEvent(&socket.RcvMsgEvent{Sess: ts, Message: &socket.SessionClosed{}, Err: err})
+			ts.ProcEvent(&socket.RcvProcEvent{Sess: ts, Message: &socket.SessionClosed{}, Err: err})
 			break
 		}
-		ts.ProcEvent(&socket.RcvMsgEvent{Sess: ts, Message: msg})
+		ts.ProcEvent(&socket.RcvProcEvent{Sess: ts, Message: msg})
 	}
 	ts.exitWg.Done()
 }

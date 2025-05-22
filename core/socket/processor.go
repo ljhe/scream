@@ -9,14 +9,14 @@ import (
 )
 
 type Processor struct {
-	MsgProc   iface.IMessageProcessor // 根据不同对象来处理消息读写的加解密
-	Hooker    iface.IHookEvent        // 不进入主消息队列 直接操作
-	MsgHandle iface.IMsgHandle
-	MsgRouter iface.EventCallBack
+	MsgFlow   iface.IMsgFlow      // 处理消息读写
+	Hooker    iface.IHookEvent    // 不进入主消息队列 直接操作
+	MsgHandle iface.IMsgHandle    // 消息主队列
+	MsgRouter iface.EventCallBack // 路由
 }
 
-func (n *Processor) SetMessageProc(v iface.IMessageProcessor) {
-	n.MsgProc = v
+func (n *Processor) SetMsgFlow(v iface.IMsgFlow) {
+	n.MsgFlow = v
 }
 
 func (n *Processor) SetHooker(v iface.IHookEvent) {
@@ -61,8 +61,8 @@ func (n *Processor) ProcEvent(e iface.IProcEvent) {
 }
 
 func (n *Processor) ReadMsg(s iface.ISession) (interface{}, error) {
-	if n.MsgProc != nil {
-		return n.MsgProc.OnRcvMsg(s)
+	if n.MsgFlow != nil {
+		return n.MsgFlow.OnRcvMsg(s)
 	}
 	return nil, fmt.Errorf("msg rpc is nil")
 }
@@ -71,8 +71,8 @@ func (n *Processor) SendMsg(e iface.IProcEvent) error {
 	if n.Hooker != nil {
 		e = n.Hooker.OutEvent(e)
 	}
-	if n.MsgProc != nil {
-		return n.MsgProc.OnSendMsg(e.Session(), e.Msg())
+	if n.MsgFlow != nil {
+		return n.MsgFlow.OnSendMsg(e.Session(), e.Msg())
 	}
 	return nil
 }

@@ -23,11 +23,9 @@ func TestWSConnector(t *testing.T) {
 }
 
 func createConnector() {
-	// 1. 构造 WebSocket 连接的 URL
 	u := url.URL{Scheme: "ws", Host: "localhost:9001", Path: "/ws"}
 	log.Printf("connecting to %s", u.String())
 
-	// 2. 连接到 WebSocket 服务端
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		log.Fatal("dial error:", err)
@@ -39,21 +37,26 @@ func createConnector() {
 		}
 	}(c)
 
-	// 3. 启动 goroutine 接收服务端消息
+	stopReading := make(chan struct{})
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
 		for {
-			_, message, err := c.ReadMessage()
-			if err != nil {
-				log.Println("read error:", err)
+			select {
+			case <-stopReading:
+				log.Println("read goroutine exiting. addr:", c.LocalAddr().String())
 				return
+			default:
+				_, message, err := c.ReadMessage()
+				if err != nil {
+					log.Println("read error:", err)
+					return
+				}
+				log.Printf("recv: %s", message)
 			}
-			log.Printf("recv: %s", message)
 		}
 	}()
 
-	// 4. 循环发送消息给服务端
 	rand.Seed(time.Now().UnixNano())
 	random := utils.RandomIntRange(1, 5)
 	ticker := time.NewTicker(time.Duration(random) * time.Second)
@@ -64,7 +67,6 @@ func createConnector() {
 		case <-done:
 			return
 		case <-ticker.C:
-			// RSA加密
 			data := &pbgo.CSSendMsgReq{
 				Msg: c.LocalAddr().String() + "_" + fmt.Sprintf("%d", count),
 			}
@@ -78,6 +80,8 @@ func createConnector() {
 			err = c.WriteMessage(websocket.BinaryMessage, buf)
 			count++
 			if count >= 3 {
+				close(stopReading)
+				time.Sleep(100 * time.Millisecond)
 				err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 				if err != nil {
 					panic(err)

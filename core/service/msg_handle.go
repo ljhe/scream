@@ -2,7 +2,6 @@ package service
 
 import (
 	"github.com/ljhe/scream/core/iface"
-	"github.com/panjf2000/ants/v2"
 	"log"
 	"runtime/debug"
 	"sync"
@@ -12,10 +11,9 @@ import (
 var queListSize = 20000
 
 type MsgHandle struct {
-	queList  chan interface{}
-	onError  func(interface{})
-	workPool *ants.Pool
-	wg       sync.WaitGroup
+	queList chan interface{}
+	onError func(interface{})
+	wg      sync.WaitGroup
 }
 
 func NewMsgHandle() iface.IMsgHandle {
@@ -29,11 +27,8 @@ func NewMsgHandle() iface.IMsgHandle {
 	}
 }
 
-func GetMsgHandle(size int) iface.IMsgHandle {
+func GetMsgHandle() iface.IMsgHandle {
 	handle := NewMsgHandle()
-	if size > 0 {
-		handle.SetWorkPool(size)
-	}
 	handle.Start()
 	return handle
 }
@@ -67,12 +62,4 @@ func (m *MsgHandle) PostCb(cb func()) {
 	if cb != nil {
 		m.queList <- cb
 	}
-}
-
-func (m *MsgHandle) SetWorkPool(size int) {
-	p, err := ants.NewPool(size)
-	if err != nil {
-		return
-	}
-	m.workPool = p
 }

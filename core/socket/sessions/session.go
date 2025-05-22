@@ -2,10 +2,12 @@ package sessions
 
 import (
 	"github.com/gorilla/websocket"
+	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/core/socket"
 	"log"
 	"net"
+	"reflect"
 	"runtime/debug"
 	"sync"
 	"sync/atomic"
@@ -103,9 +105,9 @@ func (s *Session) RunSend() {
 		if data == nil {
 			continue
 		}
-		err := s.SendMsg(&socket.SendMsgEvent{Sess: s, Message: data})
+		err := s.SendMsg(&socket.SendProcEvent{Sess: s, Message: data})
 		if err != nil {
-			log.Println("send msg err:", err)
+			logrus.Log(logrus.LogsSystem).Errorf("session send msg err:%v. sessionId:%d dataT:%v data:%v", err, s.GetId(), reflect.TypeOf(data), data)
 			break
 		}
 	}

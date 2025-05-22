@@ -14,13 +14,13 @@ import (
 )
 
 type tcpAcceptor struct {
-	socket.RuntimeTag         // 节点运行状态相关
-	socket.TCPSocketOption    // socket相关设置
-	socket.Processor          // 事件处理相关
-	socket.ServerNodeProperty // 节点配置属性相关
-	socket.ContextSet         // 节点上下文相关
-	iface.ISessionManager     // 会话管理
-	listener                  net.Listener
+	socket.RuntimeTag      // 节点运行状态相关
+	socket.TCPSocketOption // socket相关设置
+	socket.Processor       // 事件处理相关
+	socket.NodeProp        // 节点配置属性相关
+	socket.ContextSet      // 节点上下文相关
+	iface.ISessionManager  // 会话管理
+	listener               net.Listener
 }
 
 func (t *tcpAcceptor) Start() iface.INetNode {
@@ -110,7 +110,7 @@ func (t *tcpAcceptor) tcpAccept() {
 			session := sessions.NewTcpSession(conn, t)
 			session.Start()
 			// 通知上层主事件 (将回调放入队列中 防止多线程冲突)
-			t.ProcEvent(&socket.RcvMsgEvent{Sess: session, Message: &socket.SessionAccepted{}})
+			t.ProcEvent(&socket.RcvProcEvent{Sess: session, Message: &socket.SessionAccepted{}})
 		}()
 	}
 	t.SetRunState(false)

@@ -13,14 +13,14 @@ import (
 )
 
 type tcpConnector struct {
-	socket.RuntimeTag                              // 节点运行状态相关
-	socket.TCPSocketOption                         // socket相关设置
-	socket.Processor                               // 事件处理相关
-	socket.ServerNodeProperty                      // 节点配置属性相关
-	socket.ContextSet                              // 节点上下文相关
-	iface.ISessionManager                          // 会话管理
-	session                   *sessions.TCPSession // 连接会话
-	wg                        sync.WaitGroup
+	socket.RuntimeTag                           // 节点运行状态相关
+	socket.TCPSocketOption                      // socket相关设置
+	socket.Processor                            // 事件处理相关
+	socket.NodeProp                             // 节点配置属性相关
+	socket.ContextSet                           // 节点上下文相关
+	iface.ISessionManager                       // 会话管理
+	session                *sessions.TCPSession // 连接会话
+	wg                     sync.WaitGroup
 }
 
 func (t *tcpConnector) Start() iface.INetNode {
@@ -80,7 +80,7 @@ func (t *tcpConnector) connect() {
 		t.session.SetConn(conn)
 		t.session.Start()
 		// 连接事件
-		t.ProcEvent(&socket.RcvMsgEvent{Sess: t.session, Message: &socket.SessionConnected{}})
+		t.ProcEvent(&socket.RcvProcEvent{Sess: t.session, Message: &socket.SessionConnected{}})
 		//go t.deal(conn)
 		t.wg.Wait()
 		if t.GetCloseFlag() {

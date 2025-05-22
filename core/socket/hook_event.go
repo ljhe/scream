@@ -25,7 +25,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		ctx := iv.Session().Node().(iface.IContextSet)
 		var ed *trdetcd.ETCDServiceDesc
 		if ctx.RawContextData(core.ContextSetEtcdKey, &ed) {
-			prop := iv.Session().Node().(iface.IServerNodeProperty)
+			prop := iv.Session().Node().(iface.INodeProp)
 			// 连接上服务器节点后 发送确认信息 告诉对端自己的服务器信息
 			iv.Session().Send(&pbgo.ServiceIdentifyACK{
 				ServiceId:       utils.GenServiceId(prop),
@@ -89,7 +89,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		}
 
 		iv.Session().TransmitChild(msg.SessionId, data)
-		logrus.Log(logrus.LogsSystem).Printf("receive MsgTransmitNtf msg. main_session:%d client_session:%d msgT:%v data:%v",
+		logrus.Log(logrus.LogsSystem).Printf("receive MsgTransmitNtf msg. main_session:%d client_session:%d dataT:%v data:%v",
 			iv.Session().GetId(), msg.SessionId, reflect.TypeOf(data), data)
 		return nil
 	default:
@@ -131,6 +131,7 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 			Data:      bytes,
 		})
 
+		// 关闭客户端到ws的发送端
 		return nil
 	case *pbgo.CSPingReq:
 		iv.Session().Send(&pbgo.SCPingAck{})

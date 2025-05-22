@@ -22,14 +22,14 @@ type ITCPSocketOption interface {
 }
 
 type IProcessor interface {
-	SetMessageProc(v IMessageProcessor)
+	SetMsgFlow(v IMsgFlow)
 	SetHooker(v IHookEvent)
 	SetMsgHandle(v IMsgHandle)
 	SetMsgRouter(v EventCallBack)
 	GetMsgRouter() EventCallBack
 }
 
-type IServerNodeProperty interface {
+type INodeProp interface {
 	SetAddr(a string)
 	GetAddr() string
 	SetName(s string)
@@ -40,7 +40,7 @@ type IServerNodeProperty interface {
 	GetServerTyp() int
 	SetIndex(i int)
 	GetIndex() int
-	SetServerNodeProperty()
+	SetNodeProp()
 }
 
 type IContextSet interface {

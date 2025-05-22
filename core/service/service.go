@@ -16,15 +16,14 @@ import (
 // CreateAcceptor 创建监听节点
 func CreateAcceptor() iface.INetNode {
 	node := socket.NewServerNode(core.SocketTypTcpAcceptor, config.SConf.Node.Name, config.SConf.Node.Addr)
-	node.(iface.IProcessor).SetMessageProc(new(socket.TCPMessageProcessor))
+	node.(iface.IProcessor).SetMsgFlow(new(socket.TCPMsgFlow))
 	node.(iface.IProcessor).SetHooker(new(socket.ServerHookEvent))
-	msgHandle := GetMsgHandle(100)
-	node.(iface.IProcessor).SetMsgHandle(msgHandle)
+	node.(iface.IProcessor).SetMsgHandle(GetMsgHandle())
 
 	msgPrcFunc := pbgo.GetMessageHandler(core.GetServiceNodeStr(config.SConf.Node.Typ))
 	node.(iface.IProcessor).SetMsgRouter(msgPrcFunc)
 
-	node.(iface.IServerNodeProperty).SetServerNodeProperty()
+	node.(iface.INodeProp).SetNodeProp()
 
 	node.Start()
 
@@ -42,10 +41,9 @@ func CreateConnector(connect string, multiNode trdetcd.MultiServerNode) {
 				return
 			}
 			node := socket.NewServerNode(core.SocketTypTcpConnector, config.SConf.Node.Name, ed.Host)
-			msgHandle := GetMsgHandle(0)
 			node.(iface.IProcessor).SetHooker(new(socket.ServerHookEvent))
-			node.(iface.IProcessor).SetMsgHandle(msgHandle)
-			node.(iface.IProcessor).SetMessageProc(new(socket.TCPMessageProcessor))
+			node.(iface.IProcessor).SetMsgHandle(GetMsgHandle())
+			node.(iface.IProcessor).SetMsgFlow(new(socket.TCPMsgFlow))
 
 			if opt, ok := node.(iface.ITCPSocketOption); ok {
 				opt.SetSocketBuff(core.MsgMaxLen, core.MsgMaxLen, true)
@@ -53,7 +51,7 @@ func CreateConnector(connect string, multiNode trdetcd.MultiServerNode) {
 				opt.SetSocketDeadline(time.Second*15, time.Second*15)
 			}
 
-			node.(iface.IServerNodeProperty).SetServerNodeProperty()
+			node.(iface.INodeProp).SetNodeProp()
 
 			// 将etcd信息保存在内存中
 			node.(iface.IContextSet).SetContextData(core.ContextSetEtcdKey, ed)
@@ -68,7 +66,7 @@ func CreateConnector(connect string, multiNode trdetcd.MultiServerNode) {
 func CreateWebSocketAcceptor() iface.INetNode {
 	node := socket.NewServerNode(core.SocketTypTcpWSAcceptor, config.SConf.Node.Name, config.SConf.Node.WsAddr)
 
-	node.(iface.IProcessor).SetMessageProc(new(socket.WSMessageProcessor))
+	node.(iface.IProcessor).SetMsgFlow(new(socket.WSMsgFlow))
 	node.(iface.IProcessor).SetHooker(new(socket.WsHookEvent))
 	msgPrcFunc := pbgo.GetMessageHandler(core.GetServiceNodeStr(config.SConf.Node.Typ))
 	node.(iface.IProcessor).SetMsgRouter(msgPrcFunc)
@@ -81,7 +79,7 @@ func CreateWebSocketAcceptor() iface.INetNode {
 		// 读/写协程没有过滤超时事件 发生了操时操作就断开连接
 	}
 
-	node.(iface.IServerNodeProperty).SetServerNodeProperty()
+	node.(iface.INodeProp).SetNodeProp()
 
 	node.Start()
 
