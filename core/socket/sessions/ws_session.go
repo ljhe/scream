@@ -62,27 +62,20 @@ func (ws *WSSession) RunRcv() {
 	ws.exitWg.Done()
 }
 
-func (ws *WSSession) SetSessionChild(sessionId uint64, data interface{}) {
+func (ws *WSSession) TransmitChild(sessionId uint64, data interface{}) {
 
 }
 
-func (ws *WSSession) DelSessionChild(sessionId uint64) {
+func (ws *WSSession) DelChild(sessionId uint64) {
 
 }
 
 func NewWSSession(conn *websocket.Conn, node iface.INetNode) *WSSession {
 	ws := &WSSession{
-		conn: conn,
-		Session: &Session{
-			node: node,
-			// 在session中初始化 每一个session 一个处理消息的队列 实现多客户端之间并行
-			Processor: &socket.Processor{
-				MsgProc: new(socket.WSMessageProcessor),
-				Hooker:  new(socket.WsHookEvent),
-			},
-		},
+		conn:    conn,
+		Session: NewSession(node),
 	}
-	ws.ISessionSpecific = ws
+	ws.ISessionExtension = ws
 	node.(socket.Option).CopyOpt(&ws.sessionOpt)
 	return ws
 }

@@ -1,27 +1,29 @@
 package iface
 
-type ISession interface {
+type ISessionCommon interface {
 	Conn() interface{} // 获得conn
+	TransmitChild(sessionId uint64, data interface{})
+	DelChild(sessionId uint64)
+	HeartBeat(msg interface{}) // 心跳检测
+}
+
+type ISession interface {
+	ISessionCommon
 	Node() INetNode
+	GetProcessor() IProcessor
 	Send(msg interface{})
 	Close()
 	SetId(id uint64)
 	GetId() uint64
-	HeartBeat(msg interface{})
 	IncRcvPingNum(inc int)
 	RcvPingNum() int
-	SetSessionChild(sessionId uint64, data interface{})
-	DelSessionChild(sessionId uint64)
 	Start()
 }
 
-type ISessionSpecific interface {
-	Conn() interface{}
+type ISessionExtension interface {
+	ISessionCommon
 	SetConn(c interface{})
 	RunRcv()
-	SetSessionChild(sessionId uint64, data interface{})
-	DelSessionChild(sessionId uint64)
-	HeartBeat(msg interface{})
 }
 
 type ISessionChild interface {

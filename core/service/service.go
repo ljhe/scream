@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/ljhe/scream/3rd/etcd"
+	trdetcd "github.com/ljhe/scream/3rd/etcd"
 	"github.com/ljhe/scream/core"
 	_ "github.com/ljhe/scream/core/baseserver/normal_logic"
 	"github.com/ljhe/scream/core/config"
@@ -29,14 +29,14 @@ func CreateAcceptor() iface.INetNode {
 	node.Start()
 
 	// 注册到服务发现etcd中
-	etcd.ETCDRegister(node)
+	trdetcd.ETCDRegister(node)
 	return node
 }
 
 // CreateConnector 创建连接节点
-func CreateConnector(connect string, multiNode etcd.MultiServerNode) {
-	etcd.DiscoveryService(multiNode, connect, config.SConf.Node.Zone,
-		func(mn etcd.MultiServerNode, ed *etcd.ETCDServiceDesc) {
+func CreateConnector(connect string, multiNode trdetcd.MultiServerNode) {
+	trdetcd.DiscoveryService(multiNode, connect, config.SConf.Node.Zone,
+		func(mn trdetcd.MultiServerNode, ed *trdetcd.ETCDServiceDesc) {
 			// 不连接自己
 			if ed.Typ == config.SConf.Node.Typ && ed.Zone == config.SConf.Node.Zone && ed.Index == config.SConf.Node.Index {
 				return
@@ -68,10 +68,10 @@ func CreateConnector(connect string, multiNode etcd.MultiServerNode) {
 func CreateWebSocketAcceptor() iface.INetNode {
 	node := socket.NewServerNode(core.SocketTypTcpWSAcceptor, config.SConf.Node.Name, config.SConf.Node.WsAddr)
 
-	//node.(iface.INetProcessor).SetMessageProc(new(socket.WSMessageProcessor))
-	//node.(iface.INetProcessor).(iface.INetProcessor).SetHooker(new(WsHookEvent))
+	node.(iface.IProcessor).SetMessageProc(new(socket.WSMessageProcessor))
+	node.(iface.IProcessor).SetHooker(new(socket.WsHookEvent))
 	msgPrcFunc := pbgo.GetMessageHandler(core.GetServiceNodeStr(config.SConf.Node.Typ))
-	node.(iface.IProcessor).(iface.IProcessor).SetMsgRouter(msgPrcFunc)
+	node.(iface.IProcessor).SetMsgRouter(msgPrcFunc)
 
 	if opt, ok := node.(iface.ITCPSocketOption); ok {
 		opt.SetSocketBuff(core.MsgMaxLen, core.MsgMaxLen, true)
@@ -86,6 +86,6 @@ func CreateWebSocketAcceptor() iface.INetNode {
 	node.Start()
 
 	// 注册到服务发现etcd中
-	etcd.ETCDRegister(node)
+	trdetcd.ETCDRegister(node)
 	return node
 }

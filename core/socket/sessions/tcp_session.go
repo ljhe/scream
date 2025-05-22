@@ -54,7 +54,7 @@ func (ts *TCPSession) RunRcv() {
 	ts.exitWg.Done()
 }
 
-func (ts *TCPSession) SetSessionChild(sessionId uint64, data interface{}) {
+func (ts *TCPSession) TransmitChild(sessionId uint64, data interface{}) {
 	var sc *SessionChild
 	if val, ok := ts.children.Load(sessionId); !ok {
 		sc = NewSessionChild(sessionId, ts.Session)
@@ -66,7 +66,7 @@ func (ts *TCPSession) SetSessionChild(sessionId uint64, data interface{}) {
 	sc.Rcv(data)
 }
 
-func (ts *TCPSession) DelSessionChild(sessionId uint64) {
+func (ts *TCPSession) DelChild(sessionId uint64) {
 	if val, ok := ts.children.Load(sessionId); ok {
 		val.(*SessionChild).Stop()
 		ts.children.Delete(sessionId)
@@ -96,17 +96,10 @@ func (ts *TCPSession) HeartBeat(msg interface{}) {
 
 func NewTcpSession(c net.Conn, node iface.INetNode) *TCPSession {
 	ts := &TCPSession{
-		conn: c,
-		Session: &Session{
-			node:            node,
-			sendQueueMaxLen: sendQueueMaxLen,
-			sendQueue:       make(chan interface{}, sendQueueMaxLen),
-			Processor: node.(interface {
-				GetProc() *socket.Processor
-			}).GetProc(),
-		},
+		conn:    c,
+		Session: NewSession(node),
 	}
-	ts.ISessionSpecific = ts
+	ts.ISessionExtension = ts
 	node.(socket.Option).CopyOpt(&ts.sessionOpt)
 	return ts
 }

@@ -1,7 +1,7 @@
 package socket
 
 import (
-	"github.com/ljhe/scream/3rd/etcd"
+	trdetcd "github.com/ljhe/scream/3rd/etcd"
 	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core"
 	"github.com/ljhe/scream/core/baseserver"
@@ -23,7 +23,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	case *SessionConnected:
 		// 从内存中的etcd获取服务器信息
 		ctx := iv.Session().Node().(iface.IContextSet)
-		var ed *etcd.ETCDServiceDesc
+		var ed *trdetcd.ETCDServiceDesc
 		if ctx.RawContextData(core.ContextSetEtcdKey, &ed) {
 			prop := iv.Session().Node().(iface.IServerNodeProperty)
 			// 连接上服务器节点后 发送确认信息 告诉对端自己的服务器信息
@@ -61,7 +61,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	case *pbgo.PingReq:
 		// 来自ServiceIdentifyACK接收端的服务器信息
 		ctx := iv.Session().(iface.IContextSet)
-		var ed *etcd.ETCDServiceDesc
+		var ed *trdetcd.ETCDServiceDesc
 		iv.Session().IncRcvPingNum(1)
 		if iv.Session().RcvPingNum() >= 10 {
 			iv.Session().IncRcvPingNum(-1)
@@ -73,7 +73,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		return nil
 	case *pbgo.PingAck:
 		ctx := iv.Session().(iface.IContextSet)
-		var ed *etcd.ETCDServiceDesc
+		var ed *trdetcd.ETCDServiceDesc
 		iv.Session().IncRcvPingNum(1)
 		if iv.Session().RcvPingNum() >= 10 {
 			iv.Session().IncRcvPingNum(-1)
@@ -83,15 +83,14 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		}
 		return nil
 	case *pbgo.MsgTransmitNtf:
-		logrus.Log(logrus.LogsSystem).Printf("receive MsgTransmitNtf msg. main_session:%d client_session:%d data:%v",
-			iv.Session().GetId(), msg.SessionId, msg.Data)
-
 		data, err := DecodeMessage(uint16(msg.MsgId), msg.Data)
 		if err != nil {
 			panic(err)
 		}
 
-		iv.Session().SetSessionChild(msg.SessionId, data)
+		iv.Session().TransmitChild(msg.SessionId, data)
+		logrus.Log(logrus.LogsSystem).Printf("receive MsgTransmitNtf msg. main_session:%d client_session:%d msgT:%v data:%v",
+			iv.Session().GetId(), msg.SessionId, reflect.TypeOf(data), data)
 		return nil
 	default:
 		logrus.Log(logrus.LogsSystem).Printf("receive unknown msg %v msgT:%v ivM %v sessionId:%d",
@@ -196,7 +195,7 @@ func (sc *SessionChildHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	switch msg := iv.Msg().(type) {
 	case *pbgo.WSSessionClosedNtf:
 		logrus.Log(logrus.LogsSystem).Infof("SessionChildHookEvent session closed. sessionId:%d", s.GetSessionId())
-		iv.Session().DelSessionChild(s.GetSessionId())
+		iv.Session().DelChild(s.GetSessionId())
 		return nil
 	default:
 		logrus.Log(logrus.LogsSystem).Infof("receive unknown msg %v msgT:%v ivM %v", msg, reflect.TypeOf(msg), iv.Msg())

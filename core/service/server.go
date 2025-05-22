@@ -3,7 +3,7 @@ package service
 import (
 	"fmt"
 	"github.com/ljhe/scream/3rd/db/gorm"
-	"github.com/ljhe/scream/3rd/etcd"
+	trdetcd "github.com/ljhe/scream/3rd/etcd"
 	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/config"
 	"github.com/ljhe/scream/core/iface"
@@ -20,7 +20,7 @@ func Init() error {
 	// 初始化内存池
 	//mpool.MemoryPoolInit()
 	// 初始化服务发现
-	err := etcd.InitServiceDiscovery("127.0.0.1:2379")
+	err := trdetcd.InitServiceDiscovery("127.0.0.1:2379")
 	if err != nil {
 		logrus.Log(logrus.LogsSystem).Errorf("InitServiceDiscovery err:%v", err)
 		return err
@@ -52,7 +52,7 @@ func StartUp() {
 		nodes = append(nodes, CreateWebSocketAcceptor())
 	}
 
-	multiNode := etcd.NewMultiServerNode()
+	multiNode := trdetcd.NewMultiServerNode()
 	for _, connect := range config.SConf.Node.Connect {
 		CreateConnector(connect, multiNode)
 	}
@@ -79,5 +79,5 @@ func Stop(node iface.INetNode) {
 		return
 	}
 	node.Stop()
-	etcd.ETCDUnRegister(node)
+	trdetcd.ETCDUnRegister(node)
 }

@@ -1,7 +1,7 @@
 package baseserver
 
 import (
-	"github.com/ljhe/scream/3rd/etcd"
+	trdetcd "github.com/ljhe/scream/3rd/etcd"
 	"github.com/ljhe/scream/core"
 	"github.com/ljhe/scream/core/iface"
 	"log"
@@ -18,12 +18,12 @@ var (
 func AddServiceNode(session iface.ISession, sid, name string, from string) {
 	mu.Lock()
 	defer mu.Unlock()
-	typ, zone, idx, err := etcd.ParseServiceId(sid)
+	typ, zone, idx, err := trdetcd.ParseServiceId(sid)
 	if err != nil {
 		log.Println("AddServiceNode error:", err)
 		return
 	}
-	session.(iface.IContextSet).SetContextData(core.ContextSetCtxKey, &etcd.ETCDServiceDesc{
+	session.(iface.IContextSet).SetContextData(core.ContextSetCtxKey, &trdetcd.ETCDServiceDesc{
 		Id:    sid,
 		Name:  name,
 		Typ:   typ,
@@ -73,9 +73,9 @@ func GetServiceNode(sid string) iface.ISession {
 	return nil
 }
 
-func SessionContextEtcd(session iface.ISession) *etcd.ETCDServiceDesc {
+func SessionContextEtcd(session iface.ISession) *trdetcd.ETCDServiceDesc {
 	if ed, ok := session.(iface.IContextSet).GetContextData(core.ContextSetCtxKey); ok {
-		return ed.(*etcd.ETCDServiceDesc)
+		return ed.(*trdetcd.ETCDServiceDesc)
 	}
 	return nil
 }
@@ -145,7 +145,7 @@ func selectServiceNode(serviceName string, id uint64) string {
 	var retIDList []string
 	for _, node := range serviceConnBySid {
 		if raw, ok := node.(iface.IContextSet).GetContextData("ctx"); ok {
-			sid := raw.(*etcd.ETCDServiceDesc)
+			sid := raw.(*trdetcd.ETCDServiceDesc)
 			if sid.Name == serviceName {
 				retIDList = append(retIDList, sid.Id)
 			}

@@ -16,7 +16,7 @@ var sendQueueMaxLen = 200
 type Session struct {
 	*socket.Processor // 事件处理相关
 	socket.ContextSet // 记录session绑定信息
-	iface.ISessionSpecific
+	iface.ISessionExtension
 	node            iface.INetNode
 	close           int64
 	sendQueue       chan interface{}
@@ -39,6 +39,10 @@ func (s *Session) GetId() uint64 {
 
 func (s *Session) Node() iface.INetNode {
 	return s.node
+}
+
+func (s *Session) GetProcessor() iface.IProcessor {
+	return s.Processor
 }
 
 func (s *Session) IncRcvPingNum(inc int) {
@@ -117,5 +121,16 @@ func (s *Session) Send(msg interface{}) {
 	select {
 	case s.sendQueue <- msg:
 	default:
+	}
+}
+
+func NewSession(node iface.INetNode) *Session {
+	return &Session{
+		node:            node,
+		sendQueueMaxLen: sendQueueMaxLen,
+		sendQueue:       make(chan interface{}, sendQueueMaxLen),
+		Processor: node.(interface {
+			GetProc() *socket.Processor
+		}).GetProc(),
 	}
 }

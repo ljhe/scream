@@ -26,6 +26,7 @@ type IProcessor interface {
 	SetHooker(v IHookEvent)
 	SetMsgHandle(v IMsgHandle)
 	SetMsgRouter(v EventCallBack)
+	GetMsgRouter() EventCallBack
 }
 
 type IServerNodeProperty interface {

@@ -31,6 +31,10 @@ func (n *Processor) SetMsgRouter(msgr iface.EventCallBack) {
 	n.MsgRouter = msgr
 }
 
+func (n *Processor) GetMsgRouter() iface.EventCallBack {
+	return n.MsgRouter
+}
+
 func (n *Processor) GetProc() *Processor {
 	return n
 }
@@ -42,7 +46,7 @@ func (n *Processor) ProcEvent(e iface.IProcEvent) {
 	if e != nil {
 		switch n.Hooker.(type) {
 		case *SessionChildHookEvent:
-			n.MsgRouter(e)
+			e.Session().GetProcessor().GetMsgRouter()(e)
 		default:
 			if n.MsgHandle != nil {
 				n.MsgHandle.PostCb(func() {
