@@ -1,7 +1,5 @@
 package iface
 
-import "time"
-
 type INetNode interface {
 	Start() INetNode
 	Stop()
@@ -15,10 +13,11 @@ type IRuntimeTag interface {
 	GetRunState() bool
 }
 
-// ITCPSocketOption socket相关设置
-type ITCPSocketOption interface {
-	SetSocketBuff(read, write int, noDelay bool)
-	SetSocketDeadline(read, write time.Duration)
+type IOption interface {
+	GetMaxMsgLen() int
+	SocketReadTimeout(s ISession, callback func())
+	SocketWriteTimeout(s ISession, callback func())
+	SetOption(opt interface{})
 }
 
 type IProcessor interface {

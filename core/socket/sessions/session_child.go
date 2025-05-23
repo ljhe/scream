@@ -7,6 +7,8 @@ import (
 	"sync/atomic"
 )
 
+const SessionChildRcvQueueLen = 500
+
 type SessionChild struct {
 	sessionId uint64
 	*Session
@@ -23,7 +25,7 @@ func NewSessionChild(sessionId uint64, s *Session) *SessionChild {
 			MsgFlow: new(socket.WSMsgFlow),
 			Hooker:  new(socket.SessionChildHookEvent),
 		},
-		rcvQueue: make(chan interface{}, 500),
+		rcvQueue: make(chan interface{}, SessionChildRcvQueueLen),
 	}
 }
 

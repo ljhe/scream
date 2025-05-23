@@ -13,7 +13,7 @@ import (
 	"sync/atomic"
 )
 
-var sendQueueMaxLen = 200
+const SessionMainSendQueueLen = 2000
 
 type Session struct {
 	*socket.Processor // 事件处理相关
@@ -23,7 +23,6 @@ type Session struct {
 	close           int64
 	sendQueue       chan interface{}
 	sendQueueMaxLen int
-	sessionOpt      socket.TCPSocketOption
 	exitWg          sync.WaitGroup
 	id              uint64
 	rcvPingNum      int
@@ -158,9 +157,8 @@ func (s *Session) ConnClose() {
 
 func NewSession(node iface.INetNode) *Session {
 	return &Session{
-		node:            node,
-		sendQueueMaxLen: sendQueueMaxLen,
-		sendQueue:       make(chan interface{}, sendQueueMaxLen),
+		node:      node,
+		sendQueue: make(chan interface{}, SessionMainSendQueueLen),
 		Processor: node.(interface {
 			GetProc() *socket.Processor
 		}).GetProc(),

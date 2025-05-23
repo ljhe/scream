@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/ljhe/scream/3rd/logrus"
-	"github.com/ljhe/scream/core"
 	"github.com/ljhe/scream/core/iface"
+	"github.com/ljhe/scream/def"
 	"github.com/ljhe/scream/pbgo"
 	"github.com/ljhe/scream/utils/encryption"
 	"io"
@@ -88,7 +88,7 @@ func (t *TcpDataPacket) SendMessage(s iface.ISession, msg interface{}) (err erro
 	mb := &MsgBase{
 		MsgLen:    uint16(len(msgData)),
 		MsgId:     msgInfo.ID,
-		ChunkNum:  uint16(msgLen/core.MsgMaxLen + 1), // 计算分片数量
+		ChunkNum:  uint16(msgLen/def.MsgMaxLen + 1), // 计算分片数量
 		ChunkId:   1,
 		SendBytes: 0,
 	}
@@ -145,9 +145,9 @@ func (w *WsDataPacket) SendMessage(s iface.ISession, msg interface{}) (err error
 	}
 	msgDataLen := len(msgData)
 	// todo 注意上层发包不要超过最大值 之后这里可以改成如果超过最大值 就分片发送
-	opt := s.Node().(Option)
-	if msgDataLen > opt.MaxMsgLen() {
-		return fmt.Errorf("ws sendMessage too big. msgId=%v msglen=%v maxlen=%v", 1, msgDataLen, opt.MaxMsgLen())
+	opt := s.Node().(iface.IOption)
+	if msgDataLen > opt.GetMaxMsgLen() {
+		return fmt.Errorf("ws sendMessage too big. msgId=%v msglen=%v maxlen=%v", 1, msgDataLen, opt.GetMaxMsgLen())
 	}
 	mb := &MsgBase{
 		MsgId:  msgInfo.ID,
@@ -225,7 +225,7 @@ func readUint16(reader io.Reader, byteLen uint16) (uint16, error) {
 
 func (mb *MsgBase) Marshal(msgData []byte) []byte {
 	remaining := int(mb.MsgLen) - mb.SendBytes
-	mb.ChunkSize = core.MsgMaxLen
+	mb.ChunkSize = def.MsgMaxLen
 	if remaining < mb.ChunkSize {
 		mb.ChunkSize = remaining
 	}
@@ -278,7 +278,7 @@ func (mb *MsgBase) Unmarshal(reader io.Reader) ([]byte, error) {
 			bufMsg = make([]byte, mb.MsgLen)
 		}
 		remaining := mb.MsgLen - mb.ReceivedBytes
-		mb.ChunkSize = core.MsgMaxLen
+		mb.ChunkSize = def.MsgMaxLen
 		if remaining < uint16(mb.ChunkSize) {
 			mb.ChunkSize = int(remaining)
 		}
@@ -354,7 +354,7 @@ func (mb *MsgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
 	msgData = bytes[MsgOptions.FlagIdLen:]
 
 	switch mb.FlagId {
-	case core.MsgEncryptionRSA:
+	case def.MsgEncryptionRSA:
 		msgData, err = encryption.RSADecrypt(msgData, encryption.RSAWSPrivateKey)
 	default:
 		logrus.Log(logrus.LogsSystem).Errorf("MsgBase flagId err. flagId: %d", mb.FlagId)

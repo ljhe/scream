@@ -3,10 +3,10 @@ package tcp
 import (
 	"context"
 	"fmt"
-	"github.com/ljhe/scream/core"
 	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/core/socket"
 	"github.com/ljhe/scream/core/socket/sessions"
+	"github.com/ljhe/scream/def"
 	"log"
 	"net"
 	"syscall"
@@ -14,13 +14,13 @@ import (
 )
 
 type tcpAcceptor struct {
-	socket.RuntimeTag      // 节点运行状态相关
-	socket.TCPSocketOption // socket相关设置
-	socket.Processor       // 事件处理相关
-	socket.NodeProp        // 节点配置属性相关
-	socket.ContextSet      // 节点上下文相关
-	iface.ISessionManager  // 会话管理
-	listener               net.Listener
+	socket.RuntimeTag     // 节点运行状态相关
+	socket.Option         // socket相关设置
+	socket.Processor      // 事件处理相关
+	socket.NodeProp       // 节点配置属性相关
+	socket.ContextSet     // 节点上下文相关
+	iface.ISessionManager // 会话管理
+	listener              net.Listener
 }
 
 func (t *tcpAcceptor) Start() iface.INetNode {
@@ -71,7 +71,7 @@ func (t *tcpAcceptor) Stop() {
 }
 
 func (t *tcpAcceptor) GetTyp() string {
-	return core.SocketTypTcpAcceptor
+	return def.SocketTypTcpAcceptor
 }
 
 func init() {
@@ -79,7 +79,6 @@ func init() {
 		node := &tcpAcceptor{
 			ISessionManager: sessions.NewSessionManager(),
 		}
-		node.TCPSocketOption.Init()
 		return node
 	})
 	log.Println("tcp acceptor register success.")

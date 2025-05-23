@@ -1,7 +1,7 @@
 package mpool
 
 import (
-	"github.com/ljhe/scream/core"
+	"github.com/ljhe/scream/def"
 )
 
 var SystemMemoryPoolKey = "SystemMemoryPoolKey"
@@ -9,7 +9,7 @@ var SystemMemoryPoolKey = "SystemMemoryPoolKey"
 var MemoryPoolConfigs = []*MemoryPoolConf{
 	{
 		key: SystemMemoryPoolKey,
-		Mps: []int{8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, core.MsgMaxLen},
+		Mps: []int{8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, def.MsgMaxLen},
 		Mpc: []int{10, 10, 10, 10, 10, 10, 10, 10, 5, 5, 5, 5, 3, 3},
 	},
 }

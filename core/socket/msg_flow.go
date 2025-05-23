@@ -6,7 +6,7 @@ type TCPMsgFlow struct {
 }
 
 func (tp *TCPMsgFlow) OnRcvMsg(s iface.ISession) (msg interface{}, err error) {
-	opt := s.Node().(Option)
+	opt := s.Node().(iface.IOption)
 	opt.SocketReadTimeout(s, func() {
 		p := TcpDataPacket{}
 		msg, err = p.ReadMessage(s)
@@ -15,7 +15,7 @@ func (tp *TCPMsgFlow) OnRcvMsg(s iface.ISession) (msg interface{}, err error) {
 }
 
 func (tp *TCPMsgFlow) OnSendMsg(s iface.ISession, msg interface{}) (err error) {
-	opt := s.Node().(Option)
+	opt := s.Node().(iface.IOption)
 	opt.SocketWriteTimeout(s, func() {
 		p := TcpDataPacket{}
 		err = p.SendMessage(s, msg)
@@ -27,7 +27,7 @@ type WSMsgFlow struct {
 }
 
 func (tp *WSMsgFlow) OnRcvMsg(s iface.ISession) (msg interface{}, err error) {
-	opt := s.Node().(Option)
+	opt := s.Node().(iface.IOption)
 	opt.SocketReadTimeout(s, func() {
 		p := WsDataPacket{}
 		msg, err = p.ReadMessage(s)
@@ -36,7 +36,7 @@ func (tp *WSMsgFlow) OnRcvMsg(s iface.ISession) (msg interface{}, err error) {
 }
 
 func (tp *WSMsgFlow) OnSendMsg(s iface.ISession, msg interface{}) (err error) {
-	opt := s.Node().(Option)
+	opt := s.Node().(iface.IOption)
 	opt.SocketWriteTimeout(s, func() {
 		p := WsDataPacket{}
 		err = p.SendMessage(s, msg)

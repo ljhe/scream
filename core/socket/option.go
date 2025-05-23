@@ -2,128 +2,73 @@ package socket
 
 import (
 	"github.com/gorilla/websocket"
-	"github.com/ljhe/scream/core"
 	"github.com/ljhe/scream/core/iface"
-	"math"
+	"github.com/ljhe/scream/def"
 	"net"
 	"time"
 )
 
-type Option interface {
-	MaxMsgLen() int
-	SocketReadTimeout(s iface.ISession, callback func())
-	SocketWriteTimeout(s iface.ISession, callback func())
-	CopyOpt(opt *TCPSocketOption)
+type Option struct {
+	ReadBufferSize  int
+	WriteBufferSize int
+	ReadTimeout     time.Duration
+	WriteTimeout    time.Duration
+	MaxMsgLen       int
 }
 
-type TCPSocketOption struct {
-	readBufferSize  int
-	writeBufferSize int
-	readTimeout     time.Duration
-	writeTimeout    time.Duration
-	noDelay         bool
-	maxMsgLen       int
+func (o *Option) GetMaxMsgLen() int {
+	return o.MaxMsgLen
 }
 
-func (no *TCPSocketOption) Init() {
-	no.maxMsgLen = core.MsgMaxLen
-}
-
-// SocketOptWebSocket 拷贝监听socket的配置信息
-func (no *TCPSocketOption) SocketOptWebSocket(c *websocket.Conn) {
-	if conn, ok := c.UnderlyingConn().(*net.TCPConn); ok {
-		conn.SetNoDelay(no.noDelay)
-		conn.SetReadBuffer(no.readBufferSize)
-		conn.SetWriteBuffer(no.writeBufferSize)
-	}
-}
-
-func (no *TCPSocketOption) MaxMsgLen() int {
-	return no.maxMsgLen
-}
-
-func (no *TCPSocketOption) SocketReadTimeout(s iface.ISession, callback func()) {
+func (o *Option) SocketReadTimeout(s iface.ISession, callback func()) {
 	switch s.Conn().(type) {
 	case net.Conn:
-		if no.readTimeout > 0 {
-			s.Conn().(net.Conn).SetReadDeadline(time.Now().Add(no.readTimeout))
+		if o.ReadTimeout > 0 {
 			callback()
-			s.Conn().(net.Conn).SetReadDeadline(time.Time{})
+			s.Conn().(net.Conn).SetReadDeadline(time.Now().Add(o.ReadTimeout))
 		} else {
 			callback()
 		}
 	case *websocket.Conn:
-		if no.readTimeout > 0 {
-			s.Conn().(*websocket.Conn).SetReadDeadline(time.Now().Add(no.readTimeout))
+		if o.ReadTimeout > 0 {
 			callback()
-			s.Conn().(*websocket.Conn).SetReadDeadline(time.Time{})
+			s.Conn().(*websocket.Conn).SetReadDeadline(time.Now().Add(o.ReadTimeout))
 		} else {
 			callback()
 		}
 	}
 }
 
-func (no *TCPSocketOption) SocketWriteTimeout(s iface.ISession, callback func()) {
+func (o *Option) SocketWriteTimeout(s iface.ISession, callback func()) {
 	switch s.Conn().(type) {
 	case net.Conn:
-		if no.readTimeout > 0 {
-			s.Conn().(net.Conn).SetWriteDeadline(time.Now().Add(no.readTimeout))
+		if o.ReadTimeout > 0 {
 			callback()
-			s.Conn().(net.Conn).SetWriteDeadline(time.Time{})
+			s.Conn().(net.Conn).SetWriteDeadline(time.Now().Add(o.WriteTimeout))
 		} else {
 			callback()
 		}
 	case *websocket.Conn:
-		if no.readTimeout > 0 {
-			s.Conn().(*websocket.Conn).SetWriteDeadline(time.Now().Add(no.readTimeout))
+		if o.ReadTimeout > 0 {
 			callback()
-			s.Conn().(*websocket.Conn).SetWriteDeadline(time.Time{})
+			s.Conn().(*websocket.Conn).SetWriteDeadline(time.Now().Add(o.WriteTimeout))
 		} else {
 			callback()
 		}
 	}
 }
 
-func (no *TCPSocketOption) WSReadTimeout(c *websocket.Conn, callback func()) {
-	if no.readTimeout > 0 {
-		c.SetReadDeadline(time.Now().Add(no.readTimeout))
-		callback()
-		c.SetReadDeadline(time.Time{})
-	} else {
-		callback()
-	}
-}
+func (o *Option) SetOption(option interface{}) {
+	// 默认是最大值
+	o.MaxMsgLen = def.MsgMaxLen
 
-func (no *TCPSocketOption) WSWriteTimeout(c *websocket.Conn, callback func()) {
-	if no.writeTimeout > 0 {
-		c.SetWriteDeadline(time.Now().Add(no.writeTimeout))
-		callback()
-		c.SetWriteDeadline(time.Time{})
-	} else {
-		callback()
+	if opt, ok := option.(*Option); ok {
+		o.ReadBufferSize = opt.ReadBufferSize
+		o.WriteBufferSize = opt.WriteBufferSize
+		o.ReadTimeout = opt.ReadTimeout
+		o.WriteTimeout = opt.WriteTimeout
+		if opt.MaxMsgLen > 0 {
+			o.MaxMsgLen = opt.MaxMsgLen
+		}
 	}
-}
-
-func (no *TCPSocketOption) CopyOpt(opt *TCPSocketOption) {
-	opt.maxMsgLen = no.maxMsgLen
-	opt.noDelay = no.noDelay
-	opt.readBufferSize = no.readBufferSize
-	opt.writeBufferSize = no.writeBufferSize
-}
-
-func (no *TCPSocketOption) SetSocketBuff(read, write int, noDelay bool) {
-	no.readBufferSize = read
-	no.writeBufferSize = write
-	no.noDelay = noDelay
-	if read > 0 {
-		no.maxMsgLen = read
-	}
-	if no.maxMsgLen >= math.MaxUint16 {
-		no.maxMsgLen = math.MaxUint16
-	}
-}
-
-func (no *TCPSocketOption) SetSocketDeadline(read, write time.Duration) {
-	no.readTimeout = read
-	no.writeTimeout = write
 }

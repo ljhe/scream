@@ -32,6 +32,5 @@ func NewWSSession(conn *websocket.Conn, node iface.INetNode) *WSSession {
 		Session: NewSession(node),
 	}
 	ws.ISessionExtension = ws
-	node.(socket.Option).CopyOpt(&ws.sessionOpt)
 	return ws
 }

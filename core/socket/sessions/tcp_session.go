@@ -8,6 +8,11 @@ import (
 	"time"
 )
 
+const (
+	HeartBeatNewTimer = 15 * time.Second
+	HeartBeatReset    = 5 * time.Second
+)
+
 type TCPSession struct {
 	*Session
 	conn net.Conn
@@ -49,9 +54,9 @@ func (ts *TCPSession) HeartBeat(msg interface{}) {
 	}
 
 	go func() {
-		delayTimer := time.NewTimer(15 * time.Second)
+		delayTimer := time.NewTimer(HeartBeatNewTimer)
 		for {
-			delayTimer.Reset(5 * time.Second)
+			delayTimer.Reset(HeartBeatReset)
 			select {
 			case <-delayTimer.C:
 				if atomic.LoadInt64(&ts.close) != 0 {
@@ -73,6 +78,5 @@ func NewTcpSession(c net.Conn, node iface.INetNode) *TCPSession {
 		Session: NewSession(node),
 	}
 	ts.ISessionExtension = ts
-	node.(socket.Option).CopyOpt(&ts.sessionOpt)
 	return ts
 }

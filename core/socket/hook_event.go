@@ -3,9 +3,9 @@ package socket
 import (
 	trdetcd "github.com/ljhe/scream/3rd/etcd"
 	"github.com/ljhe/scream/3rd/logrus"
-	"github.com/ljhe/scream/core"
 	"github.com/ljhe/scream/core/baseserver"
 	"github.com/ljhe/scream/core/iface"
+	"github.com/ljhe/scream/def"
 	"github.com/ljhe/scream/pbgo"
 	"github.com/ljhe/scream/utils"
 	"reflect"
@@ -24,7 +24,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		// 从内存中的etcd获取服务器信息
 		ctx := iv.Session().Node().(iface.IContextSet)
 		var ed *trdetcd.ETCDServiceDesc
-		if ctx.RawContextData(core.ContextSetEtcdKey, &ed) {
+		if ctx.RawContextData(def.ContextSetEtcdKey, &ed) {
 			prop := iv.Session().Node().(iface.INodeProp)
 			// 连接上服务器节点后 发送确认信息 告诉对端自己的服务器信息
 			iv.Session().Send(&pbgo.ServiceIdentifyACK{
@@ -65,7 +65,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		iv.Session().IncRcvPingNum(1)
 		if iv.Session().RcvPingNum() >= 10 {
 			iv.Session().IncRcvPingNum(-1)
-			if ctx.RawContextData(core.ContextSetCtxKey, &ed) {
+			if ctx.RawContextData(def.ContextSetCtxKey, &ed) {
 				logrus.Log(logrus.LogsSystem).Printf("receive PingReq from [%v] session=%v", ed.Id, iv.Session().GetId())
 			}
 		}
@@ -77,7 +77,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		iv.Session().IncRcvPingNum(1)
 		if iv.Session().RcvPingNum() >= 10 {
 			iv.Session().IncRcvPingNum(-1)
-			if ctx.RawContextData(core.ContextSetCtxKey, &ed) {
+			if ctx.RawContextData(def.ContextSetCtxKey, &ed) {
 				logrus.Log(logrus.LogsSystem).Printf("receive PingAck from [%v] session=%v", ed.Id, iv.Session().GetId())
 			}
 		}
@@ -115,7 +115,7 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		logrus.Log(logrus.LogsSystem).Infof("ws session closed. sessionId:%d", iv.Session().GetId())
 
 		// 测试消息转发关闭
-		node, _ := baseserver.GetServiceNodeAndSession("", core.ServiceNodeTypeGameStr, 0)
+		node, _ := baseserver.GetServiceNodeAndSession("", def.ServiceNodeTypeGameStr, 0)
 		service := baseserver.GetServiceNode(node)
 		if service == nil {
 			return nil
@@ -141,7 +141,7 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		logrus.Log(logrus.LogsSystem).Infof("receive client msg. sessionId:%d msg:%v", iv.Session().GetId(), m.Msg)
 
 		// 测试消息转发
-		node, _ := baseserver.GetServiceNodeAndSession("", core.ServiceNodeTypeGameStr, 0)
+		node, _ := baseserver.GetServiceNodeAndSession("", def.ServiceNodeTypeGameStr, 0)
 		service := baseserver.GetServiceNode(node)
 		if service == nil {
 			return nil
@@ -165,8 +165,8 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		cliUser, err := baseserver.BindClient(iv.Session(), m.OpenId, m.Platform)
 		if err == nil {
 			// 绑定成功 转发给对应的服务器做处理
-			node, _ := baseserver.GetServiceNodeAndSession("", core.ServiceNodeTypeGameStr, 0)
-			err = cliUser.ClientDirect2Backend(node, 0, 0, []byte(m.OpenId), core.ServiceNodeTypeGameStr)
+			node, _ := baseserver.GetServiceNodeAndSession("", def.ServiceNodeTypeGameStr, 0)
+			err = cliUser.ClientDirect2Backend(node, 0, 0, []byte(m.OpenId), def.ServiceNodeTypeGameStr)
 			if err != nil {
 				return nil
 			}

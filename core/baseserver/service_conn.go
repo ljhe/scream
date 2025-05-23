@@ -2,8 +2,8 @@ package baseserver
 
 import (
 	trdetcd "github.com/ljhe/scream/3rd/etcd"
-	"github.com/ljhe/scream/core"
 	"github.com/ljhe/scream/core/iface"
+	"github.com/ljhe/scream/def"
 	"log"
 	"math/rand"
 	"sync"
@@ -23,7 +23,7 @@ func AddServiceNode(session iface.ISession, sid, name string, from string) {
 		log.Println("AddServiceNode error:", err)
 		return
 	}
-	session.(iface.IContextSet).SetContextData(core.ContextSetCtxKey, &trdetcd.ETCDServiceDesc{
+	session.(iface.IContextSet).SetContextData(def.ContextSetCtxKey, &trdetcd.ETCDServiceDesc{
 		Id:    sid,
 		Name:  name,
 		Typ:   typ,
@@ -74,7 +74,7 @@ func GetServiceNode(sid string) iface.ISession {
 }
 
 func SessionContextEtcd(session iface.ISession) *trdetcd.ETCDServiceDesc {
-	if ed, ok := session.(iface.IContextSet).GetContextData(core.ContextSetCtxKey); ok {
+	if ed, ok := session.(iface.IContextSet).GetContextData(def.ContextSetCtxKey); ok {
 		return ed.(*trdetcd.ETCDServiceDesc)
 	}
 	return nil
@@ -128,9 +128,9 @@ func SelectServiceNode(serviceName string, id uint64) string {
 		id = uint64(rand.Int31n(100))
 	}
 	switch serviceName {
-	case core.ServiceNodeTypeGateStr:
+	case def.ServiceNodeTypeGateStr:
 		fallthrough
-	case core.ServiceNodeTypeGameStr:
+	case def.ServiceNodeTypeGameStr:
 		return selectServiceNode(serviceName, id)
 	default:
 		return ""

@@ -4,10 +4,10 @@ import (
 	"context"
 	"github.com/gorilla/websocket"
 	"github.com/ljhe/scream/3rd/logrus"
-	"github.com/ljhe/scream/core"
 	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/core/socket"
 	"github.com/ljhe/scream/core/socket/sessions"
+	"github.com/ljhe/scream/def"
 	"github.com/ljhe/scream/utils"
 	"log"
 	"net"
@@ -16,9 +16,9 @@ import (
 )
 
 type tcpWebSocketAcceptor struct {
-	socket.RuntimeTag      // 运行状态
-	socket.TCPSocketOption // socket相关设置
-	socket.Processor       // 事件处理相关
+	socket.RuntimeTag // 运行状态
+	socket.Option     // socket相关设置
+	socket.Processor  // 事件处理相关
 	socket.NodeProp
 	socket.ContextSet
 	iface.ISessionManager // 会话管理
@@ -84,7 +84,7 @@ func (ws *tcpWebSocketAcceptor) Stop() {
 }
 
 func (ws *tcpWebSocketAcceptor) GetTyp() string {
-	return core.SocketTypTcpWSAcceptor
+	return def.SocketTypTcpWSAcceptor
 }
 
 // handleConnTest 测试websocket连接
@@ -124,7 +124,6 @@ func (ws *tcpWebSocketAcceptor) handleConn(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	ws.SocketOptWebSocket(conn)
 	sess := sessions.NewWSSession(conn, ws)
 	sess.Start()
 	// 通知上层事件(这边的回调要放到队列中，否则会有多线程冲突)
@@ -142,7 +141,6 @@ func init() {
 				},
 			},
 		}
-		node.TCPSocketOption.Init()
 		return node
 	})
 	log.Println("ws acceptor register success.")
