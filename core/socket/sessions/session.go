@@ -91,13 +91,13 @@ func (s *Session) RunRcv() {
 	for {
 		msg, err := s.ReadMsg(s)
 		if err != nil {
-			logrus.Log(logrus.LogsSystem).Errorf("RunRcv ReadMsg err:%v sessionId:%d \n", err, s.GetId())
+			logrus.Log(logrus.LogsSystem).Errorf("RunRcv ReadMsg err:%v sessionId:%d", err, s.GetId())
 			// 做关闭处理 发送数据时已经无法发送
 			atomic.StoreInt64(&s.close, 1)
 			select {
 			case s.sendQueue <- nil:
 			default:
-				logrus.Log(logrus.LogsSystem).Errorf("RunRcv sendQueue block len:%d sessionId:%d \n", len(s.sendQueue), s.GetId())
+				logrus.Log(logrus.LogsSystem).Errorf("RunRcv sendQueue block len:%d sessionId:%d", len(s.sendQueue), s.GetId())
 			}
 
 			// 抛出关闭事件

@@ -15,7 +15,7 @@ import (
 	"syscall"
 )
 
-type tcpWebSocketAcceptor struct {
+type webSocketAcceptor struct {
 	socket.RuntimeTag // 运行状态
 	socket.Option     // socket相关设置
 	socket.Processor  // 事件处理相关
@@ -28,7 +28,7 @@ type tcpWebSocketAcceptor struct {
 	server   *http.Server
 }
 
-func (ws *tcpWebSocketAcceptor) Start() iface.INetNode {
+func (ws *webSocketAcceptor) Start() iface.INetNode {
 	// 正在停止的话 需要先等待
 	ws.StopWg.Wait()
 	// 防止重入导致错误
@@ -79,16 +79,16 @@ func (ws *tcpWebSocketAcceptor) Start() iface.INetNode {
 	return ws
 }
 
-func (ws *tcpWebSocketAcceptor) Stop() {
+func (ws *webSocketAcceptor) Stop() {
 
 }
 
-func (ws *tcpWebSocketAcceptor) GetTyp() string {
+func (ws *webSocketAcceptor) GetTyp() string {
 	return def.SocketTypTcpWSAcceptor
 }
 
 // handleConnTest 测试websocket连接
-func (ws *tcpWebSocketAcceptor) handleConnTest(w http.ResponseWriter, r *http.Request) {
+func (ws *webSocketAcceptor) handleConnTest(w http.ResponseWriter, r *http.Request) {
 	conn, err := ws.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		logrus.Log(logrus.LogsSystem).Errorf("ws acceptor err:%v ip:%v", err, ws.GetAddr())
@@ -117,7 +117,7 @@ func (ws *tcpWebSocketAcceptor) handleConnTest(w http.ResponseWriter, r *http.Re
 	}
 }
 
-func (ws *tcpWebSocketAcceptor) handleConn(w http.ResponseWriter, r *http.Request) {
+func (ws *webSocketAcceptor) handleConn(w http.ResponseWriter, r *http.Request) {
 	conn, err := ws.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		logrus.Log(logrus.LogsSystem).Errorf("ws acceptor err:%v ip:%v", err, ws.GetAddr())
@@ -132,7 +132,7 @@ func (ws *tcpWebSocketAcceptor) handleConn(w http.ResponseWriter, r *http.Reques
 
 func init() {
 	socket.RegisterServerNode(func() iface.INetNode {
-		node := &tcpWebSocketAcceptor{
+		node := &webSocketAcceptor{
 			ISessionManager: sessions.NewSessionManager(),
 			upgrader: &websocket.Upgrader{
 				CheckOrigin: func(r *http.Request) bool {

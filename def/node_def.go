@@ -5,7 +5,7 @@ import "fmt"
 const (
 	SocketTypTcpAcceptor   = "TcpAcceptor"
 	SocketTypTcpConnector  = "TcpConnector"
-	SocketTypTcpWSAcceptor = "TcpWebSocketAcceptor"
+	SocketTypTcpWSAcceptor = "WebSocketAcceptor"
 )
 
 const (

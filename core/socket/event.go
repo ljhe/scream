@@ -1,9 +1,5 @@
 package socket
 
-import (
-	_ "github.com/ljhe/scream/pbgo"
-)
-
 // SessionConnected 连接成功事件
 type SessionConnected struct {
 }

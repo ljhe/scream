@@ -62,7 +62,7 @@ func (sd *ServiceDiscovery) RegisterService(key, val string) error {
 	if err != nil {
 		return err
 	}
-	logrus.Log(logrus.LogsSystem).Infof("etcd register ok. key=%v clusterid=%v leaseid=%v etcdaddr=%v \n", key, rsp.Header.ClusterId, leaseResp.ID, sd.config)
+	logrus.Log(logrus.LogsSystem).Infof("etcd register ok. key=%v clusterid=%v leaseid=%v etcdaddr=%v", key, rsp.Header.ClusterId, leaseResp.ID, sd.config)
 	return nil
 }
 

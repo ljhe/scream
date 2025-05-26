@@ -168,7 +168,7 @@ func setServiceStartupTime(zone int) {
 		}
 		startupTime = t
 	}
-	logrus.Log(logrus.LogsSystem).Infof("etcd setServiceStartupTime success. startupKey:%v startupTime:%v\n", startupKey, startupTime)
+	logrus.Log(logrus.LogsSystem).Infof("etcd setServiceStartupTime success. startupKey:%v startupTime:%v", startupKey, startupTime)
 }
 
 func genServicePrefix(name string, zone int) string {
