@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"github.com/ljhe/scream/core/iface"
 	"net/http"
 )
@@ -49,12 +48,4 @@ func withCORS(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
-}
-
-func helloHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello World")
-}
-
-func paramHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "test_param")
 }
