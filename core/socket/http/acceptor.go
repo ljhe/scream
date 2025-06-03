@@ -1,17 +1,26 @@
 package http
 
 import (
+	"errors"
 	"github.com/ljhe/scream/core/iface"
+	"log"
 	"net/http"
 )
 
-var Server *httpAcceptor
+type httpAcceptor struct {
+	server *http.Server
+}
 
-type httpAcceptor struct{}
+func NewHttpServer() *httpAcceptor {
+	return &httpAcceptor{}
+}
 
 func (h *httpAcceptor) Stop() {
-	//TODO implement me
-	panic("implement me")
+	err := h.server.Close()
+	if err != nil {
+		panic(err)
+	}
+	log.Println("http acceptor stopped success.")
 }
 
 func (h *httpAcceptor) GetTyp() string {
@@ -25,12 +34,19 @@ func (h *httpAcceptor) Start() iface.INetNode {
 		mux.HandleFunc(prefix+k, v)
 	}
 
-	handler := withCORS(mux)
-
-	err := http.ListenAndServe(":8080", handler)
-	if err != nil {
-		panic(err)
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: withCORS(mux),
 	}
+
+	go func() {
+		err := server.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			panic(err)
+		}
+	}()
+
+	h.server = server
 	return h
 }
 

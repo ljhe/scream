@@ -62,7 +62,9 @@ func WithParams(method string, handler HandlerWithParams) http.HandlerFunc {
 			http.Error(w, fmt.Sprintf("Method not allowed: expected %s", method), http.StatusMethodNotAllowed)
 			return
 		}
-		handler(w, r, ExtractParams(r))
+		params := ExtractParams(r)
+		//printParams(w, r, params)
+		handler(w, r, params)
 		logrus.Log(logrus.LogsSystem).Infof("[%s] %s %s %s -> %d - %s", start.Format("15:04:05"), r.Method, r.URL.String(),
 			r.Header.Get("Content-Type"), http.StatusOK, time.Since(start))
 	}
