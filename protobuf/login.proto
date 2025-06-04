@@ -1,5 +1,6 @@
 syntax = "proto3";
 package pbgo;
+option go_package = ".;pbgo";
 
 // 登录操作
 message CSLoginReq { //project gate|game

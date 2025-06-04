@@ -1,0 +1,24 @@
+syntax = "proto3";
+package pbgo;
+option go_package = ".;pbgo";
+
+service Acceptor {
+  rpc routing(routeReqs) returns (routeRes) {}
+}
+
+message Header {
+  int64 Timestamp = 1;
+}
+
+message Message {
+  Header header = 1;
+  bytes body = 2;
+}
+
+message routeReqs {
+  Message msg = 1;
+}
+
+message routeRes {
+  Message msg = 2;
+}

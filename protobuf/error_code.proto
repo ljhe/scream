@@ -1,5 +1,6 @@
 syntax = "proto3";
 package pbgo;
+option go_package = ".;pbgo";
 
 enum ErrorCode {
     ERROR_OK                        = 0;

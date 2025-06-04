@@ -392,6 +392,8 @@ func saveMessageDef(sortMsg *sortMsgData) {
 	// 保存到文件
 	saveFile(messageFile, fmt.Sprintf(`syntax = "proto3";
 package %s;
+option go_package = ".;pbgo";
+
 enum protoMsgId{
 	MSG_BEGIN	= 0;
 %s

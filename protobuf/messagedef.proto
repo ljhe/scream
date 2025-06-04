@@ -1,5 +1,7 @@
 syntax = "proto3";
 package pbgo;
+option go_package = ".;pbgo";
+
 enum protoMsgId{
 	MSG_BEGIN	= 0;
 	SERVICE_IDENTIFY_ACK             = 1;		//	ServiceIdentifyACK **ServiceIdentifyACK **framework.proto ** [ServiceIdentifyACK]

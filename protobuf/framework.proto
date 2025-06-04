@@ -1,5 +1,6 @@
 syntax = "proto3";
 package pbgo;
+option go_package = ".;pbgo";
 
 // 连接成功后服务器节点回复验证信息
 message ServiceIdentifyACK {

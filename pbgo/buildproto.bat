@@ -11,7 +11,7 @@ echo "copying proto files success"
 "%~dp0proto_cmd/proto_cmd.exe"
 
 for %%i in (*.proto) do (
-    protoc --go_out=. "%%i"
+    protoc --go_out=. --go-grpc_out=. "%%i"
 )
 
 if exist "messagedef.proto" (
