@@ -3,9 +3,10 @@ package etcd
 import (
 	"context"
 	"fmt"
-	"github.com/coreos/etcd/clientv3"
 	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/utils"
+	"go.etcd.io/etcd/client/v3"
+	"log"
 	"sync"
 	"time"
 )
@@ -58,10 +59,20 @@ func (sd *ServiceDiscovery) RegisterService(key, val string) error {
 	if err != nil {
 		return err
 	}
-	_, err = sd.etcdCli.KeepAlive(context.TODO(), leaseResp.ID)
+	ch, err := sd.etcdCli.KeepAlive(context.TODO(), leaseResp.ID)
 	if err != nil {
 		return err
 	}
+	go func() {
+		for resp := range ch {
+			if resp == nil {
+				// 租约已失效
+				log.Println("etcd keep alive channel closed")
+				return
+			}
+			// 纪律日志或处理响应
+		}
+	}()
 	logrus.Log(logrus.LogsSystem).Infof("etcd register ok. key=%v clusterid=%v leaseid=%v etcdaddr=%v", key, rsp.Header.ClusterId, leaseResp.ID, sd.config)
 	return nil
 }
