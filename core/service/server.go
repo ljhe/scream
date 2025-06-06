@@ -79,5 +79,5 @@ func Stop(node iface.INetNode) {
 		return
 	}
 	node.Stop()
-	trdetcd.ETCDUnRegister(node)
+	trdetcd.UnRegister(node)
 }

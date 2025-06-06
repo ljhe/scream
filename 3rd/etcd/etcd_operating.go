@@ -3,6 +3,7 @@ package etcd
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/iface"
@@ -13,9 +14,9 @@ import (
 	"strings"
 )
 
-var servicePrefixKey = "server/"
+var ServerPreKey = "server/"
 
-type ETCDServiceDesc struct {
+type ServerInfo struct {
 	Id      string
 	Name    string
 	Host    string
@@ -25,7 +26,7 @@ type ETCDServiceDesc struct {
 	RegTime int64
 }
 
-func (e *ETCDServiceDesc) String() string {
+func (e *ServerInfo) String() string {
 	data, err := json.Marshal(e)
 	if err != nil {
 		return ""
@@ -33,9 +34,9 @@ func (e *ETCDServiceDesc) String() string {
 	return string(data)
 }
 
-func ETCDRegister(node iface.INetNode) *ETCDServiceDesc {
+func Register(node iface.INetNode) *ServerInfo {
 	property := node.(iface.INodeProp)
-	ed := &ETCDServiceDesc{
+	ed := &ServerInfo{
 		Id:    utils.GenServiceId(property),
 		Name:  property.GetName(),
 		Host:  property.GetAddr(),
@@ -47,7 +48,7 @@ func ETCDRegister(node iface.INetNode) *ETCDServiceDesc {
 
 	// 先查询是否存在该节点 如果存在不做处理(或者通过del操作关闭其他客户端)
 	etcdKey := genServicePrefix(ed.Id, property.GetZone())
-	resp, err := etcdDiscovery.etcdKV.Get(context.TODO(), etcdKey)
+	resp, err := etcdDiscovery.KV.Get(context.TODO(), etcdKey)
 	if err != nil {
 		log.Println("etcd register error:", err)
 		return nil
@@ -64,14 +65,13 @@ func ETCDRegister(node iface.INetNode) *ETCDServiceDesc {
 		return nil
 	}
 	etcdDiscovery.WatchServices(etcdKey, *ed)
-	setServiceStartupTime(property.GetZone())
 	logrus.Log(logrus.LogsSystem).Info("etcd register success:", ed.Id)
 	return ed
 }
 
-func ETCDUnRegister(node iface.INetNode) error {
+func UnRegister(node iface.INetNode) error {
 	property := node.(iface.INodeProp)
-	ed := &ETCDServiceDesc{
+	ed := &ServerInfo{
 		Id: utils.GenServiceId(property),
 	}
 
@@ -79,17 +79,17 @@ func ETCDUnRegister(node iface.INetNode) error {
 	return etcdDiscovery.DelServices(etcdKey)
 }
 
-func DiscoveryService(multiNode MultiServerNode, serviceName string, zone int, nodeCreator func(MultiServerNode, *ETCDServiceDesc)) iface.INetNode {
+func DiscoveryService(multiNode MultiServerNode, serviceName string, zone int, nodeCreator func(MultiServerNode, *ServerInfo)) iface.INetNode {
 	// 如果已经存在 就停止之前正在运行的节点(注意不要配置成一样的节点信息 否则会关闭之前的连接)
 	// 连接同一个zone里的服务器节点
 	etcdKey := genDiscoveryServicePrefix(serviceName, zone)
 
 	// 监测目标节点的变化
 	var ch clientv3.WatchChan
-	ch = etcdDiscovery.etcdCli.Watch(context.TODO(), etcdKey, clientv3.WithPrefix())
+	ch = etcdDiscovery.Cli.Watch(context.TODO(), etcdKey, clientv3.WithPrefix())
 
 	go func() {
-		resp, err := etcdDiscovery.etcdKV.Get(context.TODO(), etcdKey, clientv3.WithPrefix())
+		resp, err := etcdDiscovery.KV.Get(context.TODO(), etcdKey, clientv3.WithPrefix())
 		if err != nil {
 			log.Println("etcd discovery error:", err)
 			return
@@ -97,7 +97,7 @@ func DiscoveryService(multiNode MultiServerNode, serviceName string, zone int, n
 		log.Printf("service[%v] node find count:%v \n", etcdKey, resp.Count)
 		for _, data := range resp.Kvs {
 			log.Println("etcd discovery start connect:", string(data.Key))
-			var ed ETCDServiceDesc
+			var ed ServerInfo
 			err = json.Unmarshal(data.Value, &ed)
 			if err != nil {
 				log.Printf("etcd discovery unmarshal error:%v key:%v \n", err, data.Key)
@@ -117,7 +117,7 @@ func DiscoveryService(multiNode MultiServerNode, serviceName string, zone int, n
 				for _, ev := range c.Events {
 					switch ev.Type {
 					case clientv3.EventTypePut:
-						var ed ETCDServiceDesc
+						var ed ServerInfo
 						err = json.Unmarshal(ev.Kv.Value, &ed)
 						if err != nil {
 							log.Printf("etcd discovery unmarshal error:%v key:%v \n", err, ev.Kv.Key)
@@ -146,45 +146,16 @@ func DiscoveryService(multiNode MultiServerNode, serviceName string, zone int, n
 	return nil
 }
 
-// setServiceStartupTime 设置服务器开服时间
-func setServiceStartupTime(zone int) {
-	startupKey := genServiceZonePrefix(zone)
-	resp, err := etcdDiscovery.etcdKV.Get(context.TODO(), startupKey)
-	if err != nil {
-		log.Println("etcd setServiceStartupTime error:", err)
-		return
-	}
-	startupTime := uint64(0)
-	if resp.Count > 0 {
-		startupTime, _ = strconv.ParseUint(string(resp.Kvs[0].Value), 10, 64)
-	} else {
-		// 注册
-		t := utils.GetCurrentTimeMs()
-		val := strconv.FormatUint(t, 10)
-		err = etcdDiscovery.RegisterService(startupKey, val)
-		if err != nil {
-			logrus.Log(logrus.LogsSystem).Errorf("etcd setServiceStartupTime error:%v", err)
-			return
-		}
-		startupTime = t
-	}
-	logrus.Log(logrus.LogsSystem).Infof("etcd setServiceStartupTime success. startupKey:%v startupTime:%v", startupKey, startupTime)
-}
-
 func genServicePrefix(name string, zone int) string {
-	//return servicePrefixKey + strconv.Itoa(zone) + "/" + name
-	return servicePrefixKey + name
-}
-
-func genServiceZonePrefix(zone int) string {
-	return servicePrefixKey + strconv.Itoa(zone)
+	//return ServerPreKey + strconv.Itoa(zone) + "/" + name
+	return ServerPreKey + name
 }
 
 func genDiscoveryServicePrefix(name string, zone int) string {
 	if zone > 0 {
-		return servicePrefixKey + name + "#" + strconv.Itoa(zone)
+		return ServerPreKey + name + "#" + strconv.Itoa(zone)
 	}
-	return servicePrefixKey + name + "#"
+	return ServerPreKey + name + "#"
 }
 
 func getNodeId(key string) string {
@@ -198,12 +169,12 @@ func getNodeId(key string) string {
 func ParseServiceId(sid string) (typ, zone, idx int, err error) {
 	str := strings.Split(sid, "#")
 	if len(str) < 2 {
-		err = fmt.Errorf("ParseServiceId sid invalid. sid:" + sid)
+		err = errors.New(fmt.Sprintf("ParseServiceId sid invalid. sid:%s", sid))
 		return
 	} else {
 		strProp := strings.Split(str[1], "@")
 		if len(strProp) < 3 {
-			err = fmt.Errorf("ParseServiceId sid invalid. sid:" + sid)
+			err = errors.New(fmt.Sprintf("ParseServiceId sid invalid. sid:%s", sid))
 			return
 		} else {
 			zone, err = utils.StrToInt(strProp[0])

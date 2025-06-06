@@ -38,14 +38,14 @@ func CreateAcceptor() iface.INetNode {
 	node.Start()
 
 	// 注册到服务发现etcd中
-	trdetcd.ETCDRegister(node)
+	trdetcd.Register(node)
 	return node
 }
 
 // CreateConnector 创建连接节点
 func CreateConnector(connect string, multiNode trdetcd.MultiServerNode) {
 	trdetcd.DiscoveryService(multiNode, connect, config.SConf.Node.Zone,
-		func(mn trdetcd.MultiServerNode, ed *trdetcd.ETCDServiceDesc) {
+		func(mn trdetcd.MultiServerNode, ed *trdetcd.ServerInfo) {
 			// 不连接自己
 			if ed.Typ == config.SConf.Node.Typ && ed.Zone == config.SConf.Node.Zone && ed.Index == config.SConf.Node.Index {
 				return
@@ -102,6 +102,6 @@ func CreateWebSocketAcceptor() iface.INetNode {
 	node.Start()
 
 	// 注册到服务发现etcd中
-	trdetcd.ETCDRegister(node)
+	trdetcd.Register(node)
 	return node
 }

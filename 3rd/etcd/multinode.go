@@ -6,7 +6,7 @@ import (
 )
 
 type MultiServerNode interface {
-	AddNode(ed *ETCDServiceDesc, node iface.INetNode)
+	AddNode(ed *ServerInfo, node iface.INetNode)
 	GetNode(id string) iface.INetNode
 	DelNode(id, name string)
 	GetNodeByName(name string) iface.INetNode
@@ -26,7 +26,7 @@ func NewMultiServerNode() *NetServerNode {
 	}
 }
 
-func (n *NetServerNode) AddNode(ed *ETCDServiceDesc, node iface.INetNode) {
+func (n *NetServerNode) AddNode(ed *ServerInfo, node iface.INetNode) {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
 	n.nodeList[ed.Id] = node

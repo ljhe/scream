@@ -23,7 +23,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	case *SessionConnected:
 		// 从内存中的etcd获取服务器信息
 		ctx := iv.Session().Node().(iface.IContextSet)
-		var ed *trdetcd.ETCDServiceDesc
+		var ed *trdetcd.ServerInfo
 		if ctx.RawContextData(def.ContextSetEtcdKey, &ed) {
 			prop := iv.Session().Node().(iface.INodeProp)
 			// 连接上服务器节点后 发送确认信息 告诉对端自己的服务器信息
@@ -61,7 +61,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	case *pbgo.PingReq:
 		// 来自ServiceIdentifyACK接收端的服务器信息
 		ctx := iv.Session().(iface.IContextSet)
-		var ed *trdetcd.ETCDServiceDesc
+		var ed *trdetcd.ServerInfo
 		iv.Session().IncRcvPingNum(1)
 		if iv.Session().RcvPingNum() >= 10 {
 			iv.Session().IncRcvPingNum(-1)
@@ -73,7 +73,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		return nil
 	case *pbgo.PingAck:
 		ctx := iv.Session().(iface.IContextSet)
-		var ed *trdetcd.ETCDServiceDesc
+		var ed *trdetcd.ServerInfo
 		iv.Session().IncRcvPingNum(1)
 		if iv.Session().RcvPingNum() >= 10 {
 			iv.Session().IncRcvPingNum(-1)

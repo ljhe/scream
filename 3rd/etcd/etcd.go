@@ -13,10 +13,10 @@ import (
 var etcdDiscovery *ServiceDiscovery
 
 type ServiceDiscovery struct {
-	config  clientv3.Config
-	etcdCli *clientv3.Client
-	etcdKV  clientv3.KV
-	mu      sync.RWMutex
+	Cli    *clientv3.Client
+	KV     clientv3.KV
+	config clientv3.Config
+	mu     sync.RWMutex
 }
 
 func NewServiceDiscovery(addr string) (*ServiceDiscovery, error) {
@@ -30,8 +30,8 @@ func NewServiceDiscovery(addr string) (*ServiceDiscovery, error) {
 	if err != nil {
 		return nil, err
 	}
-	etcdDiscovery.etcdKV = clientv3.NewKV(cli)
-	etcdDiscovery.etcdCli = cli
+	etcdDiscovery.KV = clientv3.NewKV(cli)
+	etcdDiscovery.Cli = cli
 	return etcdDiscovery, nil
 }
 
@@ -48,17 +48,17 @@ func GetEtcdDiscovery() *ServiceDiscovery {
 }
 
 func (sd *ServiceDiscovery) RegisterService(key, val string) error {
-	leaseResp, err := sd.etcdCli.Grant(context.TODO(), 3)
+	leaseResp, err := sd.Cli.Grant(context.TODO(), 3)
 	if err != nil {
 		return err
 	}
 	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
 	defer cancel()
-	rsp, err := sd.etcdKV.Put(ctx, key, val, clientv3.WithLease(leaseResp.ID))
+	rsp, err := sd.KV.Put(ctx, key, val, clientv3.WithLease(leaseResp.ID))
 	if err != nil {
 		return err
 	}
-	ch, err := sd.etcdCli.KeepAlive(context.TODO(), leaseResp.ID)
+	ch, err := sd.Cli.KeepAlive(context.TODO(), leaseResp.ID)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (sd *ServiceDiscovery) RegisterService(key, val string) error {
 }
 
 func (sd *ServiceDiscovery) DiscoverService(key string) error {
-	watchChan := sd.etcdCli.Watch(context.TODO(), key, clientv3.WithPrefix())
+	watchChan := sd.Cli.Watch(context.TODO(), key, clientv3.WithPrefix())
 	go func() {
 		for {
 			select {
@@ -96,8 +96,8 @@ func (sd *ServiceDiscovery) DiscoverService(key string) error {
 	return nil
 }
 
-func (sd *ServiceDiscovery) WatchServices(key string, value ETCDServiceDesc) {
-	watchChan := sd.etcdCli.Watch(context.TODO(), key, clientv3.WithPrefix())
+func (sd *ServiceDiscovery) WatchServices(key string, value ServerInfo) {
+	watchChan := sd.Cli.Watch(context.TODO(), key, clientv3.WithPrefix())
 	go func() {
 		for {
 			select {
@@ -121,6 +121,6 @@ func (sd *ServiceDiscovery) WatchServices(key string, value ETCDServiceDesc) {
 }
 
 func (sd *ServiceDiscovery) DelServices(key string) error {
-	_, err := sd.etcdCli.Delete(context.TODO(), key)
+	_, err := sd.Cli.Delete(context.TODO(), key)
 	return err
 }
