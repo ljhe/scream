@@ -3,7 +3,6 @@ package etcd
 import (
 	"context"
 	"fmt"
-	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/utils"
 	"go.etcd.io/etcd/client/v3"
 	"log"
@@ -73,7 +72,7 @@ func (sd *ServiceDiscovery) RegisterService(key, val string) error {
 			// 纪律日志或处理响应
 		}
 	}()
-	logrus.Log(logrus.LogsSystem).Infof("etcd register ok. key=%v clusterid=%v leaseid=%v etcdaddr=%v", key, rsp.Header.ClusterId, leaseResp.ID, sd.config)
+	log.Printf("etcd register ok. key=%v clusterid=%v leaseid=%v etcdaddr=%v \n", key, rsp.Header.ClusterId, leaseResp.ID, sd.config)
 	return nil
 }
 

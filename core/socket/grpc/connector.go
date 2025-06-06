@@ -16,7 +16,7 @@ func NewGRPCConnector() *grpcConnector {
 }
 
 func (g grpcConnector) Start() iface.INetNode {
-	conn, err := grpc.Dial("localhost:9090", grpc.WithInsecure())
+	conn, err := grpc.NewClient("localhost:9090")
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
