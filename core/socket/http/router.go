@@ -65,7 +65,7 @@ func WithParams(method string, handler HandlerWithParams) http.HandlerFunc {
 		params := ExtractParams(r)
 		//printParams(w, r, params)
 		handler(w, r, params)
-		logrus.Log(logrus.LogsSystem).Infof("[%s] %s %s %s -> %d - %s", start.Format("15:04:05"), r.Method, r.URL.String(),
+		logrus.Log(def.LogsSystem).Infof("[%s] %s %s %s -> %d - %s", start.Format("15:04:05"), r.Method, r.URL.String(),
 			r.Header.Get("Content-Type"), http.StatusOK, time.Since(start))
 	}
 }

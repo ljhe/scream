@@ -54,7 +54,7 @@ func (ws *webSocketAcceptor) Start() iface.INetNode {
 		log.Panicf("webSocketAcceptor listen fail. err:%v", err)
 	}
 	ws.listener = ln
-	logrus.Log(logrus.LogsSystem).Infof("ws listen success ip:%v", ws.GetAddr())
+	logrus.Log(def.LogsSystem).Infof("ws listen success ip:%v", ws.GetAddr())
 
 	// 是否正在结束中
 	if ws.GetCloseFlag() {
@@ -69,7 +69,7 @@ func (ws *webSocketAcceptor) Start() iface.INetNode {
 	go func() {
 		err = ws.server.Serve(ws.listener)
 		if err != nil {
-			logrus.Log(logrus.LogsSystem).Errorf("ws listen field err:%v", err)
+			logrus.Log(def.LogsSystem).Errorf("ws listen field err:%v", err)
 		}
 
 		ws.SetRunState(false)
@@ -91,7 +91,7 @@ func (ws *webSocketAcceptor) GetTyp() string {
 func (ws *webSocketAcceptor) handleConnTest(w http.ResponseWriter, r *http.Request) {
 	conn, err := ws.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		logrus.Log(logrus.LogsSystem).Errorf("ws acceptor err:%v ip:%v", err, ws.GetAddr())
+		logrus.Log(def.LogsSystem).Errorf("ws acceptor err:%v ip:%v", err, ws.GetAddr())
 		return
 	}
 
@@ -101,15 +101,15 @@ func (ws *webSocketAcceptor) handleConnTest(w http.ResponseWriter, r *http.Reque
 		typ, msg, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
-				logrus.Log(logrus.LogsSystem).Infof("ws client closed connection. remoteAddr:%v ip:%v", r.RemoteAddr, ip)
+				logrus.Log(def.LogsSystem).Infof("ws client closed connection. remoteAddr:%v ip:%v", r.RemoteAddr, ip)
 				return
 			}
-			logrus.Log(logrus.LogsSystem).Errorf("ws acceptor read message err:%v ip:%v", err, ws.GetAddr())
+			logrus.Log(def.LogsSystem).Errorf("ws acceptor read message err:%v ip:%v", err, ws.GetAddr())
 			return
 		}
 
 		// 打印客户端发送的数据
-		logrus.Log(logrus.LogsSystem).Infof("ws acceptor receive msg:%v", string(msg))
+		logrus.Log(def.LogsSystem).Infof("ws acceptor receive msg:%v", string(msg))
 		// 回复客户端
 		if err := conn.WriteMessage(typ, msg); err != nil {
 			return
@@ -120,7 +120,7 @@ func (ws *webSocketAcceptor) handleConnTest(w http.ResponseWriter, r *http.Reque
 func (ws *webSocketAcceptor) handleConn(w http.ResponseWriter, r *http.Request) {
 	conn, err := ws.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		logrus.Log(logrus.LogsSystem).Errorf("ws acceptor err:%v ip:%v", err, ws.GetAddr())
+		logrus.Log(def.LogsSystem).Errorf("ws acceptor err:%v ip:%v", err, ws.GetAddr())
 		return
 	}
 

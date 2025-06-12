@@ -18,7 +18,7 @@ type ServerHookEvent struct {
 func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	switch msg := iv.Msg().(type) {
 	case *SessionAccepted:
-		logrus.Log(logrus.LogsSystem).Printf("receive SessionAccepted success. session:%d", iv.Session().GetId())
+		logrus.Log(def.LogsSystem).Printf("receive SessionAccepted success. session:%d", iv.Session().GetId())
 		return nil
 	case *SessionConnected:
 		// 从内存中的etcd获取服务器信息
@@ -34,19 +34,19 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 			})
 			// 添加远程的服务器节点信息到本地
 			baseserver.AddServiceNode(iv.Session(), ed.Id, ed.Name, "local")
-			logrus.Log(logrus.LogsSystem).Printf("send ServiceIdentifyACK [%v]->[%v] sessionId=%v",
+			logrus.Log(def.LogsSystem).Printf("send ServiceIdentifyACK [%v]->[%v] sessionId=%v",
 				utils.GenServiceId(prop), ed.Id, iv.Session().GetId())
 		} else {
-			logrus.Log(logrus.LogsSystem).Println("connector connect err. etcd not exist", msg)
+			logrus.Log(def.LogsSystem).Println("connector connect err. etcd not exist", msg)
 		}
 		return nil
 	case *SessionClosed:
 		sid := baseserver.RemoveServiceNode(iv.Session())
-		logrus.Log(logrus.LogsSystem).Printf("SessionClosed sessionId=%v sid=%v", iv.Session().GetId(), sid)
+		logrus.Log(def.LogsSystem).Printf("SessionClosed sessionId=%v sid=%v", iv.Session().GetId(), sid)
 		return nil
 	case *pbgo.ServiceIdentifyACK:
 		// 来自其他服务器的连接确认信息
-		logrus.Log(logrus.LogsSystem).Printf("receive ServiceIdentifyACK from [%v]  sessionId:%v", msg.ServiceId, iv.Session().GetId())
+		logrus.Log(def.LogsSystem).Printf("receive ServiceIdentifyACK from [%v]  sessionId:%v", msg.ServiceId, iv.Session().GetId())
 		// 重连时会有问题 重连上来时 但是上一个连接还未移除(正在移除中) 导致重连失败(想连接的没连接上 该移除的正在移除)
 		// 通过PingReq超时断开连接 来触发断线重连
 		if serviceNode := baseserver.GetServiceNode(msg.ServiceId); serviceNode == nil {
@@ -66,7 +66,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		if iv.Session().RcvPingNum() >= 10 {
 			iv.Session().IncRcvPingNum(-1)
 			if ctx.RawContextData(def.ContextSetCtxKey, &ed) {
-				logrus.Log(logrus.LogsSystem).Printf("receive PingReq from [%v] session=%v", ed.Id, iv.Session().GetId())
+				logrus.Log(def.LogsSystem).Printf("receive PingReq from [%v] session=%v", ed.Id, iv.Session().GetId())
 			}
 		}
 		iv.Session().Send(&pbgo.PingAck{Ms: time.Now().UnixMilli()})
@@ -78,7 +78,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		if iv.Session().RcvPingNum() >= 10 {
 			iv.Session().IncRcvPingNum(-1)
 			if ctx.RawContextData(def.ContextSetCtxKey, &ed) {
-				logrus.Log(logrus.LogsSystem).Printf("receive PingAck from [%v] session=%v", ed.Id, iv.Session().GetId())
+				logrus.Log(def.LogsSystem).Printf("receive PingAck from [%v] session=%v", ed.Id, iv.Session().GetId())
 			}
 		}
 		return nil
@@ -89,11 +89,11 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		}
 
 		iv.Session().TransmitChild(msg.SessionId, data)
-		logrus.Log(logrus.LogsSystem).Printf("receive MsgTransmitNtf msg. main_session:%d client_session:%d dataT:%v data:%v",
+		logrus.Log(def.LogsSystem).Printf("receive MsgTransmitNtf msg. main_session:%d client_session:%d dataT:%v data:%v",
 			iv.Session().GetId(), msg.SessionId, reflect.TypeOf(data), data)
 		return nil
 	default:
-		logrus.Log(logrus.LogsSystem).Printf("receive unknown msg %v msgT:%v ivM %v sessionId:%d",
+		logrus.Log(def.LogsSystem).Printf("receive unknown msg %v msgT:%v ivM %v sessionId:%d",
 			msg, reflect.TypeOf(msg), iv.Msg(), iv.Session().GetId())
 	}
 	return iv
@@ -109,10 +109,10 @@ type WsHookEvent struct {
 func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	switch msg := iv.Msg().(type) {
 	case *SessionAccepted:
-		logrus.Log(logrus.LogsSystem).Infof("WS-SessionConnected cliId=%v", iv.Session().GetId())
+		logrus.Log(def.LogsSystem).Infof("WS-SessionConnected cliId=%v", iv.Session().GetId())
 		return nil
 	case *pbgo.WSSessionClosedNtf:
-		logrus.Log(logrus.LogsSystem).Infof("ws session closed. sessionId:%d", iv.Session().GetId())
+		logrus.Log(def.LogsSystem).Infof("ws session closed. sessionId:%d", iv.Session().GetId())
 
 		// 测试消息转发关闭
 		node, _ := baseserver.GetServiceNodeAndSession("", def.ServiceNodeTypeGameStr, 0)
@@ -138,7 +138,7 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		return nil
 	case *pbgo.CSSendMsgReq:
 		m := iv.Msg().(*pbgo.CSSendMsgReq)
-		logrus.Log(logrus.LogsSystem).Infof("receive client msg. sessionId:%d msg:%v", iv.Session().GetId(), m.Msg)
+		logrus.Log(def.LogsSystem).Infof("receive client msg. sessionId:%d msg:%v", iv.Session().GetId(), m.Msg)
 
 		// 测试消息转发
 		node, _ := baseserver.GetServiceNodeAndSession("", def.ServiceNodeTypeGameStr, 0)
@@ -172,12 +172,12 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 			}
 			iv.Session().Send(&pbgo.SCLoginAck{Error: int32(pbgo.ErrorCode_ERROR_OK)})
 		} else {
-			logrus.Log(logrus.LogsSystem).Errorf("CSLoginReq BindClient err:%s. openId=%s", err, m.OpenId)
+			logrus.Log(def.LogsSystem).Errorf("CSLoginReq BindClient err:%s. openId=%s", err, m.OpenId)
 			iv.Session().Send(&pbgo.SCLoginAck{Error: int32(pbgo.ErrorCode_ERROR_SESSION_BIND_CLIENT)})
 		}
 		return nil
 	default:
-		logrus.Log(logrus.LogsSystem).Infof("receive unknown msg %v msgT:%v ivM %v", msg, reflect.TypeOf(msg), iv.Msg())
+		logrus.Log(def.LogsSystem).Infof("receive unknown msg %v msgT:%v ivM %v", msg, reflect.TypeOf(msg), iv.Msg())
 	}
 	return iv
 }
@@ -195,11 +195,11 @@ func (sc *SessionChildHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	}
 	switch msg := iv.Msg().(type) {
 	case *pbgo.WSSessionClosedNtf:
-		logrus.Log(logrus.LogsSystem).Infof("SessionChildHookEvent session closed. sessionId:%d", s.GetSessionId())
+		logrus.Log(def.LogsSystem).Infof("SessionChildHookEvent session closed. sessionId:%d", s.GetSessionId())
 		iv.Session().DelChild(s.GetSessionId())
 		return nil
 	default:
-		logrus.Log(logrus.LogsSystem).Infof("receive unknown msg %v msgT:%v ivM %v", msg, reflect.TypeOf(msg), iv.Msg())
+		logrus.Log(def.LogsSystem).Infof("receive unknown msg %v msgT:%v ivM %v", msg, reflect.TypeOf(msg), iv.Msg())
 	}
 	return iv
 }

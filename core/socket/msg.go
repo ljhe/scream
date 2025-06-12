@@ -192,7 +192,7 @@ func EncodeMessage(msg interface{}) ([]byte, *pbgo.MessageInfo, error) {
 	}
 	bt, err := info.Codec.Marshal(msg)
 	if err != nil {
-		logrus.Log(logrus.LogsSystem).Errorf("EncodeMessage Marshal err. msg:%v err:%v", msg, err)
+		logrus.Log(def.LogsSystem).Errorf("EncodeMessage Marshal err. msg:%v err:%v", msg, err)
 		return nil, nil, err
 	}
 	return bt.([]byte), info, nil
@@ -207,7 +207,7 @@ func DecodeMessage(msgId uint16, msg []byte) (interface{}, error) {
 	msgObj := reflect.New(sys.Type).Interface()
 	err := sys.Codec.Unmarshal(msg, msgObj)
 	if err != nil {
-		logrus.Log(logrus.LogsSystem).Errorf("DecodeMessage Unmarshal err. msg:%v err:%v", msg, err)
+		logrus.Log(def.LogsSystem).Errorf("DecodeMessage Unmarshal err. msg:%v err:%v", msg, err)
 		return nil, err
 	}
 	return msgObj, nil
@@ -332,7 +332,7 @@ func (mb *MsgBase) MarshalBytes(msgData []byte) []byte {
 func (mb *MsgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
 	var msgBodyLen uint16 // 请求长度
 	if len(bytes) < int(MsgOptions.MsgBodyLen) {
-		logrus.Log(logrus.LogsSystem).Errorf("MsgBase UnmarshalBytes MsgBodyLen err. bytes'len: %d", len(bytes))
+		logrus.Log(def.LogsSystem).Errorf("MsgBase UnmarshalBytes MsgBodyLen err. bytes'len: %d", len(bytes))
 		return
 	}
 	msgBodyLen = binary.BigEndian.Uint16(bytes)
@@ -340,14 +340,14 @@ func (mb *MsgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
 	bytes = bytes[MsgOptions.MsgBodyLen:]
 
 	if len(bytes) < int(MsgOptions.MsgIdLen) {
-		logrus.Log(logrus.LogsSystem).Errorf("MsgBase UnmarshalBytes MsgIdLen err. bytes'len: %d", len(bytes))
+		logrus.Log(def.LogsSystem).Errorf("MsgBase UnmarshalBytes MsgIdLen err. bytes'len: %d", len(bytes))
 		return
 	}
 	mb.MsgId = binary.BigEndian.Uint16(bytes)
 	bytes = bytes[MsgOptions.MsgIdLen:]
 
 	if len(bytes) < int(MsgOptions.FlagIdLen) {
-		logrus.Log(logrus.LogsSystem).Errorf("MsgBase UnmarshalBytes FlagIdLen err. bytes'len: %d", len(bytes))
+		logrus.Log(def.LogsSystem).Errorf("MsgBase UnmarshalBytes FlagIdLen err. bytes'len: %d", len(bytes))
 		return
 	}
 	mb.FlagId = binary.BigEndian.Uint16(bytes)
@@ -357,7 +357,7 @@ func (mb *MsgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
 	case def.MsgEncryptionRSA:
 		msgData, err = encryption.RSADecrypt(msgData, encryption.RSAWSPrivateKey)
 	default:
-		logrus.Log(logrus.LogsSystem).Errorf("MsgBase flagId err. flagId: %d", mb.FlagId)
+		logrus.Log(def.LogsSystem).Errorf("MsgBase flagId err. flagId: %d", mb.FlagId)
 		return
 	}
 

@@ -2,45 +2,33 @@ package logrus
 
 import (
 	"fmt"
+	"github.com/ljhe/scream/def"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"log"
 	"os"
 )
 
-var logs logsEntry
 var opt *Options
-
-type logsEntry struct {
-	entry map[string]*logrus.Entry
-}
-
-const (
-	// LogsSystem 系统级日志
-	LogsSystem = "系统级"
-)
 
 func Init(filepath string) {
 	loadConfig(filepath)
 	logrusInit()
-	logs.entry = make(map[string]*logrus.Entry)
-	logs.initSystem()
-	Log(LogsSystem).Infof("logrus init success. filepath:%v", filepath)
+	Log(def.LogsSystem).Infof("logrus init success. filepath:%v", filepath)
 }
 
-// 初始化系统级日志
-func (l *logsEntry) initSystem() {
-	l.entry[LogsSystem] = logger.WithFields(logrus.Fields{
-		"tag": LogsSystem,
-	})
-}
-
-func (l *logsEntry) getEntry(typ string) *logrus.Entry {
-	return l.entry[typ]
-}
-
-func Log(typ string) *logrus.Entry {
-	return logs.getEntry(typ)
+func Log(tag string, param ...interface{}) *logrus.Entry {
+	fields := logrus.Fields{
+		"tag": tag,
+	}
+	if len(param) > 0 {
+		if p, ok := param[0].(map[string]interface{}); ok {
+			for k, v := range p {
+				fields[k] = v
+			}
+		}
+	}
+	return logger.WithFields(fields)
 }
 
 // 加载配置文件

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/iface"
+	"github.com/ljhe/scream/def"
 	"github.com/ljhe/scream/utils"
 	"go.etcd.io/etcd/client/v3"
 	"log"
@@ -65,7 +66,7 @@ func Register(node iface.INetNode) *ServerInfo {
 		return nil
 	}
 	etcdDiscovery.WatchServices(etcdKey, *ed)
-	logrus.Log(logrus.LogsSystem).Info("etcd register success:", ed.Id)
+	logrus.Log(def.LogsSystem).Info("etcd register success:", ed.Id)
 	return ed
 }
 

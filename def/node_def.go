@@ -29,6 +29,13 @@ const (
 	ServiceNodeTypeGameStr = "game"
 )
 
+const (
+	// LogsSystem 系统级日志
+	LogsSystem = "system"
+	// LogsConfigCenter 服务中心日志
+	LogsConfigCenter = "config_center"
+)
+
 func GetServiceNodeStr(id int) string {
 	switch id {
 	case ServiceNodeTypeGate:
