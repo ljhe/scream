@@ -1,6 +1,7 @@
 package logrus
 
 import (
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"log"
@@ -8,7 +9,7 @@ import (
 )
 
 var logs logsEntry
-var conf logConf
+var opt *Options
 
 type logsEntry struct {
 	entry map[string]*logrus.Entry
@@ -30,7 +31,7 @@ func Init(filepath string) {
 // 初始化系统级日志
 func (l *logsEntry) initSystem() {
 	l.entry[LogsSystem] = logger.WithFields(logrus.Fields{
-		"type": LogsSystem,
+		"tag": LogsSystem,
 	})
 }
 
@@ -44,16 +45,17 @@ func Log(typ string) *logrus.Entry {
 
 // 加载配置文件
 func loadConfig(filepath string) {
-	if filepath == "" {
-		filepath = "./config.yaml"
+	conf := &logConf{}
+	if filepath != "" {
+		yamlFile, err := os.ReadFile(filepath)
+		if err != nil {
+			log.Fatalf("logrus load config readFile err:%v filepath:%v", err, filepath)
+		}
+		err = yaml.Unmarshal(yamlFile, conf)
+		if err != nil {
+			log.Fatalf("logrus load config Unmarshal err: %v", err)
+		}
 	}
-	yamlFile, err := os.ReadFile(filepath)
-	if err != nil {
-		log.Fatalf("logrus load config readFile err:%v filepath:%v", err, filepath)
-	}
-	err = yaml.Unmarshal(yamlFile, &conf)
-	if err != nil {
-		log.Fatalf("logrus load config Unmarshal err: %v", err)
-	}
-	log.Println("logrus load config success", conf.Log)
+	opt = NewOptions(conf)
+	fmt.Printf("logrus load config success. opt:%v \n", opt)
 }

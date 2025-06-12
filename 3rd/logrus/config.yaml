@@ -1,8 +1,0 @@
-log:
-  log_name: tests    # 日志文件名前缀
-  log_level: 6       # 日志级别
-  max_size: 512      # 每个日志文件的最大大小(MB)
-  max_backups: 100   # 保留日志文件的最大数量(maxAge可能仍然会导致它们丢失)
-  max_age: 10        # 日志文件的最大保留天数
-  save_path: ./      # 日志保存路径
-  config: ./         # 日志配置文件路径
