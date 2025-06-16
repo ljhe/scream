@@ -65,7 +65,7 @@ func WithParams(method string, handler HandlerWithParams) http.HandlerFunc {
 		params := ExtractParams(r)
 		//printParams(w, r, params)
 		handler(w, r, params)
-		logrus.Log(def.LogsSystem).Infof("[%s] %s %s %s -> %d - %s", start.Format("15:04:05"), r.Method, r.URL.String(),
+		logrus.Infof("[%s] %s %s %s -> %d - %s", start.Format("15:04:05"), r.Method, r.URL.String(),
 			r.Header.Get("Content-Type"), http.StatusOK, time.Since(start))
 	}
 }
@@ -74,27 +74,27 @@ func printParams(w http.ResponseWriter, r *http.Request, params *RequestParams) 
 	log.Println("--- Header Parameters ---")
 	for key, values := range params.HeaderParams {
 		for _, value := range values {
-			log.Printf("%s: %s\n", key, value)
+			logrus.Printf("%s: %s\n", key, value)
 		}
 	}
 
 	log.Println("--- Query / Form Parameters ---")
 	for key, values := range params.QueryParams {
 		for _, value := range values {
-			log.Printf("%s = %s\n", key, value)
+			logrus.Printf("%s = %s\n", key, value)
 		}
 	}
 
 	log.Println("--- POST Form Parameters ---")
 	for key, values := range params.PostParams {
 		for _, value := range values {
-			log.Printf("%s = %s\n", key, value)
+			logrus.Printf("%s = %s\n", key, value)
 		}
 	}
 
 	log.Println("--- JSON Body Parameters ---")
 	for key, value := range params.JSONBody {
-		log.Printf("%s = %v\n", key, value)
+		logrus.Printf("%s = %v\n", key, value)
 	}
 }
 

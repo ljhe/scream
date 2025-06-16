@@ -5,7 +5,6 @@ import (
 	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/core/socket"
-	"github.com/ljhe/scream/def"
 	"log"
 	"net"
 	"reflect"
@@ -84,7 +83,7 @@ func (s *Session) Close() {
 func (s *Session) RunRcv() {
 	defer func() {
 		if err := recover(); err != nil {
-			logrus.Log(def.LogsSystem).Errorf("tcpSession Stack---::%v\n %s\n", err, string(debug.Stack()))
+			logrus.Errorf("tcpSession Stack---::%v\n %s\n", err, string(debug.Stack()))
 			debug.PrintStack()
 		}
 	}()
@@ -92,13 +91,13 @@ func (s *Session) RunRcv() {
 	for {
 		msg, err := s.ReadMsg(s)
 		if err != nil {
-			logrus.Log(def.LogsSystem).Errorf("RunRcv ReadMsg err:%v sessionId:%d", err, s.GetId())
+			logrus.Errorf("RunRcv ReadMsg err:%v sessionId:%d", err, s.GetId())
 			// 做关闭处理 发送数据时已经无法发送
 			atomic.StoreInt64(&s.close, 1)
 			select {
 			case s.sendQueue <- nil:
 			default:
-				logrus.Log(def.LogsSystem).Errorf("RunRcv sendQueue block len:%d sessionId:%d", len(s.sendQueue), s.GetId())
+				logrus.Errorf("RunRcv sendQueue block len:%d sessionId:%d", len(s.sendQueue), s.GetId())
 			}
 
 			// 抛出关闭事件
@@ -137,7 +136,7 @@ func (s *Session) RunSend() {
 		}
 		err := s.SendMsg(&socket.SendProcEvent{Sess: s, Message: data})
 		if err != nil {
-			logrus.Log(def.LogsSystem).Errorf("session send msg err:%v. sessionId:%d dataT:%v data:%v", err, s.GetId(), reflect.TypeOf(data), data)
+			logrus.Errorf("session send msg err:%v. sessionId:%d dataT:%v data:%v", err, s.GetId(), reflect.TypeOf(data), data)
 			break
 		}
 	}

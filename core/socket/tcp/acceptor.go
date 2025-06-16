@@ -3,6 +3,7 @@ package tcp
 import (
 	"context"
 	"fmt"
+	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/core/socket"
 	"github.com/ljhe/scream/core/socket/sessions"
@@ -46,11 +47,11 @@ func (t *tcpAcceptor) Start() iface.INetNode {
 	}
 	ln, err := listenConfig.Listen(context.Background(), "tcp", t.GetAddr())
 	if err != nil {
-		log.Println(fmt.Sprintf("tcp listen error:%v. addr:%v", err, t.GetAddr()))
+		logrus.Errorf(fmt.Sprintf("tcp listen error:%v. addr:%v", err, t.GetAddr()))
 		return nil
 	}
 	t.listener = ln
-	log.Printf("tcp listen success. addr:%v \n", t.GetAddr())
+	logrus.Printf("tcp listen success. addr:%v \n", t.GetAddr())
 	go t.tcpAccept()
 	return t
 }
@@ -67,7 +68,7 @@ func (t *tcpAcceptor) Stop() {
 	t.CloseAllSession()
 	// 等待协程结束
 	t.StopWg.Wait()
-	log.Println("tcp acceptor stop success.")
+	logrus.Infof("tcp acceptor stop success.")
 }
 
 func (t *tcpAcceptor) GetTyp() string {
@@ -100,10 +101,10 @@ func (t *tcpAcceptor) tcpAccept() {
 					continue
 				}
 			}
-			log.Println("tcp accept error:", err)
+			logrus.Infof("tcp accept error:%v", err)
 			break
 		}
-		log.Println("tcp accept success. remoteAddr:", conn.RemoteAddr())
+		logrus.Infof("tcp accept success. remoteAddr:%s", conn.RemoteAddr())
 		//go t.deal(conn)
 		func() {
 			session := sessions.NewTcpSession(conn, t)
@@ -115,7 +116,7 @@ func (t *tcpAcceptor) tcpAccept() {
 	t.SetRunState(false)
 	t.SetCloseFlag(false)
 	t.StopWg.Done()
-	log.Println("tcp acceptor close.")
+	logrus.Infof("tcp acceptor close.")
 }
 
 func (t *tcpAcceptor) deal(conn net.Conn) {

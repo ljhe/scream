@@ -10,10 +10,13 @@ import (
 )
 
 var opt *Options
+var logJson *logrus.Logger
+var logText *logrus.Logger
 
 func Init(filepath string) {
 	loadConfig(filepath)
-	logrusInit()
+	logJson = NewLogger(&SelfJsonFormatter{})
+	logText = NewLogger(&SelfTextFormatter{})
 	Log(def.LogsSystem).Infof("logrus init success. filepath:%v", filepath)
 }
 
@@ -22,13 +25,9 @@ func Log(tag string, param ...interface{}) *logrus.Entry {
 		"tag": tag,
 	}
 	if len(param) > 0 {
-		if p, ok := param[0].(map[string]interface{}); ok {
-			for k, v := range p {
-				fields[k] = v
-			}
-		}
+		fields["zlog"] = param
 	}
-	return logger.WithFields(fields)
+	return logJson.WithFields(fields)
 }
 
 // 加载配置文件

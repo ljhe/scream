@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/iface"
-	"github.com/ljhe/scream/def"
 	"github.com/ljhe/scream/pbgo"
 )
 
@@ -44,7 +43,7 @@ func (cli *ClientUser) AddClient(cliSession iface.ISession, openId, platform str
 
 // SendServer gate把接收到的数据直接发送到后端其他服务器节点
 func (cli *ClientUser) SendServer() {
-	logrus.Log(def.LogsSystem).Infof("bind success, send other server...")
+	logrus.Infof("bind success, send other server...")
 }
 
 // gate把接收到的数据直接发送到后端服务器节点

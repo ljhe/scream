@@ -3,7 +3,6 @@ package sessions
 import (
 	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/socket"
-	"github.com/ljhe/scream/def"
 	"runtime/debug"
 	"sync/atomic"
 )
@@ -57,7 +56,7 @@ func (sc *SessionChild) GetSessionId() uint64 {
 func (sc *SessionChild) RunRcv() {
 	defer func() {
 		if err := recover(); err != nil {
-			logrus.Log(def.LogsSystem).Errorf("session children Stack---::%v\n %s\n", err, string(debug.Stack()))
+			logrus.Errorf("session children Stack---::%v\n %s\n", err, string(debug.Stack()))
 			debug.PrintStack()
 		}
 	}()
@@ -71,5 +70,5 @@ func (sc *SessionChild) RunRcv() {
 		}
 		sc.Processor.ProcEvent(&socket.RcvProcEvent{Sess: sc, Message: data, Err: nil})
 	}
-	logrus.Log(def.LogsSystem).Infof("session children close. sessionId:%d", sc.sessionId)
+	logrus.Infof("session children close. sessionId:%d", sc.sessionId)
 }

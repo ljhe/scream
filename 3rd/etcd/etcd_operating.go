@@ -7,10 +7,8 @@ import (
 	"fmt"
 	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/iface"
-	"github.com/ljhe/scream/def"
 	"github.com/ljhe/scream/utils"
 	"go.etcd.io/etcd/client/v3"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -51,7 +49,7 @@ func Register(node iface.INetNode) *ServerInfo {
 	etcdKey := genServicePrefix(ed.Id, property.GetZone())
 	resp, err := etcdDiscovery.KV.Get(context.TODO(), etcdKey)
 	if err != nil {
-		log.Println("etcd register error:", err)
+		logrus.Infof("etcd register error:%v", err)
 		return nil
 	}
 	if resp.Count > 0 {
@@ -62,11 +60,11 @@ func Register(node iface.INetNode) *ServerInfo {
 	// 注册
 	err = etcdDiscovery.RegisterService(etcdKey, ed.String())
 	if err != nil {
-		log.Println("etcd register error:", err)
+		logrus.Errorf("etcd register error:%v", err)
 		return nil
 	}
 	etcdDiscovery.WatchServices(etcdKey, *ed)
-	logrus.Log(def.LogsSystem).Info("etcd register success:", ed.Id)
+	logrus.Infof("etcd register success:%s", ed.Id)
 	return ed
 }
 
@@ -92,16 +90,16 @@ func DiscoveryService(multiNode MultiServerNode, serviceName string, zone int, n
 	go func() {
 		resp, err := etcdDiscovery.KV.Get(context.TODO(), etcdKey, clientv3.WithPrefix())
 		if err != nil {
-			log.Println("etcd discovery error:", err)
+			logrus.Errorf("etcd discovery error:%v", err)
 			return
 		}
-		log.Printf("service[%v] node find count:%v \n", etcdKey, resp.Count)
+		logrus.Printf("service[%v] node find count:%v \n", etcdKey, resp.Count)
 		for _, data := range resp.Kvs {
-			log.Println("etcd discovery start connect:", string(data.Key))
+			logrus.Errorf("etcd discovery start connect:%v", string(data.Key))
 			var ed ServerInfo
 			err = json.Unmarshal(data.Value, &ed)
 			if err != nil {
-				log.Printf("etcd discovery unmarshal error:%v key:%v \n", err, data.Key)
+				logrus.Printf("etcd discovery unmarshal error:%v key:%v \n", err, data.Key)
 				continue
 			}
 			// 先停止之前的连接 再执行新的连接
@@ -121,21 +119,21 @@ func DiscoveryService(multiNode MultiServerNode, serviceName string, zone int, n
 						var ed ServerInfo
 						err = json.Unmarshal(ev.Kv.Value, &ed)
 						if err != nil {
-							log.Printf("etcd discovery unmarshal error:%v key:%v \n", err, ev.Kv.Key)
+							logrus.Printf("etcd discovery unmarshal error:%v key:%v \n", err, ev.Kv.Key)
 							continue
 						}
-						log.Println("etcd discovery start connect:", string(ev.Kv.Key))
+						logrus.Errorf("etcd discovery start connect:%v", string(ev.Kv.Key))
 						// 先停止之前的连接 再执行新的连接
 						if preNode := multiNode.GetNode(ed.Id); preNode != nil {
 							multiNode.DelNode(ed.Id, serviceName)
 							preNode.Stop()
-							log.Println(fmt.Sprintf("del old node. id:%v", ed.Id))
+							logrus.Errorf(fmt.Sprintf("del old node. id:%v", ed.Id))
 						}
 						nodeCreator(multiNode, &ed)
 					case clientv3.EventTypeDelete:
 						nodeID := getNodeId(string(ev.Kv.Key))
 						if preNode := multiNode.GetNode(nodeID); preNode != nil {
-							log.Println(fmt.Sprintf("del node. id:%v", nodeID))
+							logrus.Errorf(fmt.Sprintf("del node. id:%v", nodeID))
 							multiNode.DelNode(nodeID, serviceName)
 							preNode.Stop()
 						}

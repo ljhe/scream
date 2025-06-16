@@ -1,0 +1,31 @@
+{"level":"INFO","message":"logrus init success. filepath:","tag":"system","time":"2025-06-16 14:01:03.352"}
+{"level":"INFO","message":"add server","tag":"config_center","time":"2025-06-16 14:01:32.662","zlog":[{"server/game#9999@2@1":"eyJJZCI6ImdhbWUjOTk5OUAyQDEiLCJOYW1lIjoiZ2FtZSIsIkhvc3QiOiIwLjAuMC4wOjI3MDEiLCJUeXAiOjIsIlpvbmUiOjk5OTksIkluZGV4IjoxLCJSZWdUaW1lIjoxNzUwMDUzNjkyfQ=="}]}
+{"level":"INFO","message":"server info change, now all server info","tag":"config_center","time":"2025-06-16 14:01:32.662","zlog":[{"server/game#9999@2@1":{"Id":"game#9999@2@1","Name":"game","Host":"0.0.0.0:2701","Typ":2,"Zone":9999,"Index":1,"RegTime":1750053692}}]}
+{"level":"INFO","message":"del server","tag":"config_center","time":"2025-06-16 14:03:37.535","zlog":[{"server/game#9999@2@1":null}]}
+{"level":"INFO","message":"logrus init success. filepath:","tag":"system","time":"2025-06-16 14:03:42.905"}
+{"level":"INFO","message":"add server","tag":"config_center","time":"2025-06-16 14:03:44.921","zlog":[{"server/game#9999@2@1":true}]}
+{"level":"INFO","message":"server info change, now all server info","tag":"config_center","time":"2025-06-16 14:03:44.921","zlog":[{"server/game#9999@2@1":true}]}
+{"level":"INFO","message":"logrus init success. filepath:","tag":"system","time":"2025-06-16 14:04:15.531"}
+{"level":"INFO","message":"del server","tag":"config_center","time":"2025-06-16 14:04:17.203","zlog":[{"server/game#9999@2@1":true}]}
+{"level":"INFO","message":"add server","tag":"config_center","time":"2025-06-16 14:04:17.669","zlog":[{"server/game#9999@2@1":true}]}
+{"level":"INFO","message":"server info change, now all server info","tag":"config_center","time":"2025-06-16 14:04:17.669","zlog":[{"server/game#9999@2@1":{"Id":"game#9999@2@1","Name":"game","Host":"0.0.0.0:2701","Typ":2,"Zone":9999,"Index":1,"RegTime":1750053857}}]}
+{"level":"INFO","message":"logrus init success. filepath:","tag":"system","time":"2025-06-16 14:05:07.208"}
+{"level":"INFO","message":"del server","tag":"config_center","time":"2025-06-16 14:05:08.392","zlog":[{"server/game#9999@2@1":""}]}
+{"level":"INFO","message":"add server","tag":"config_center","time":"2025-06-16 14:05:08.856","zlog":[{"server/game#9999@2@1":"{\"Id\":\"game#9999@2@1\",\"Name\":\"game\",\"Host\":\"0.0.0.0:2701\",\"Typ\":2,\"Zone\":9999,\"Index\":1,\"RegTime\":1750053908}"}]}
+{"level":"INFO","message":"server info change, now all server info","tag":"config_center","time":"2025-06-16 14:05:08.856","zlog":[{"server/game#9999@2@1":{"Id":"game#9999@2@1","Name":"game","Host":"0.0.0.0:2701","Typ":2,"Zone":9999,"Index":1,"RegTime":1750053908}}]}
+{"level":"INFO","message":"logrus init success. filepath:","tag":"system","time":"2025-06-16 14:06:28.026"}
+{"level":"INFO","message":"del server","tag":"config_center","time":"2025-06-16 14:06:29.410","zlog":[{"server/game#9999@2@1":""}]}
+{"level":"INFO","message":"add server","tag":"config_center","time":"2025-06-16 14:06:29.851","zlog":[{"server/game#9999@2@1":"eyJJZCI6ImdhbWUjOTk5OUAyQDEiLCJOYW1lIjoiZ2FtZSIsIkhvc3QiOiIwLjAuMC4wOjI3MDEiLCJUeXAiOjIsIlpvbmUiOjk5OTksIkluZGV4IjoxLCJSZWdUaW1lIjoxNzUwMDUzOTg5fQ=="}]}
+{"level":"INFO","message":"server info change, now all server info","tag":"config_center","time":"2025-06-16 14:06:29.851","zlog":[{"server/game#9999@2@1":{"Id":"game#9999@2@1","Name":"game","Host":"0.0.0.0:2701","Typ":2,"Zone":9999,"Index":1,"RegTime":1750053989}}]}
+{"level":"INFO","message":"logrus init success. filepath:","tag":"system","time":"2025-06-16 14:07:50.189"}
+{"level":"INFO","message":"del server","tag":"config_center","time":"2025-06-16 14:07:51.638","zlog":[{"server/game#9999@2@1":""}]}
+{"level":"INFO","message":"add server","tag":"config_center","time":"2025-06-16 14:07:52.099","zlog":[{"server/game#9999@2@1":{"Id":"game#9999@2@1","Name":"game","Host":"0.0.0.0:2701","Typ":2,"Zone":9999,"Index":1,"RegTime":1750054072}}]}
+{"level":"INFO","message":"server info change, now all server info","tag":"config_center","time":"2025-06-16 14:07:52.100","zlog":[{"server/game#9999@2@1":{"Id":"game#9999@2@1","Name":"game","Host":"0.0.0.0:2701","Typ":2,"Zone":9999,"Index":1,"RegTime":1750054072}}]}
+{"level":"INFO","message":"logrus init success. filepath:","tag":"system","time":"2025-06-16 14:09:34.923"}
+{"level":"INFO","message":"logrus init success. filepath:","tag":"system","time":"2025-06-16 14:10:35.934"}
+{"level":"INFO","message":"add server","tag":"config_center","time":"2025-06-16 14:10:37.883","zlog":[{"server/game#9999@2@1":{"Id":"game#9999@2@1","Name":"game","Host":"0.0.0.0:2701","Typ":2,"Zone":9999,"Index":1,"RegTime":1750054237}}]}
+{"level":"INFO","message":"server info change, now all server info","tag":"config_center","time":"2025-06-16 14:10:37.883","zlog":[{"server/game#9999@2@1":{"Id":"game#9999@2@1","Name":"game","Host":"0.0.0.0:2701","Typ":2,"Zone":9999,"Index":1,"RegTime":1750054237}}]}
+{"level":"INFO","message":"del server","tag":"config_center","time":"2025-06-16 14:10:43.842","zlog":[{"server/game#9999@2@1":true}]}
+{"level":"INFO","message":"logrus init success. filepath:","tag":"system","time":"2025-06-16 14:13:12.192"}
+{"level":"INFO","message":"add server","tag":"config_center","time":"2025-06-16 14:13:14.476","zlog":[{"key":"server/game#9999@2@1"}]}
+{"level":"INFO","message":"server info change, now all server info","tag":"config_center","time":"2025-06-16 14:13:14.477","zlog":[{"key":"server/game#9999@2@1","val":{"Id":"game#9999@2@1","Name":"game","Host":"0.0.0.0:2701","Typ":2,"Zone":9999,"Index":1,"RegTime":1750054394}}]}

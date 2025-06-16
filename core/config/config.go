@@ -41,7 +41,7 @@ func Init() {
 	if err != nil {
 		log.Fatalf("global config Unmarshal err: %v", err)
 	}
-	log.Println("global config load success", SConf)
+	log.Println("global config load success")
 }
 
 func GetOrm() *gorm.Orm {
