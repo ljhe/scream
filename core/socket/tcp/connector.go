@@ -56,7 +56,6 @@ func init() {
 		node.session = sessions.NewTcpSession(nil, node)
 		return node
 	})
-	log.Println("tcp connector register success.")
 }
 
 func (t *tcpConnector) connect() {

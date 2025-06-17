@@ -9,7 +9,6 @@ import (
 	"github.com/ljhe/scream/core/socket/sessions"
 	"github.com/ljhe/scream/def"
 	"github.com/ljhe/scream/utils"
-	"log"
 	"net"
 	"net/http"
 	"syscall"
@@ -143,5 +142,4 @@ func init() {
 		}
 		return node
 	})
-	log.Println("ws acceptor register success.")
 }

@@ -7,7 +7,9 @@ import (
 )
 
 func main() {
-	*config.ServerConfigPath = "./tests/websocket/acceptor/config.yaml"
+	if *config.ServerConfigPath == "" {
+		*config.ServerConfigPath = "./tests/websocket/acceptor/config.yaml"
+	}
 	err := service.Init()
 	if err != nil {
 		logrus.Panicf("server starting fail:%v", err)

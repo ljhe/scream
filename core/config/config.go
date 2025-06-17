@@ -29,11 +29,15 @@ type Node struct {
 
 var (
 	ServerCmd        = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-	ServerConfigPath = ServerCmd.String("config", "config.yaml", "server config file")
+	ServerConfigPath = ServerCmd.String("config", "", "server config file")
 	OrmConnector     *gorm.Orm
 )
 
 func Init() {
+	err := ServerCmd.Parse(os.Args[1:])
+	if err != nil {
+		log.Fatalf("serverCnd parse err:%v", err)
+	}
 	yamlFile, err := os.ReadFile(*ServerConfigPath)
 	if err != nil {
 		log.Fatalf("global config readFile err:%v", err)

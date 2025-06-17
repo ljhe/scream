@@ -447,7 +447,6 @@ func registerInfo(id uint16, msgType reflect.Type) {
 		data := sortMsg.initMsg[id]
 		minit += "\n\tregisterInfo(" + strconv.Itoa(id) + ", reflect.TypeOf((*" + data.name + ")(nil)).Elem())"
 	}
-	minit += "\n\tlog.Println(\"pbbind_gen.go init success\")\n}"
 
 	messageText := mhead + mhanderDef + mhandler + minit
 	saveFile(pbBindGo, messageText)

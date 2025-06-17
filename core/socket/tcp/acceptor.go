@@ -8,7 +8,6 @@ import (
 	"github.com/ljhe/scream/core/socket"
 	"github.com/ljhe/scream/core/socket/sessions"
 	"github.com/ljhe/scream/def"
-	"log"
 	"net"
 	"syscall"
 	"time"
@@ -51,7 +50,7 @@ func (t *tcpAcceptor) Start() iface.INetNode {
 		return nil
 	}
 	t.listener = ln
-	logrus.Printf("tcp listen success. addr:%v \n", t.GetAddr())
+	logrus.Printf("tcp listen success. addr:%v", t.GetAddr())
 	go t.tcpAccept()
 	return t
 }
@@ -82,7 +81,6 @@ func init() {
 		}
 		return node
 	})
-	log.Println("tcp acceptor register success.")
 }
 
 func (t *tcpAcceptor) tcpAccept() {

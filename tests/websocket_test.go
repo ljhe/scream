@@ -7,7 +7,6 @@ import (
 	"github.com/ljhe/scream/core/socket"
 	"github.com/ljhe/scream/pbgo"
 	"github.com/ljhe/scream/utils"
-	"github.com/ljhe/scream/utils/encryption"
 	"log"
 	"math/rand"
 	"net/url"
@@ -71,12 +70,19 @@ func createConnector() {
 				Msg: c.LocalAddr().String() + "_" + fmt.Sprintf("%d", count),
 			}
 			msgData, msgInfo, _ := socket.EncodeMessage(data)
-			encryptStr, _ := encryption.RSAEncrypt(msgData, encryption.RSAWSPublicKey)
+			// 使用加密的方式发送信息
+			//encryptStr, _ := encryption.RSAEncrypt(msgData, encryption.RSAWSPublicKey)
+			//mb := &socket.MsgBase{
+			//	MsgId:  msgInfo.ID,
+			//	FlagId: 1,
+			//}
+			//buf := mb.MarshalBytes(encryptStr)
+
+			// 不使用加密的方式发送信息
 			mb := &socket.MsgBase{
-				MsgId:  msgInfo.ID,
-				FlagId: 1,
+				MsgId: msgInfo.ID,
 			}
-			buf := mb.MarshalBytes(encryptStr)
+			buf := mb.MarshalBytes(msgData)
 			err = c.WriteMessage(websocket.BinaryMessage, buf)
 			count++
 			if count >= 3 {

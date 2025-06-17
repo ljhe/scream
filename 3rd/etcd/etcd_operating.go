@@ -93,13 +93,13 @@ func DiscoveryService(multiNode MultiServerNode, serviceName string, zone int, n
 			logrus.Errorf("etcd discovery error:%v", err)
 			return
 		}
-		logrus.Printf("service[%v] node find count:%v \n", etcdKey, resp.Count)
+		logrus.Printf("service[%v] node find count:%v", etcdKey, resp.Count)
 		for _, data := range resp.Kvs {
 			logrus.Errorf("etcd discovery start connect:%v", string(data.Key))
 			var ed ServerInfo
 			err = json.Unmarshal(data.Value, &ed)
 			if err != nil {
-				logrus.Printf("etcd discovery unmarshal error:%v key:%v \n", err, data.Key)
+				logrus.Printf("etcd discovery unmarshal error:%v key:%v", err, data.Key)
 				continue
 			}
 			// 先停止之前的连接 再执行新的连接
@@ -119,7 +119,7 @@ func DiscoveryService(multiNode MultiServerNode, serviceName string, zone int, n
 						var ed ServerInfo
 						err = json.Unmarshal(ev.Kv.Value, &ed)
 						if err != nil {
-							logrus.Printf("etcd discovery unmarshal error:%v key:%v \n", err, ev.Kv.Key)
+							logrus.Printf("etcd discovery unmarshal error:%v key:%v", err, ev.Kv.Key)
 							continue
 						}
 						logrus.Errorf("etcd discovery start connect:%v", string(ev.Kv.Key))

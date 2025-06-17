@@ -8,7 +8,9 @@ import (
 )
 
 func main() {
-	*config.ServerConfigPath = "./tests/config_center/config.yaml"
+	if *config.ServerConfigPath == "" {
+		*config.ServerConfigPath = "./tests/config_center/config.yaml"
+	}
 	err := service.Init()
 	if err != nil {
 		logrus.Panicf("server starting fail:%v", err)

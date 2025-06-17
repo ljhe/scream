@@ -202,12 +202,12 @@ func EncodeMessage(msg interface{}) ([]byte, *pbgo.MessageInfo, error) {
 func DecodeMessage(msgId uint16, msg []byte) (interface{}, error) {
 	sys := pbgo.MessageInfoById(msgId)
 	if sys == nil {
-		return nil, fmt.Errorf("msgId not found. msgId: %d msg:%v", msgId, msg)
+		return nil, fmt.Errorf("msgId not found. msgId: %d msg:%s", msgId, string(msg))
 	}
 	msgObj := reflect.New(sys.Type).Interface()
 	err := sys.Codec.Unmarshal(msg, msgObj)
 	if err != nil {
-		logrus.Errorf("DecodeMessage Unmarshal err. msg:%v err:%v", msg, err)
+		logrus.Errorf("DecodeMessage Unmarshal err. msg:%s err:%v", string(msg), err)
 		return nil, err
 	}
 	return msgObj, nil
@@ -354,6 +354,8 @@ func (mb *MsgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
 	msgData = bytes[MsgOptions.FlagIdLen:]
 
 	switch mb.FlagId {
+	case def.MsgEncryptionNone:
+		break
 	case def.MsgEncryptionRSA:
 		msgData, err = encryption.RSADecrypt(msgData, encryption.RSAWSPrivateKey)
 	default:
