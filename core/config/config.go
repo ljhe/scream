@@ -24,6 +24,7 @@ type Node struct {
 	Index   int      `yaml:"index"`
 	Connect []string `yaml:"connect"`
 	WsAddr  string   `yaml:"ws_addr"`
+	Etcd    string   `yaml:"etcd"`
 }
 
 var (

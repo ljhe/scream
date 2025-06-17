@@ -6,6 +6,7 @@ node:
   index: 1                                # 服务器区内的编号
   connect: [game]                         # 需要建立连接的节点名称
   ws_addr: 0.0.0.0:9001                   # 对外ws地址
+  etcd: 127.0.0.1:2379                    # 服务发现
 log:
   log_name: gate     # 日志文件名前缀
   log_level: 6       # 日志级别

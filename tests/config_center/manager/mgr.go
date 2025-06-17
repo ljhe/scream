@@ -23,11 +23,7 @@ func (c *Center) Run() {
 }
 
 func (c *Center) watch() {
-	ed, err := etcd.NewServiceDiscovery("127.0.0.1:2379")
-	if err != nil {
-		panic(err)
-	}
-
+	ed := etcd.GetEtcdDiscovery()
 	watchChan := ed.Cli.Watch(context.TODO(), etcd.ServerPreKey, clientv3.WithPrefix())
 	go func() {
 		for {
@@ -37,7 +33,7 @@ func (c *Center) watch() {
 					switch event.Type {
 					case clientv3.EventTypePut:
 						var info etcd.ServerInfo
-						err = json.Unmarshal(event.Kv.Value, &info)
+						err := json.Unmarshal(event.Kv.Value, &info)
 						if err != nil {
 							panic(err)
 						}

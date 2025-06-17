@@ -2,7 +2,6 @@ package logrus
 
 import (
 	"fmt"
-	"github.com/ljhe/scream/def"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"log"
@@ -17,7 +16,7 @@ func Init(filepath string) {
 	loadConfig(filepath)
 	logJson = NewLogger(&SelfJsonFormatter{})
 	logText = NewLogger(&SelfTextFormatter{})
-	Log(def.LogsSystem).Infof("logrus init success. filepath:%v", filepath)
+	Infof("logrus init success. filepath:%v", filepath)
 }
 
 func Log(tag string, param ...interface{}) *logrus.Entry {

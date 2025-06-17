@@ -20,7 +20,7 @@ func Init() error {
 	// 初始化内存池
 	//mpool.MemoryPoolInit()
 	// 初始化服务发现
-	err := trdetcd.InitServiceDiscovery("127.0.0.1:2379")
+	err := trdetcd.InitServiceDiscovery(config.SConf.Node.Etcd)
 	if err != nil {
 		logrus.Errorf("InitServiceDiscovery err:%v", err)
 		return err
@@ -36,12 +36,6 @@ func Init() error {
 }
 
 func StartUp() {
-	err := Init()
-	if err != nil {
-		logrus.Errorf("server starting fail:%v", err)
-		return
-	}
-
 	logrus.Infof(fmt.Sprintf("[ %s ] starting ...", config.SConf.Node.Name))
 	nodes := make([]iface.INetNode, 0)
 	if config.SConf.Node.Addr != "" {

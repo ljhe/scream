@@ -27,6 +27,9 @@ const (
 
 	ServiceNodeTypeGame    = 2
 	ServiceNodeTypeGameStr = "game"
+
+	ServiceNodeTypeConfigCenter    = 3
+	ServiceNodeTypeConfigCenterStr = "config_center"
 )
 
 const (
