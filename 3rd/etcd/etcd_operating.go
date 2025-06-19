@@ -78,7 +78,7 @@ func UnRegister(node iface.INetNode) error {
 	return etcdDiscovery.DelServices(etcdKey)
 }
 
-func DiscoveryService(multiNode MultiServerNode, serviceName string, zone int, nodeCreator func(MultiServerNode, *ServerInfo)) iface.INetNode {
+func DiscoveryService(serviceName string, zone int, nodeCreator func(*ServerInfo)) iface.INetNode {
 	// 如果已经存在 就停止之前正在运行的节点(注意不要配置成一样的节点信息 否则会关闭之前的连接)
 	// 连接同一个zone里的服务器节点
 	etcdKey := genDiscoveryServicePrefix(serviceName, zone)
@@ -95,19 +95,14 @@ func DiscoveryService(multiNode MultiServerNode, serviceName string, zone int, n
 		}
 		logrus.Printf("service[%v] node find count:%v", etcdKey, resp.Count)
 		for _, data := range resp.Kvs {
-			logrus.Errorf("etcd discovery start connect:%v", string(data.Key))
 			var ed ServerInfo
 			err = json.Unmarshal(data.Value, &ed)
 			if err != nil {
 				logrus.Printf("etcd discovery unmarshal error:%v key:%v", err, data.Key)
 				continue
 			}
-			// 先停止之前的连接 再执行新的连接
-			if preNode := multiNode.GetNode(ed.Id); preNode != nil {
-				multiNode.DelNode(ed.Id, serviceName)
-				preNode.Stop()
-			}
-			nodeCreator(multiNode, &ed)
+			// todo 先停止之前的连接 再执行新的连接
+			nodeCreator(&ed)
 		}
 
 		for {
@@ -122,21 +117,11 @@ func DiscoveryService(multiNode MultiServerNode, serviceName string, zone int, n
 							logrus.Printf("etcd discovery unmarshal error:%v key:%v", err, ev.Kv.Key)
 							continue
 						}
-						logrus.Errorf("etcd discovery start connect:%v", string(ev.Kv.Key))
-						// 先停止之前的连接 再执行新的连接
-						if preNode := multiNode.GetNode(ed.Id); preNode != nil {
-							multiNode.DelNode(ed.Id, serviceName)
-							preNode.Stop()
-							logrus.Errorf(fmt.Sprintf("del old node. id:%v", ed.Id))
-						}
-						nodeCreator(multiNode, &ed)
+						logrus.Infof("etcd discovery start connect:%v", string(ev.Kv.Key))
+						// todo 先停止之前的连接 再执行新的连接
+						nodeCreator(&ed)
 					case clientv3.EventTypeDelete:
-						nodeID := getNodeId(string(ev.Kv.Key))
-						if preNode := multiNode.GetNode(nodeID); preNode != nil {
-							logrus.Errorf(fmt.Sprintf("del node. id:%v", nodeID))
-							multiNode.DelNode(nodeID, serviceName)
-							preNode.Stop()
-						}
+
 					}
 				}
 			}

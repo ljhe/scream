@@ -47,3 +47,9 @@ type IContextSet interface {
 	GetContextData(key interface{}) (interface{}, bool)
 	RawContextData(key interface{}, ptr interface{}) bool
 }
+
+type IDiscover interface {
+	// Loader load all node info by ETCD after the node started
+	Loader()
+	Close()
+}

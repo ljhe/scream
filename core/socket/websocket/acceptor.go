@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/gorilla/websocket"
 	"github.com/ljhe/scream/3rd/logrus"
+	"github.com/ljhe/scream/core/discover"
 	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/core/socket"
 	"github.com/ljhe/scream/core/socket/sessions"
@@ -21,6 +22,7 @@ type webSocketAcceptor struct {
 	socket.NodeProp
 	socket.ContextSet
 	iface.ISessionManager // 会话管理
+	discover.Discover
 
 	listener net.Listener // 保存端口
 	upgrader *websocket.Upgrader

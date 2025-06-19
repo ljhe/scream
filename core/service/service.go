@@ -39,41 +39,40 @@ func CreateAcceptor() iface.INetNode {
 
 	// 注册到服务发现etcd中
 	trdetcd.Register(node)
+	// 加载数据到discover
+	node.(iface.IDiscover).Loader()
 	return node
 }
 
 // CreateConnector 创建连接节点
-func CreateConnector(connect string, multiNode trdetcd.MultiServerNode) {
-	trdetcd.DiscoveryService(multiNode, connect, config.SConf.Node.Zone,
-		func(mn trdetcd.MultiServerNode, ed *trdetcd.ServerInfo) {
-			// 不连接自己
-			if ed.Typ == config.SConf.Node.Typ && ed.Zone == config.SConf.Node.Zone && ed.Index == config.SConf.Node.Index {
-				return
-			}
-			node := socket.NewServerNode(def.SocketTypTcpConnector, config.SConf.Node.Name, ed.Host)
-			node.(iface.IProcessor).SetHooker(new(socket.ServerHookEvent))
-			node.(iface.IProcessor).SetMsgHandle(GetMsgHandle())
-			node.(iface.IProcessor).SetMsgFlow(new(socket.TCPMsgFlow))
+func CreateConnector(connect string) {
+	trdetcd.DiscoveryService(connect, config.SConf.Node.Zone, func(ed *trdetcd.ServerInfo) {
+		// 不连接自己
+		if ed.Typ == config.SConf.Node.Typ && ed.Zone == config.SConf.Node.Zone && ed.Index == config.SConf.Node.Index {
+			return
+		}
+		node := socket.NewServerNode(def.SocketTypTcpConnector, config.SConf.Node.Name, ed.Host)
+		node.(iface.IProcessor).SetHooker(new(socket.ServerHookEvent))
+		node.(iface.IProcessor).SetMsgHandle(GetMsgHandle())
+		node.(iface.IProcessor).SetMsgFlow(new(socket.TCPMsgFlow))
 
-			if opt, ok := node.(iface.IOption); ok {
-				// 15s无读写断开 服务器之间已经添加心跳来维持读写
-				opt.SetOption(&socket.Option{
-					ReadBufferSize:  def.MsgMaxLen,
-					WriteBufferSize: def.MsgMaxLen,
-					ReadTimeout:     time.Second * 15,
-					WriteTimeout:    time.Second * 15,
-				})
-			}
+		if opt, ok := node.(iface.IOption); ok {
+			// 15s无读写断开 服务器之间已经添加心跳来维持读写
+			opt.SetOption(&socket.Option{
+				ReadBufferSize:  def.MsgMaxLen,
+				WriteBufferSize: def.MsgMaxLen,
+				ReadTimeout:     time.Second * 15,
+				WriteTimeout:    time.Second * 15,
+			})
+		}
 
-			node.(iface.INodeProp).SetNodeProp()
+		node.(iface.INodeProp).SetNodeProp()
 
-			// 将etcd信息保存在内存中
-			node.(iface.IContextSet).SetContextData(def.ContextSetEtcdKey, ed)
-			// 添加到服务发现的节点管理中
-			mn.AddNode(ed, node)
+		// 将etcd信息保存在内存中
+		node.(iface.IContextSet).SetContextData(def.ContextSetEtcdKey, ed)
 
-			node.Start()
-		})
+		node.Start()
+	})
 }
 
 // CreateWebSocketAcceptor 创建监听节点
@@ -100,8 +99,5 @@ func CreateWebSocketAcceptor() iface.INetNode {
 	node.(iface.INodeProp).SetNodeProp()
 
 	node.Start()
-
-	// 注册到服务发现etcd中
-	trdetcd.Register(node)
 	return node
 }

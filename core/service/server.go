@@ -45,10 +45,9 @@ func StartUp() {
 	if config.SConf.Node.WsAddr != "" {
 		nodes = append(nodes, CreateWebSocketAcceptor())
 	}
-
-	multiNode := trdetcd.NewMultiServerNode()
+	
 	for _, connect := range config.SConf.Node.Connect {
-		CreateConnector(connect, multiNode)
+		CreateConnector(connect)
 	}
 	logrus.Infof(fmt.Sprintf("[ %s ] start success ...", config.SConf.Node.Name))
 
