@@ -8,25 +8,38 @@ import (
 	"os"
 )
 
+const (
+	fieldsTag    = "tag"
+	fieldsZLog   = "zlog"
+	fieldsCaller = "caller"
+)
+
 var opt *Options
-var logJson *logrus.Logger
-var logText *logrus.Logger
+var lJson *logrus.Logger
+var lText *logrus.Logger
 
 func Init(filepath string) {
 	loadConfig(filepath)
-	logJson = NewLogger(&SelfJsonFormatter{})
-	logText = NewLogger(&SelfTextFormatter{})
+	lJson = NewLogger(&SelfJsonFormatter{})
+	lText = NewLogger(&SelfTextFormatter{})
 	Infof("logrus init success. filepath:%v", filepath)
 }
 
-func Log(tag string, param ...interface{}) *logrus.Entry {
+func LogJson(tag string, param ...interface{}) *logrus.Entry {
 	fields := logrus.Fields{
-		"tag": tag,
+		fieldsTag: tag,
 	}
 	if len(param) > 0 {
-		fields["zlog"] = param
+		fields[fieldsZLog] = param
 	}
-	return logJson.WithFields(fields)
+	return lJson.WithFields(fields)
+}
+
+func logText(caller string) *logrus.Entry {
+	fields := logrus.Fields{
+		fieldsCaller: caller,
+	}
+	return lText.WithFields(fields)
 }
 
 // 加载配置文件

@@ -20,8 +20,8 @@ func NewLogger(formatter logrus.Formatter) *logrus.Logger {
 	// 这个设置可能会增大开销
 	// Note that this does add measurable overhead - the cost will depend on the version of Go,
 	// but is between 20 and 40% in recent tests with 1.6 and 1.7
-	logger.SetReportCaller(false)
-
+	//logger.SetReportCaller(true)
+	
 	suffix := ""
 	switch formatter.(type) {
 	case *SelfJsonFormatter:
