@@ -20,7 +20,7 @@ func Init() error {
 	// 初始化内存池
 	//mpool.MemoryPoolInit()
 	// 初始化服务发现
-	err := trdetcd.InitServiceDiscovery(config.SConf.Node.Etcd)
+	err := trdetcd.InitServiceDiscovery(config.SConf.Process.Node[0].Etcd)
 	if err != nil {
 		logrus.Errorf("InitServiceDiscovery err:%v", err)
 		return err
@@ -36,29 +36,29 @@ func Init() error {
 }
 
 func StartUp() {
-	logrus.Infof(fmt.Sprintf("[ %s ] starting ...", config.SConf.Node.Name))
+	logrus.Infof(fmt.Sprintf("[ %s ] starting ...", config.SConf.Process.Node[0].Name))
 	nodes := make([]iface.INetNode, 0)
-	if config.SConf.Node.Addr != "" {
+	if config.SConf.Process.Node[0].Addr != "" {
 		nodes = append(nodes, CreateAcceptor())
 	}
 
-	if config.SConf.Node.WsAddr != "" {
+	if config.SConf.Process.Node[0].WsAddr != "" {
 		nodes = append(nodes, CreateWebSocketAcceptor())
 	}
-	
-	for _, connect := range config.SConf.Node.Connect {
+
+	for _, connect := range config.SConf.Process.Node[0].Connect {
 		CreateConnector(connect)
 	}
-	logrus.Infof(fmt.Sprintf("[ %s ] start success ...", config.SConf.Node.Name))
+	logrus.Infof(fmt.Sprintf("[ %s ] start success ...", config.SConf.Process.Node[0].Name))
 
 	WaitExitSignal()
 
-	logrus.Infof(fmt.Sprintf("[ %s ] stoping ...", config.SConf.Node.Name))
+	logrus.Infof(fmt.Sprintf("[ %s ] stoping ...", config.SConf.Process.Node[0].Name))
 	for _, node := range nodes {
 		Stop(node)
 	}
 
-	logrus.Infof(fmt.Sprintf("[ %s ] close ...", config.SConf.Node.Name))
+	logrus.Infof(fmt.Sprintf("[ %s ] close ...", config.SConf.Process.Node[0].Name))
 }
 
 func WaitExitSignal() {

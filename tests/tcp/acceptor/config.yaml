@@ -1,10 +1,14 @@
-node:
-  name: game                      # 节点名称
-  addr: 0.0.0.0:2701              # 监听节点对内的地址
-  typ: 2                          # 服务器类型
-  zone: 9999                      # 服务器区号(理解成服务组)
-  index: 1                        # 服务器区内的编号
-  etcd: 127.0.0.1:2379            # 服务发现
+process:
+  id:     "proc-game-1"          # 节点唯一标识符
+  host:   "127.0.0.1"
+  node:
+    - name:  game             # 节点名称
+      addr: 0.0.0.0:2701      # todo game对应的是tcp端口
+      typ: 2                  # 服务器类型
+      zone: 9999              # 服务器区号(理解成服务组)
+      index: 1                # 服务器区内的编号
+      etcd: 127.0.0.1:2379    # 服务发现
 log:
   log_name: game     # 日志文件名前缀
   log_level: 6       # 日志级别
+

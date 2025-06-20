@@ -121,7 +121,6 @@ func DiscoveryService(serviceName string, zone int, nodeCreator func(*ServerInfo
 						// todo 先停止之前的连接 再执行新的连接
 						nodeCreator(&ed)
 					case clientv3.EventTypeDelete:
-
 					}
 				}
 			}
