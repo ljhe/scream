@@ -53,7 +53,7 @@ func (n *NodeProp) GetIndex() int {
 }
 
 func (n *NodeProp) SetNodeProp() {
-	n.SetServerTyp(config.SConf.Process.Node[0].Typ)
-	n.SetZone(config.SConf.Process.Node[0].Zone)
-	n.SetIndex(config.SConf.Process.Node[0].Index)
+	n.SetServerTyp(config.SConf.Node.Typ)
+	n.SetZone(config.SConf.Node.Zone)
+	n.SetIndex(config.SConf.Node.Index)
 }

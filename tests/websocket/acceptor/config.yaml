@@ -1,17 +1,12 @@
-process:
-  id:     "proc-gate-1"          # 节点唯一标识符
-  host:   "127.0.0.1"
-  node:
-    - name:  gate             # 节点名称
-      addr: 0.0.0.0:3101      # todo game|gate对应的是tcp端口
-      typ: 1                  # 服务器类型
-      zone: 9999              # 服务器区号(理解成服务组)
-      index: 1                # 服务器区内的编号
-      connect: [ game ]       # 需要建立连接的节点名称
-      ws_addr: 0.0.0.0:9001   # 对外ws地址
-      etcd: 127.0.0.1:2379    # 服务发现
+node:
+  name: gate                              # 节点名称
+  addr: 0.0.0.0:3101                      # 监听节点对内的地址
+  typ: 1                                  # 节点类型
+  zone: 9999                              # 服务器区号(理解成服务组)
+  index: 1                                # 服务器区内的编号
+  connect: [game]                         # 需要建立连接的节点名称
+  ws_addr: 0.0.0.0:9001                   # 对外ws地址
+  etcd: 127.0.0.1:2379                    # 服务发现
 log:
   log_name: gate     # 日志文件名前缀
   log_level: 6       # 日志级别
-
-

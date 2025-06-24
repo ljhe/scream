@@ -12,14 +12,8 @@ import (
 var SConf ScreamConfig
 
 type ScreamConfig struct {
-	Process Process `yaml:"process"`
-	Log     logrus.LogConfig
-}
-
-type Process struct {
-	Id   string `yaml:"id"`
-	Host string `yaml:"host"`
-	Node []Node `yaml:"node"`
+	Node Node `yaml:"node"`
+	Log  logrus.LogConfig
 }
 
 type Node struct {
@@ -44,7 +38,6 @@ func Init() {
 	if err != nil {
 		log.Fatalf("serverCnd parse err:%v", err)
 	}
-
 	yamlFile, err := os.ReadFile(*ServerConfigPath)
 	if err != nil {
 		log.Fatalf("global config readFile err:%v", err)

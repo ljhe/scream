@@ -15,7 +15,7 @@ import (
 
 // CreateAcceptor 创建监听节点
 func CreateAcceptor() iface.INetNode {
-	node := socket.NewServerNode(def.SocketTypTcpAcceptor, config.SConf.Process.Node[0].Name, config.SConf.Process.Node[0].Addr)
+	node := socket.NewServerNode(def.SocketTypTcpAcceptor, config.SConf.Node.Name, config.SConf.Node.Addr)
 	node.(iface.IProcessor).SetHooker(new(socket.ServerHookEvent))
 	node.(iface.IProcessor).SetMsgHandle(GetMsgHandle())
 	node.(iface.IProcessor).SetMsgFlow(new(socket.TCPMsgFlow))
@@ -30,7 +30,7 @@ func CreateAcceptor() iface.INetNode {
 		})
 	}
 
-	msgPrcFunc := pbgo.GetMessageHandler(def.GetServiceNodeStr(config.SConf.Process.Node[0].Typ))
+	msgPrcFunc := pbgo.GetMessageHandler(def.GetServiceNodeStr(config.SConf.Node.Typ))
 	node.(iface.IProcessor).SetMsgRouter(msgPrcFunc)
 
 	node.(iface.INodeProp).SetNodeProp()
@@ -46,12 +46,12 @@ func CreateAcceptor() iface.INetNode {
 
 // CreateConnector 创建连接节点
 func CreateConnector(connect string) {
-	trdetcd.DiscoveryService(connect, config.SConf.Process.Node[0].Zone, func(ed *trdetcd.ServerInfo) {
+	trdetcd.DiscoveryService(connect, config.SConf.Node.Zone, func(ed *trdetcd.ServerInfo) {
 		// 不连接自己
-		if ed.Typ == config.SConf.Process.Node[0].Typ && ed.Zone == config.SConf.Process.Node[0].Zone && ed.Index == config.SConf.Process.Node[0].Index {
+		if ed.Typ == config.SConf.Node.Typ && ed.Zone == config.SConf.Node.Zone && ed.Index == config.SConf.Node.Index {
 			return
 		}
-		node := socket.NewServerNode(def.SocketTypTcpConnector, config.SConf.Process.Node[0].Name, ed.Host)
+		node := socket.NewServerNode(def.SocketTypTcpConnector, config.SConf.Node.Name, ed.Host)
 		node.(iface.IProcessor).SetHooker(new(socket.ServerHookEvent))
 		node.(iface.IProcessor).SetMsgHandle(GetMsgHandle())
 		node.(iface.IProcessor).SetMsgFlow(new(socket.TCPMsgFlow))
@@ -77,11 +77,11 @@ func CreateConnector(connect string) {
 
 // CreateWebSocketAcceptor 创建监听节点
 func CreateWebSocketAcceptor() iface.INetNode {
-	node := socket.NewServerNode(def.SocketTypTcpWSAcceptor, config.SConf.Process.Node[0].Name, config.SConf.Process.Node[0].WsAddr)
+	node := socket.NewServerNode(def.SocketTypTcpWSAcceptor, config.SConf.Node.Name, config.SConf.Node.WsAddr)
 
 	node.(iface.IProcessor).SetMsgFlow(new(socket.WSMsgFlow))
 	node.(iface.IProcessor).SetHooker(new(socket.WsHookEvent))
-	msgPrcFunc := pbgo.GetMessageHandler(def.GetServiceNodeStr(config.SConf.Process.Node[0].Typ))
+	msgPrcFunc := pbgo.GetMessageHandler(def.GetServiceNodeStr(config.SConf.Node.Typ))
 	node.(iface.IProcessor).SetMsgRouter(msgPrcFunc)
 
 	if opt, ok := node.(iface.IOption); ok {
