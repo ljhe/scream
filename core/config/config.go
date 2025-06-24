@@ -4,12 +4,11 @@ import (
 	"flag"
 	"github.com/ljhe/scream/3rd/db/gorm"
 	"github.com/ljhe/scream/3rd/logrus"
+	"github.com/ljhe/scream/utils"
 	"gopkg.in/yaml.v2"
 	"log"
 	"os"
 )
-
-var SConf ScreamConfig
 
 type ScreamConfig struct {
 	Node Node `yaml:"node"`
@@ -18,7 +17,8 @@ type ScreamConfig struct {
 
 type Node struct {
 	Name    string   `yaml:"name"`
-	Addr    string   `yaml:"addr"`
+	IP      string   `yaml:"ip"`
+	Port    int      `yaml:"port"`
 	Typ     int      `yaml:"typ"`
 	Zone    int      `yaml:"zone"`
 	Index   int      `yaml:"index"`
@@ -33,20 +33,23 @@ var (
 	OrmConnector     *gorm.Orm
 )
 
-func Init() {
-	err := ServerCmd.Parse(os.Args[1:])
-	if err != nil {
-		log.Fatalf("serverCnd parse err:%v", err)
+func Init() *ScreamConfig {
+	if utils.IsTesting() {
+		return nil
 	}
 	yamlFile, err := os.ReadFile(*ServerConfigPath)
 	if err != nil {
-		log.Fatalf("global config readFile err:%v", err)
+		log.Fatalf("global config readFile err: %v ", err)
+		return nil
 	}
-	err = yaml.Unmarshal(yamlFile, &SConf)
+	var conf ScreamConfig
+	err = yaml.Unmarshal(yamlFile, &conf)
 	if err != nil {
 		log.Fatalf("global config Unmarshal err: %v", err)
+		return nil
 	}
 	log.Println("global config load success")
+	return &conf
 }
 
 func GetOrm() *gorm.Orm {

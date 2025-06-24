@@ -1,16 +1,14 @@
 package main
 
 import (
-	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/config"
-	"github.com/ljhe/scream/core/service"
+	"github.com/ljhe/scream/core/process"
 )
 
 func main() {
 	*config.ServerConfigPath = "./tests/tcp/connector/config.yaml"
-	err := service.Init()
-	if err != nil {
-		logrus.Panicf("server starting fail:%v", err)
-	}
-	service.StartUp()
+	p := process.NewProcess()
+	p.Init()
+	p.Start()
+	p.WaitClose()
 }

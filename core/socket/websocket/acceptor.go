@@ -81,7 +81,7 @@ func (ws *webSocketAcceptor) Start() iface.INetNode {
 }
 
 func (ws *webSocketAcceptor) Stop() {
-
+	logrus.Infof("ws acceptor stop success.")
 }
 
 func (ws *webSocketAcceptor) GetTyp() string {

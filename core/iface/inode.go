@@ -39,7 +39,7 @@ type INodeProp interface {
 	GetServerTyp() int
 	SetIndex(i int)
 	GetIndex() int
-	SetNodeProp()
+	SetNodeProp(typ, zone, index int)
 }
 
 type IContextSet interface {

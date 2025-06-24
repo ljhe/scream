@@ -3,7 +3,6 @@ package tests
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
-	"github.com/ljhe/scream/core/service"
 	"github.com/ljhe/scream/core/socket"
 	"github.com/ljhe/scream/pbgo"
 	"github.com/ljhe/scream/utils"
@@ -18,7 +17,7 @@ func TestWSConnector(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		go createConnector()
 	}
-	service.WaitExitSignal()
+	//service.WaitExitSignal()
 }
 
 func createConnector() {

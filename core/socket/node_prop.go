@@ -1,9 +1,5 @@
 package socket
 
-import (
-	"github.com/ljhe/scream/core/config"
-)
-
 type NodeProp struct {
 	addr  string //
 	name  string // 服务器名称
@@ -52,8 +48,8 @@ func (n *NodeProp) GetIndex() int {
 	return n.index
 }
 
-func (n *NodeProp) SetNodeProp() {
-	n.SetServerTyp(config.SConf.Node.Typ)
-	n.SetZone(config.SConf.Node.Zone)
-	n.SetIndex(config.SConf.Node.Index)
+func (n *NodeProp) SetNodeProp(typ, zone, index int) {
+	n.SetServerTyp(typ)
+	n.SetZone(zone)
+	n.SetIndex(index)
 }

@@ -2,14 +2,14 @@ package main
 
 import (
 	"github.com/ljhe/scream/3rd/logrus"
-	"github.com/ljhe/scream/core/service"
 	"github.com/ljhe/scream/core/socket/http"
+	"github.com/ljhe/scream/utils"
 )
 
 func main() {
-	logrus.Init("./3rd/logrus/config.yaml")
+	logrus.Init("")
 	server := http.NewHttpServer()
 	node := server.Start()
-	service.WaitExitSignal()
+	utils.WaitExitSignal()
 	node.Stop()
 }
