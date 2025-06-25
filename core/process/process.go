@@ -11,8 +11,9 @@ import (
 )
 
 type Process struct {
-	P     *config.ScreamConfig
-	Nodes []iface.INetNode
+	P        *config.ScreamConfig
+	Nodes    []iface.INetNode
+	Discover iface.IDiscover
 }
 
 func NewProcess() iface.IProcess {
@@ -57,6 +58,10 @@ func (p *Process) Start() error {
 	for _, connect := range p.P.Node.Connect {
 		p.CreateConnector(connect)
 	}
+
+	// 加载数据到discover
+	p.Discover = NewDiscover()
+
 	logrus.Infof(fmt.Sprintf("[ %s ] start success ...", p.P.Node.Name))
 	return nil
 }
@@ -69,6 +74,7 @@ func (p *Process) WaitClose() error {
 }
 
 func (p *Process) Stop() error {
+	p.Discover.Close()
 	for _, node := range p.Nodes {
 		if node == nil {
 			continue

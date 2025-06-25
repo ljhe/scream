@@ -14,9 +14,9 @@ func TestNewProcess(t *testing.T) {
 		Node: config.Node{
 			Name:  "game",
 			IP:    "127.0.0.1",
-			Port:  2701,
+			Port:  2702,
 			Typ:   2,
-			Zone:  9999,
+			Zone:  1,
 			Index: 1,
 			Etcd:  "127.0.0.1:2379",
 		},

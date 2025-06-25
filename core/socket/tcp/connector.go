@@ -2,7 +2,6 @@ package tcp
 
 import (
 	"fmt"
-	"github.com/ljhe/scream/core/discover"
 	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/core/socket"
 	"github.com/ljhe/scream/core/socket/sessions"
@@ -21,8 +20,7 @@ type tcpConnector struct {
 	socket.ContextSet                          // 节点上下文相关
 	iface.ISessionManager                      // 会话管理
 	session               *sessions.TCPSession // 连接会话
-	discover.Discover
-	wg sync.WaitGroup
+	wg                    sync.WaitGroup
 }
 
 func (t *tcpConnector) Start() iface.INetNode {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/ljhe/scream/3rd/logrus"
-	"github.com/ljhe/scream/core/discover"
 	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/core/socket"
 	"github.com/ljhe/scream/core/socket/sessions"
@@ -21,8 +20,7 @@ type tcpAcceptor struct {
 	socket.NodeProp       // 节点配置属性相关
 	socket.ContextSet     // 节点上下文相关
 	iface.ISessionManager // 会话管理
-	discover.Discover
-	listener net.Listener
+	listener              net.Listener
 }
 
 func (t *tcpAcceptor) Start() iface.INetNode {
@@ -67,7 +65,6 @@ func (t *tcpAcceptor) Stop() {
 	t.SetCloseFlag(true)
 	t.listener.Close()
 	t.CloseAllSession()
-	t.Discover.Close()
 	// 等待协程结束
 	t.StopWg.Wait()
 	logrus.Infof("tcp acceptor stop success.")

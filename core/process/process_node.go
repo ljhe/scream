@@ -40,8 +40,6 @@ func (p *Process) CreateAcceptor() iface.INetNode {
 
 	// 注册到服务发现etcd中
 	trdetcd.Register(node)
-	// 加载数据到discover
-	node.(iface.IDiscover).Loader()
 	return node
 }
 

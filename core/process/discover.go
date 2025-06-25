@@ -1,22 +1,30 @@
-package discover
+package process
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/ljhe/scream/3rd/etcd"
+	"github.com/ljhe/scream/3rd/logrus"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"sync"
 	"time"
 )
 
+var idMap = make(map[string][]byte)
+
 type Discover struct {
-	IdMap  map[string][]byte
 	ctx    context.Context
 	cancel context.CancelFunc
 	sync.RWMutex
 }
 
+func NewDiscover() *Discover {
+	d := &Discover{}
+	d.Loader()
+	return d
+}
+
 func (d *Discover) Loader() {
-	d.IdMap = make(map[string][]byte)
 	d.ctx, d.cancel = context.WithCancel(context.Background())
 
 	ctx, cancel := context.WithTimeout(d.ctx, 10*time.Second)
@@ -56,14 +64,26 @@ func (d *Discover) watch() {
 	}
 }
 
-func (d *Discover) setIdMap(key string, value []byte) {
+func (d *Discover) GetNodeByKey(key string) *etcd.ServerInfo {
 	d.RLock()
 	defer d.RUnlock()
-	d.IdMap[key] = value
+	res := &etcd.ServerInfo{}
+	err := json.Unmarshal(idMap[key], res)
+	if err != nil {
+		logrus.Errorf("[ GetNodeByKey ] Unmarshal err: %v", err)
+		return nil
+	}
+	return res
+}
+
+func (d *Discover) setIdMap(key string, value []byte) {
+	d.Lock()
+	defer d.Unlock()
+	idMap[key] = value
 }
 
 func (d *Discover) delIdMap(key string) {
-	d.RLock()
-	defer d.RUnlock()
-	delete(d.IdMap, key)
+	d.Lock()
+	defer d.Unlock()
+	delete(idMap, key)
 }
