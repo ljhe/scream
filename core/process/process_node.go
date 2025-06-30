@@ -11,13 +11,14 @@ import (
 	_ "github.com/ljhe/scream/core/socket/websocket"
 	"github.com/ljhe/scream/def"
 	"github.com/ljhe/scream/pbgo"
+	"github.com/ljhe/scream/utils"
 	"time"
 )
 
 // CreateAcceptor 创建监听节点
 func (p *Process) CreateAcceptor() iface.INetNode {
 	node := socket.NewServerNode(def.SocketTypTcpAcceptor, p.P.Node.Name, fmt.Sprintf("%s:%d", p.P.Node.IP, p.P.Node.Port))
-	node.(iface.INodeProp).SetNodeProp(p.P.Node.Typ, p.P.Node.Zone, p.P.Node.Index)
+	node.(iface.INodeProp).SetNodeProp(p.P.Node.Typ, p.P.Node.Index)
 
 	node.(iface.IProcessor).SetHooker(new(socket.ServerHookEvent))
 	node.(iface.IProcessor).SetMsgHandle(service.GetMsgHandle())
@@ -45,13 +46,13 @@ func (p *Process) CreateAcceptor() iface.INetNode {
 
 // CreateConnector 创建连接节点
 func (p *Process) CreateConnector(connect string) {
-	trdetcd.DiscoveryService(connect, p.P.Node.Zone, func(ed *trdetcd.ServerInfo) {
+	trdetcd.DiscoveryService(connect, func(ed *utils.ServerInfo) {
 		// 不连接自己
-		if ed.Typ == p.P.Node.Typ && ed.Zone == p.P.Node.Zone && ed.Index == p.P.Node.Index {
+		if ed.Typ == p.P.Node.Typ && ed.Index == p.P.Node.Index {
 			return
 		}
 		node := socket.NewServerNode(def.SocketTypTcpConnector, p.P.Node.Name, ed.Host)
-		node.(iface.INodeProp).SetNodeProp(p.P.Node.Typ, p.P.Node.Zone, p.P.Node.Index)
+		node.(iface.INodeProp).SetNodeProp(p.P.Node.Typ, p.P.Node.Index)
 
 		node.(iface.IProcessor).SetHooker(new(socket.ServerHookEvent))
 		node.(iface.IProcessor).SetMsgHandle(service.GetMsgHandle())
@@ -77,7 +78,7 @@ func (p *Process) CreateConnector(connect string) {
 // CreateWebSocketAcceptor 创建监听节点
 func (p *Process) CreateWebSocketAcceptor() iface.INetNode {
 	node := socket.NewServerNode(def.SocketTypTcpWSAcceptor, p.P.Node.Name, p.P.Node.WsAddr)
-	node.(iface.INodeProp).SetNodeProp(p.P.Node.Typ, p.P.Node.Zone, p.P.Node.Index)
+	node.(iface.INodeProp).SetNodeProp(p.P.Node.Typ, p.P.Node.Index)
 
 	node.(iface.IProcessor).SetMsgFlow(new(socket.WSMsgFlow))
 	node.(iface.IProcessor).SetHooker(new(socket.WsHookEvent))

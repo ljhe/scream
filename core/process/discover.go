@@ -3,23 +3,26 @@ package process
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/ljhe/scream/3rd/etcd"
 	"github.com/ljhe/scream/3rd/logrus"
+	"github.com/ljhe/scream/utils"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"sync"
 	"time"
 )
 
-var idMap = make(map[string][]byte)
-
 type Discover struct {
+	idMap  map[string][]byte
 	ctx    context.Context
 	cancel context.CancelFunc
 	sync.RWMutex
 }
 
 func NewDiscover() *Discover {
-	d := &Discover{}
+	d := &Discover{
+		idMap: make(map[string][]byte),
+	}
 	d.Loader()
 	return d
 }
@@ -29,7 +32,7 @@ func (d *Discover) Loader() {
 
 	ctx, cancel := context.WithTimeout(d.ctx, 10*time.Second)
 	defer cancel()
-	resp, err := etcd.GetEtcdDiscovery().Cli.Get(ctx, etcd.ServerPreKey, clientv3.WithPrefix())
+	resp, err := etcd.GetEtcdDiscovery().Cli.Get(ctx, utils.ServerPreKey, clientv3.WithPrefix())
 	if err != nil {
 		panic(err)
 	}
@@ -46,7 +49,7 @@ func (d *Discover) Close() {
 }
 
 func (d *Discover) watch() {
-	watchChan := etcd.GetEtcdDiscovery().Cli.Watch(context.TODO(), etcd.ServerPreKey, clientv3.WithPrefix())
+	watchChan := etcd.GetEtcdDiscovery().Cli.Watch(context.TODO(), utils.ServerPreKey, clientv3.WithPrefix())
 	for {
 		select {
 		case wr := <-watchChan:
@@ -64,13 +67,13 @@ func (d *Discover) watch() {
 	}
 }
 
-func (d *Discover) GetNodeByKey(key string) *etcd.ServerInfo {
+func (d *Discover) GetNodeByKey(key string) *utils.ServerInfo {
 	d.RLock()
 	defer d.RUnlock()
-	res := &etcd.ServerInfo{}
-	err := json.Unmarshal(idMap[key], res)
+	res := &utils.ServerInfo{}
+	err := json.Unmarshal(d.idMap[key], res)
 	if err != nil {
-		logrus.Errorf("[ GetNodeByKey ] Unmarshal err: %v", err)
+		logrus.Errorf("[ GetNodeByKey ] Unmarshal err: %v key: %s", err, key)
 		return nil
 	}
 	return res
@@ -79,11 +82,12 @@ func (d *Discover) GetNodeByKey(key string) *etcd.ServerInfo {
 func (d *Discover) setIdMap(key string, value []byte) {
 	d.Lock()
 	defer d.Unlock()
-	idMap[key] = value
+	d.idMap[key] = value
+	fmt.Println("key:", key)
 }
 
 func (d *Discover) delIdMap(key string) {
 	d.Lock()
 	defer d.Unlock()
-	delete(idMap, key)
+	delete(d.idMap, key)
 }

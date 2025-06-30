@@ -1,5 +1,9 @@
 package iface
 
+import (
+	"github.com/ljhe/scream/utils"
+)
+
 type INetNode interface {
 	Start() INetNode
 	Stop()
@@ -33,13 +37,11 @@ type INodeProp interface {
 	GetAddr() string
 	SetName(s string)
 	GetName() string
-	SetZone(z int)
-	GetZone() int
 	SetServerTyp(t int)
 	GetServerTyp() int
 	SetIndex(i int)
 	GetIndex() int
-	SetNodeProp(typ, zone, index int)
+	SetNodeProp(typ, index int)
 }
 
 type IContextSet interface {
@@ -52,4 +54,5 @@ type IDiscover interface {
 	// Loader load all node info by ETCD after the node started
 	Loader()
 	Close()
+	GetNodeByKey(key string) *utils.ServerInfo
 }

@@ -96,7 +96,7 @@ func (sd *ServiceDiscovery) DiscoverService(key string) error {
 	return nil
 }
 
-func (sd *ServiceDiscovery) WatchServices(key string, value ServerInfo) {
+func (sd *ServiceDiscovery) WatchServices(key string, value utils.ServerInfo) {
 	watchChan := sd.Cli.Watch(context.TODO(), key, clientv3.WithPrefix())
 	go func() {
 		for {

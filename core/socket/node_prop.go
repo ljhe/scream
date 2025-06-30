@@ -3,7 +3,6 @@ package socket
 type NodeProp struct {
 	addr  string //
 	name  string // 服务器名称
-	zone  int    // 服务器区号
 	typ   int    // 服务器类型
 	index int    // 服务器区内的编号
 }
@@ -24,14 +23,6 @@ func (n *NodeProp) GetName() string {
 	return n.name
 }
 
-func (n *NodeProp) SetZone(z int) {
-	n.zone = z
-}
-
-func (n *NodeProp) GetZone() int {
-	return n.zone
-}
-
 func (n *NodeProp) SetServerTyp(t int) {
 	n.typ = t
 }
@@ -48,8 +39,7 @@ func (n *NodeProp) GetIndex() int {
 	return n.index
 }
 
-func (n *NodeProp) SetNodeProp(typ, zone, index int) {
+func (n *NodeProp) SetNodeProp(typ, index int) {
 	n.SetServerTyp(typ)
-	n.SetZone(zone)
 	n.SetIndex(index)
 }

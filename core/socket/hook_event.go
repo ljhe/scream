@@ -1,7 +1,6 @@
 package socket
 
 import (
-	trdetcd "github.com/ljhe/scream/3rd/etcd"
 	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/baseserver"
 	"github.com/ljhe/scream/core/iface"
@@ -23,19 +22,19 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	case *SessionConnected:
 		// 从内存中的etcd获取服务器信息
 		ctx := iv.Session().Node().(iface.IContextSet)
-		var ed *trdetcd.ServerInfo
+		var ed *utils.ServerInfo
 		if ctx.RawContextData(def.ContextSetEtcdKey, &ed) {
 			prop := iv.Session().Node().(iface.INodeProp)
 			// 连接上服务器节点后 发送确认信息 告诉对端自己的服务器信息
 			iv.Session().Send(&pbgo.ServiceIdentifyACK{
-				ServiceId:       utils.GenServiceId(prop),
+				ServiceId:       utils.GenSelfServiceId(prop.GetName(), prop.GetServerTyp(), prop.GetIndex()),
 				ServiceName:     prop.GetName(),
 				ServerStartTime: utils.GetCurrentTimeMs(),
 			})
 			// 添加远程的服务器节点信息到本地
 			baseserver.AddServiceNode(iv.Session(), ed.Id, ed.Name, "local")
 			logrus.Printf("send ServiceIdentifyACK [%v]->[%v] sessionId=%v",
-				utils.GenServiceId(prop), ed.Id, iv.Session().GetId())
+				utils.GenSelfServiceId(prop.GetName(), prop.GetServerTyp(), prop.GetIndex()), ed.Id, iv.Session().GetId())
 		} else {
 			logrus.Infof("connector connect err. etcd not exist msg:%v", msg)
 		}
@@ -61,7 +60,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 	case *pbgo.PingReq:
 		// 来自ServiceIdentifyACK接收端的服务器信息
 		ctx := iv.Session().(iface.IContextSet)
-		var ed *trdetcd.ServerInfo
+		var ed *utils.ServerInfo
 		iv.Session().IncRcvPingNum(1)
 		if iv.Session().RcvPingNum() >= 10 {
 			iv.Session().IncRcvPingNum(-1)
@@ -73,7 +72,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		return nil
 	case *pbgo.PingAck:
 		ctx := iv.Session().(iface.IContextSet)
-		var ed *trdetcd.ServerInfo
+		var ed *utils.ServerInfo
 		iv.Session().IncRcvPingNum(1)
 		if iv.Session().RcvPingNum() >= 10 {
 			iv.Session().IncRcvPingNum(-1)

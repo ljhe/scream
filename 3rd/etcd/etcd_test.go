@@ -3,6 +3,7 @@ package etcd
 import (
 	"context"
 	"fmt"
+	"github.com/ljhe/scream/utils"
 	"os"
 	"os/signal"
 	"testing"
@@ -13,15 +14,14 @@ func TestRegisterService1(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	info := &ServerInfo{
+	info := &utils.ServerInfo{
 		Id:    "game#9999@2@1",
 		Name:  "game",
 		Host:  "127.0.0.1:2701",
 		Typ:   2,
-		Zone:  9999,
 		Index: 1,
 	}
-	err = etcd.RegisterService(fmt.Sprintf("%stest1", ServerPreKey), info.String())
+	err = etcd.RegisterService(fmt.Sprintf("%stest1", utils.ServerPreKey), info.String())
 	if err != nil {
 		t.Error(err)
 	}
@@ -38,15 +38,14 @@ func TestRegisterService2(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	info := &ServerInfo{
+	info := &utils.ServerInfo{
 		Id:    "game#9999@2@2",
 		Name:  "game",
 		Host:  "127.0.0.1:2702",
 		Typ:   2,
-		Zone:  9999,
 		Index: 2,
 	}
-	err = etcd.RegisterService(fmt.Sprintf("%stest2", ServerPreKey), info.String())
+	err = etcd.RegisterService(fmt.Sprintf("%stest2", utils.ServerPreKey), info.String())
 	if err != nil {
 		t.Error(err)
 	}
@@ -63,7 +62,7 @@ func TestDiscoverServices(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = etcd.DiscoverService(ServerPreKey)
+	err = etcd.DiscoverService(utils.ServerPreKey)
 	if err != nil {
 		t.Error(err)
 	}

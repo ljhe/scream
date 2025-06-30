@@ -20,7 +20,6 @@ type Node struct {
 	IP      string   `yaml:"ip"`
 	Port    int      `yaml:"port"`
 	Typ     int      `yaml:"typ"`
-	Zone    int      `yaml:"zone"`
 	Index   int      `yaml:"index"`
 	Connect []string `yaml:"connect"`
 	WsAddr  string   `yaml:"ws_addr"`

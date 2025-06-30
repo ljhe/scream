@@ -10,6 +10,8 @@ import (
 	"github.com/ljhe/scream/utils"
 )
 
+var pcs *Process
+
 type Process struct {
 	P        *config.ScreamConfig
 	Nodes    []iface.INetNode
@@ -17,9 +19,14 @@ type Process struct {
 }
 
 func NewProcess() iface.IProcess {
-	return &Process{
+	pcs = &Process{
 		Nodes: make([]iface.INetNode, 0),
 	}
+	return pcs
+}
+
+func Get() iface.IProcess {
+	return pcs
 }
 
 func (p *Process) Init() error {

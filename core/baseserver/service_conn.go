@@ -1,9 +1,9 @@
 package baseserver
 
 import (
-	trdetcd "github.com/ljhe/scream/3rd/etcd"
 	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/def"
+	"github.com/ljhe/scream/utils"
 	"log"
 	"math/rand"
 	"sync"
@@ -18,16 +18,15 @@ var (
 func AddServiceNode(session iface.ISession, sid, name string, from string) {
 	mu.Lock()
 	defer mu.Unlock()
-	typ, zone, idx, err := trdetcd.ParseServiceId(sid)
+	typ, idx, err := utils.ParseServiceId(sid)
 	if err != nil {
 		log.Println("AddServiceNode error:", err)
 		return
 	}
-	session.(iface.IContextSet).SetContextData(def.ContextSetCtxKey, &trdetcd.ServerInfo{
+	session.(iface.IContextSet).SetContextData(def.ContextSetCtxKey, &utils.ServerInfo{
 		Id:    sid,
 		Name:  name,
 		Typ:   typ,
-		Zone:  zone,
 		Index: idx,
 	})
 	serviceConnBySid[sid] = session
@@ -73,9 +72,9 @@ func GetServiceNode(sid string) iface.ISession {
 	return nil
 }
 
-func SessionContextEtcd(session iface.ISession) *trdetcd.ServerInfo {
+func SessionContextEtcd(session iface.ISession) *utils.ServerInfo {
 	if ed, ok := session.(iface.IContextSet).GetContextData(def.ContextSetCtxKey); ok {
-		return ed.(*trdetcd.ServerInfo)
+		return ed.(*utils.ServerInfo)
 	}
 	return nil
 }
@@ -145,7 +144,7 @@ func selectServiceNode(serviceName string, id uint64) string {
 	var retIDList []string
 	for _, node := range serviceConnBySid {
 		if raw, ok := node.(iface.IContextSet).GetContextData("ctx"); ok {
-			sid := raw.(*trdetcd.ServerInfo)
+			sid := raw.(*utils.ServerInfo)
 			if sid.Name == serviceName {
 				retIDList = append(retIDList, sid.Id)
 			}
