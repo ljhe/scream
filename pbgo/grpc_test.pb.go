@@ -23,7 +23,8 @@ const (
 
 type Header struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Timestamp     int64                  `protobuf:"varint,1,opt,name=Timestamp,proto3" json:"Timestamp,omitempty"`
+	Event         string                 `protobuf:"bytes,1,opt,name=event,proto3" json:"event,omitempty"`
+	Timestamp     int64                  `protobuf:"varint,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -56,6 +57,13 @@ func (x *Header) ProtoReflect() protoreflect.Message {
 // Deprecated: Use Header.ProtoReflect.Descriptor instead.
 func (*Header) Descriptor() ([]byte, []int) {
 	return file_grpc_test_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Header) GetEvent() string {
+	if x != nil {
+		return x.Event
+	}
+	return ""
 }
 
 func (x *Header) GetTimestamp() int64 {
@@ -209,9 +217,10 @@ var File_grpc_test_proto protoreflect.FileDescriptor
 
 const file_grpc_test_proto_rawDesc = "" +
 	"\n" +
-	"\x0fgrpc_test.proto\x12\x04pbgo\"&\n" +
-	"\x06Header\x12\x1c\n" +
-	"\tTimestamp\x18\x01 \x01(\x03R\tTimestamp\"C\n" +
+	"\x0fgrpc_test.proto\x12\x04pbgo\"<\n" +
+	"\x06Header\x12\x14\n" +
+	"\x05event\x18\x01 \x01(\tR\x05event\x12\x1c\n" +
+	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\"C\n" +
 	"\aMessage\x12$\n" +
 	"\x06header\x18\x01 \x01(\v2\f.pbgo.HeaderR\x06header\x12\x12\n" +
 	"\x04body\x18\x02 \x01(\fR\x04body\",\n" +

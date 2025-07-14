@@ -5,6 +5,7 @@ import (
 	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/pbgo"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"time"
 )
@@ -16,7 +17,11 @@ func NewGRPCConnector() *grpcConnector {
 }
 
 func (g grpcConnector) Start() iface.INetNode {
-	conn, err := grpc.NewClient("localhost:9090")
+	conn, err := grpc.NewClient(
+		"localhost:9090",
+		// 测试环境使用的是明文连接 生产环境最好用成TLS安全连接
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
@@ -25,6 +30,7 @@ func (g grpcConnector) Start() iface.INetNode {
 	client := pbgo.NewAcceptorClient(conn)
 	resp, err := client.Routing(context.Background(), &pbgo.RouteReqs{Msg: &pbgo.Message{
 		Header: &pbgo.Header{
+			Event:     "ping",
 			Timestamp: time.Now().Unix(),
 		},
 		Body: []byte("grpc ping"),

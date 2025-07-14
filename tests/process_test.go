@@ -47,7 +47,8 @@ func TestDiscover(t *testing.T) {
 	p.Start()
 
 	prop := p.Nodes[0].(iface.INodeProp)
-	fmt.Println(p.Discover.GetNodeByKey(utils.ServerPreKey + utils.GenSelfServiceId(prop.GetName(), prop.GetServerTyp(), prop.GetIndex())))
+	fmt.Println(p.Discover.GetNodeByKey(utils.ServerPreKey + utils.GenSelfServiceId(prop.GetName(),
+		prop.GetServerTyp(), prop.GetIndex())))
 
 	p.WaitClose()
 }

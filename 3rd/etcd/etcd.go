@@ -3,6 +3,7 @@ package etcd
 import (
 	"context"
 	"fmt"
+	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/utils"
 	"go.etcd.io/etcd/client/v3"
 	"log"
@@ -69,7 +70,7 @@ func (sd *ServiceDiscovery) RegisterService(key, val string) error {
 				log.Println("etcd keep alive channel closed")
 				return
 			}
-			// 纪律日志或处理响应
+			// 记录日志或处理响应
 		}
 	}()
 	log.Printf("etcd register ok. key=%v clusterid=%v leaseid=%v etcdaddr=%v \n", key, rsp.Header.ClusterId, leaseResp.ID, sd.config)
@@ -113,6 +114,7 @@ func (sd *ServiceDiscovery) WatchServices(key string, value utils.ServerInfo) {
 						if err != nil {
 							fmt.Printf("etcd watch event del key=%v err=%v \n", string(event.Kv.Key), err)
 						}
+						logrus.Infof("reset keep alive")
 					}
 				}
 			}

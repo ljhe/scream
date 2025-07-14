@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"context"
-	"fmt"
+	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/pbgo"
 	"google.golang.org/grpc"
@@ -11,14 +11,18 @@ import (
 )
 
 type grpcAcceptor struct {
+	*Runtime
 }
 
 type listen struct {
 	pbgo.AcceptorServer
+	g *grpcAcceptor
 }
 
 func NewGRPCAcceptor() *grpcAcceptor {
-	return &grpcAcceptor{}
+	return &grpcAcceptor{
+		Runtime: &Runtime{},
+	}
 }
 
 func (g *grpcAcceptor) Stop() {
@@ -38,7 +42,7 @@ func (g *grpcAcceptor) Start() iface.INetNode {
 	}
 
 	gs := grpc.NewServer()
-	pbgo.RegisterAcceptorServer(gs, &listen{})
+	pbgo.RegisterAcceptorServer(gs, &listen{g: g})
 	if err := gs.Serve(ln); err != nil {
 		panic(err)
 	}
@@ -47,6 +51,16 @@ func (g *grpcAcceptor) Start() iface.INetNode {
 }
 
 func (l *listen) Routing(ctx context.Context, req *pbgo.RouteReqs) (*pbgo.RouteRes, error) {
-	fmt.Println("grpc pong")
-	return nil, nil
+	res := &pbgo.RouteRes{
+		Msg: &pbgo.Message{},
+	}
+
+	err := l.g.Received(req)
+	if err != nil {
+		logrus.Errorf("groc Routing received err:%v", err)
+		return nil, err
+	}
+
+	res.Msg.Body = []byte("return pong")
+	return res, nil
 }
