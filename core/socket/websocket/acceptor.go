@@ -108,7 +108,7 @@ func (ws *webSocketAcceptor) handleConnTest(w http.ResponseWriter, r *http.Reque
 		}
 
 		// 打印客户端发送的数据
-		logrus.Infof("ws acceptor receive msg:%v", string(msg))
+		logrus.Infof("ws acceptor receive message:%v", string(msg))
 		// 回复客户端
 		if err := conn.WriteMessage(typ, msg); err != nil {
 			return

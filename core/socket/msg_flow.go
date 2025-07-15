@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/ljhe/scream/core/iface"
+	"github.com/ljhe/scream/core/message"
 	"github.com/ljhe/scream/def"
 	"io"
 )
@@ -30,19 +31,17 @@ func (m *MsgFlow) OnSendMsg(s iface.ISession, msg interface{}) (err error) {
 
 type TcpDataPacket struct{}
 
-type WsDataPacket struct{}
-
 func (t *TcpDataPacket) ReadMessage(s iface.ISession) (interface{}, error) {
 	reader, ok := s.Conn().(io.Reader)
 	if !ok || reader == nil {
 		return nil, fmt.Errorf("TcpDataPacket ReadMessage get io.Reader err")
 	}
-	msg, msgId, err := RcvPackageData(reader)
+	msg, msgId, err := message.RcvPackageData(reader)
 	if err != nil {
 		return nil, err
 	}
 
-	bt, err := DecodeMessage(msgId, msg)
+	bt, err := message.DecodeMessage(msgId, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -54,13 +53,13 @@ func (t *TcpDataPacket) SendMessage(s iface.ISession, msg interface{}) (err erro
 	if !ok || writer == nil {
 		return fmt.Errorf("TcpDataPacket SendMessage get io.Writer err")
 	}
-	msgData, msgInfo, err := EncodeMessage(msg)
+	msgData, msgInfo, err := message.EncodeMessage(msg)
 	if err != nil {
 		return err
 	}
 
 	msgLen := len(msgData)
-	mb := &MsgBase{
+	mb := &message.MsgBase{
 		MsgLen:    uint16(len(msgData)),
 		MsgId:     msgInfo.ID,
 		ChunkNum:  uint16(msgLen/def.MsgMaxLen + 1), // 计算分片数量
@@ -71,7 +70,7 @@ func (t *TcpDataPacket) SendMessage(s iface.ISession, msg interface{}) (err erro
 	for mb.SendBytes < int(mb.MsgLen) {
 		data := mb.Marshal(msgData)
 		// 如果使用内存池 会导致每次发送的包里都会有空数据 所以写入的时候只写入有效数据的部分
-		err = WriteFull(writer, data[:mb.ActualDataLen])
+		err = message.WriteFull(writer, data[:mb.ActualDataLen])
 		if err != nil {
 			return err
 		}
@@ -81,6 +80,8 @@ func (t *TcpDataPacket) SendMessage(s iface.ISession, msg interface{}) (err erro
 	}
 	return nil
 }
+
+type WsDataPacket struct{}
 
 func (w *WsDataPacket) ReadMessage(s iface.ISession) (interface{}, error) {
 	conn, ok := s.Conn().(*websocket.Conn)
@@ -94,11 +95,11 @@ func (w *WsDataPacket) ReadMessage(s iface.ISession) (interface{}, error) {
 
 	switch typ {
 	case websocket.BinaryMessage:
-		msg, msgId, err := RcvPackageDataByByte(bt)
+		msg, msgId, err := message.RcvPackageDataByByte(bt)
 		if err != nil {
 			return nil, err
 		}
-		bt, err := DecodeMessage(msgId, msg)
+		bt, err := message.DecodeMessage(msgId, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -114,7 +115,7 @@ func (w *WsDataPacket) SendMessage(s iface.ISession, msg interface{}) (err error
 	if !ok || conn == nil {
 		return fmt.Errorf("WsDataPacket SendMessage get websocket.Conn err")
 	}
-	msgData, msgInfo, err := EncodeMessage(msg)
+	msgData, msgInfo, err := message.EncodeMessage(msg)
 	if err != nil {
 		return err
 	}
@@ -124,7 +125,7 @@ func (w *WsDataPacket) SendMessage(s iface.ISession, msg interface{}) (err error
 	if msgDataLen > opt.GetMaxMsgLen() {
 		return fmt.Errorf("ws sendMessage too big. msgId=%v msglen=%v maxlen=%v", 1, msgDataLen, opt.GetMaxMsgLen())
 	}
-	mb := &MsgBase{
+	mb := &message.MsgBase{
 		MsgId:  msgInfo.ID,
 		FlagId: 1,
 	}

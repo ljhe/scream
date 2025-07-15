@@ -1,4 +1,4 @@
-package socket
+package message
 
 import (
 	"encoding/binary"
@@ -33,14 +33,14 @@ var MsgOptions = struct {
 
 type MsgBase struct {
 	MsgId         uint16
-	MsgLen        uint16
-	ChunkNum      uint16
-	ChunkId       uint16
-	SendBytes     int
-	ActualDataLen int
-	ChunkSize     int
-	ReceivedBytes uint16
-	FlagId        uint16
+	MsgLen        uint16 // 总长度
+	ChunkNum      uint16 // 分片数量
+	ChunkId       uint16 // 当前片id
+	SendBytes     int    // 已发送长度
+	ActualDataLen int    // 实际数据长度
+	ChunkSize     int    // 分片长度
+	ReceivedBytes uint16 // 接受长度
+	FlagId        uint16 // 加密方式
 }
 
 var bufPool = sync.Pool{
@@ -83,7 +83,7 @@ func EncodeMessage(msg interface{}) ([]byte, *pbgo.MessageInfo, error) {
 	}
 	bt, err := info.Codec.Marshal(msg)
 	if err != nil {
-		logrus.Errorf("EncodeMessage Marshal err. msg:%v err:%v", msg, err)
+		logrus.Errorf("EncodeMessage Marshal err. message:%v err:%v", msg, err)
 		return nil, nil, err
 	}
 	return bt.([]byte), info, nil
@@ -93,12 +93,12 @@ func EncodeMessage(msg interface{}) ([]byte, *pbgo.MessageInfo, error) {
 func DecodeMessage(msgId uint16, msg []byte) (interface{}, error) {
 	sys := pbgo.MessageInfoById(msgId)
 	if sys == nil {
-		return nil, fmt.Errorf("msgId not found. msgId: %d msg:%s", msgId, string(msg))
+		return nil, fmt.Errorf("msgId not found. msgId: %d message:%s", msgId, string(msg))
 	}
 	msgObj := reflect.New(sys.Type).Interface()
 	err := sys.Codec.Unmarshal(msg, msgObj)
 	if err != nil {
-		logrus.Errorf("DecodeMessage Unmarshal err. msg:%s err:%v", string(msg), err)
+		logrus.Errorf("DecodeMessage Unmarshal err. message:%s err:%v", string(msg), err)
 		return nil, err
 	}
 	return msgObj, nil
@@ -261,7 +261,6 @@ func (mb *MsgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
 func (mb *MsgBase) Container() []byte {
 	// 使用内存池
 	if MsgOptions.Pool {
-		//return mpool.GetMemoryPool(mpool.SystemMemoryPoolKey).Get(mb.actualDataLen)
 		outBuf := bufPool.Get().([]byte)
 		_, outBuf = sliceForAppend(outBuf[:0], mb.ActualDataLen)
 		return outBuf
@@ -271,7 +270,6 @@ func (mb *MsgBase) Container() []byte {
 
 func (mb *MsgBase) Release(data []byte) {
 	if MsgOptions.Pool {
-		//mpool.GetMemoryPool(mpool.SystemMemoryPoolKey).Put(data)
 		bufPool.Put(data[:0])
 	}
 }

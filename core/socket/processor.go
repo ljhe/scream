@@ -64,7 +64,7 @@ func (n *Processor) ReadMsg(s iface.ISession) (interface{}, error) {
 	if n.MsgFlow != nil {
 		return n.MsgFlow.OnRcvMsg(s)
 	}
-	return nil, fmt.Errorf("msg rpc is nil")
+	return nil, fmt.Errorf("message rpc is nil")
 }
 
 func (n *Processor) SendMsg(e iface.IProcEvent) error {

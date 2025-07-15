@@ -48,7 +48,7 @@ func (r *Runtime) update() {
 					logrus.Errorf("event: [%s] execute chain err %v", msg.Msg.Header.Event, err)
 				}
 			} else {
-				logrus.Errorf("grpc msg event: [%v], not found in chain", msg.Msg.Header.Event)
+				logrus.Errorf("grpc message event: [%v], not found in chain", msg.Msg.Header.Event)
 			}
 		}
 	}

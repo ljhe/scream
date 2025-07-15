@@ -248,7 +248,7 @@ func (*SCPingAck) Descriptor() ([]byte, []int) {
 
 type CSSendMsgReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Msg           string                 `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
+	Msg           string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -293,7 +293,7 @@ func (x *CSSendMsgReq) GetMsg() string {
 type SCSendMsgAck struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Error         int32                  `protobuf:"varint,1,opt,name=error,proto3" json:"error,omitempty"` // 错误码 0表示无错误
-	Msg           string                 `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
+	Msg           string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

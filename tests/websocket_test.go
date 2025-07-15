@@ -3,7 +3,7 @@ package tests
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
-	"github.com/ljhe/scream/core/socket"
+	"github.com/ljhe/scream/core/message"
 	"github.com/ljhe/scream/pbgo"
 	"github.com/ljhe/scream/utils"
 	"log"
@@ -17,7 +17,7 @@ func TestWSConnector(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		go createConnector()
 	}
-	//service.WaitExitSignal()
+	utils.WaitExitSignal()
 }
 
 func createConnector() {
@@ -68,7 +68,7 @@ func createConnector() {
 			data := &pbgo.CSSendMsgReq{
 				Msg: c.LocalAddr().String() + "_" + fmt.Sprintf("%d", count),
 			}
-			msgData, msgInfo, _ := socket.EncodeMessage(data)
+			msgData, msgInfo, _ := message.EncodeMessage(data)
 			// 使用加密的方式发送信息
 			//encryptStr, _ := encryption.RSAEncrypt(msgData, encryption.RSAWSPublicKey)
 			//mb := &socket.MsgBase{
@@ -78,7 +78,7 @@ func createConnector() {
 			//buf := mb.MarshalBytes(encryptStr)
 
 			// 不使用加密的方式发送信息
-			mb := &socket.MsgBase{
+			mb := &message.MsgBase{
 				MsgId: msgInfo.ID,
 			}
 			buf := mb.MarshalBytes(msgData)

@@ -36,8 +36,6 @@ func (p *Process) Init() error {
 	}
 	// 初始化日志模块
 	logrus.Init(*config.ServerConfigPath)
-	// 初始化内存池
-	//mpool.MemoryPoolInit()
 	// 初始化服务发现
 	err := trdetcd.InitServiceDiscovery(p.P.Node.Etcd)
 	if err != nil {

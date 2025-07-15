@@ -136,7 +136,7 @@ func (s *Session) RunSend() {
 		}
 		err := s.SendMsg(&socket.SendProcEvent{Sess: s, Message: data})
 		if err != nil {
-			logrus.Errorf("session send msg err:%v. sessionId:%d dataT:%v data:%v", err, s.GetId(), reflect.TypeOf(data), data)
+			logrus.Errorf("session send message err:%v. sessionId:%d dataT:%v data:%v", err, s.GetId(), reflect.TypeOf(data), data)
 			break
 		}
 	}

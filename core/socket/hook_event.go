@@ -4,6 +4,7 @@ import (
 	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/baseserver"
 	"github.com/ljhe/scream/core/iface"
+	"github.com/ljhe/scream/core/message"
 	"github.com/ljhe/scream/def"
 	"github.com/ljhe/scream/pbgo"
 	"github.com/ljhe/scream/utils"
@@ -36,7 +37,7 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 			logrus.Printf("send ServiceIdentifyACK [%v]->[%v] sessionId=%v",
 				utils.GenSelfServiceId(prop.GetName(), prop.GetServerTyp(), prop.GetIndex()), ed.Id, iv.Session().GetId())
 		} else {
-			logrus.Infof("connector connect err. etcd not exist msg:%v", msg)
+			logrus.Infof("connector connect err. etcd not exist message:%v", msg)
 		}
 		return nil
 	case *SessionClosed:
@@ -82,17 +83,17 @@ func (eh *ServerHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		}
 		return nil
 	case *pbgo.MsgTransmitNtf:
-		data, err := DecodeMessage(uint16(msg.MsgId), msg.Data)
+		data, err := message.DecodeMessage(uint16(msg.MsgId), msg.Data)
 		if err != nil {
 			panic(err)
 		}
 
 		iv.Session().TransmitChild(msg.SessionId, data)
-		logrus.Printf("receive MsgTransmitNtf msg. main_session:%d client_session:%d dataT:%v data:%v",
+		logrus.Printf("receive MsgTransmitNtf message. main_session:%d client_session:%d dataT:%v data:%v",
 			iv.Session().GetId(), msg.SessionId, reflect.TypeOf(data), data)
 		return nil
 	default:
-		logrus.Printf("receive unknown msg %v msgT:%v ivM %v sessionId:%d",
+		logrus.Printf("receive unknown message %v msgT:%v ivM %v sessionId:%d",
 			msg, reflect.TypeOf(msg), iv.Msg(), iv.Session().GetId())
 	}
 	return iv
@@ -120,7 +121,7 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 			return nil
 		}
 		// 服务器间通信 增加特有结构体 里面包含sessionId
-		bytes, info, err := EncodeMessage(&pbgo.WSSessionClosedNtf{})
+		bytes, info, err := message.EncodeMessage(&pbgo.WSSessionClosedNtf{})
 		if err != nil {
 			panic(err)
 		}
@@ -137,7 +138,7 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		return nil
 	case *pbgo.CSSendMsgReq:
 		m := iv.Msg().(*pbgo.CSSendMsgReq)
-		logrus.Infof("receive client msg. sessionId:%d msg:%v", iv.Session().GetId(), m.Msg)
+		logrus.Infof("receive client message. sessionId:%d message:%v", iv.Session().GetId(), m.Msg)
 
 		// 测试消息转发
 		node, _ := baseserver.GetServiceNodeAndSession("", def.ServiceNodeTypeGameStr, 0)
@@ -146,7 +147,7 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 			return nil
 		}
 		// 服务器间通信 增加特有结构体 里面包含sessionId
-		bytes, info, err := EncodeMessage(iv.Msg())
+		bytes, info, err := message.EncodeMessage(iv.Msg())
 		if err != nil {
 			panic(err)
 		}
@@ -176,7 +177,7 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		}
 		return nil
 	default:
-		logrus.Infof("receive unknown msg %v msgT:%v ivM %v", msg, reflect.TypeOf(msg), iv.Msg())
+		logrus.Infof("receive unknown message %v msgT:%v ivM %v", msg, reflect.TypeOf(msg), iv.Msg())
 	}
 	return iv
 }
@@ -198,7 +199,7 @@ func (sc *SessionChildHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		iv.Session().DelChild(s.GetSessionId())
 		return nil
 	default:
-		logrus.Infof("receive unknown msg %v msgT:%v ivM %v", msg, reflect.TypeOf(msg), iv.Msg())
+		logrus.Infof("receive unknown message %v msgT:%v ivM %v", msg, reflect.TypeOf(msg), iv.Msg())
 	}
 	return iv
 }

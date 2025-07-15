@@ -127,7 +127,7 @@ func (x *Message) GetBody() []byte {
 
 type RouteReqs struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Msg           *Message               `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
+	Msg           *Message               `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -171,7 +171,7 @@ func (x *RouteReqs) GetMsg() *Message {
 
 type RouteRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Msg           *Message               `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
+	Msg           *Message               `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -252,8 +252,8 @@ var file_grpc_test_proto_goTypes = []any{
 }
 var file_grpc_test_proto_depIdxs = []int32{
 	0, // 0: pbgo.Message.header:type_name -> pbgo.Header
-	1, // 1: pbgo.routeReqs.msg:type_name -> pbgo.Message
-	1, // 2: pbgo.routeRes.msg:type_name -> pbgo.Message
+	1, // 1: pbgo.routeReqs.message:type_name -> pbgo.Message
+	1, // 2: pbgo.routeRes.message:type_name -> pbgo.Message
 	2, // 3: pbgo.Acceptor.routing:input_type -> pbgo.routeReqs
 	3, // 4: pbgo.Acceptor.routing:output_type -> pbgo.routeRes
 	4, // [4:5] is the sub-list for method output_type
