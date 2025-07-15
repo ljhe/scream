@@ -22,7 +22,7 @@ func NewSessionChild(sessionId uint64, s *Session) *SessionChild {
 		sessionId: sessionId,
 		Session:   s,
 		Processor: socket.Processor{
-			MsgFlow: new(socket.WSMsgFlow),
+			MsgFlow: &socket.MsgFlow{Packet: &socket.WsDataPacket{}},
 			Hooker:  new(socket.SessionChildHookEvent),
 		},
 		rcvQueue: make(chan interface{}, SessionChildRcvQueueLen),

@@ -22,7 +22,7 @@ func (p *Process) CreateAcceptor() iface.INetNode {
 
 	node.(iface.IProcessor).SetHooker(new(socket.ServerHookEvent))
 	node.(iface.IProcessor).SetMsgHandle(service.GetMsgHandle())
-	node.(iface.IProcessor).SetMsgFlow(new(socket.TCPMsgFlow))
+	node.(iface.IProcessor).SetMsgFlow(&socket.MsgFlow{Packet: &socket.TcpDataPacket{}})
 
 	if opt, ok := node.(iface.IOption); ok {
 		// 15s无读写断开 服务器之间已经添加心跳来维持读写
@@ -56,7 +56,7 @@ func (p *Process) CreateConnector(connect string) {
 
 		node.(iface.IProcessor).SetHooker(new(socket.ServerHookEvent))
 		node.(iface.IProcessor).SetMsgHandle(service.GetMsgHandle())
-		node.(iface.IProcessor).SetMsgFlow(new(socket.TCPMsgFlow))
+		node.(iface.IProcessor).SetMsgFlow(&socket.MsgFlow{Packet: &socket.TcpDataPacket{}})
 
 		if opt, ok := node.(iface.IOption); ok {
 			// 15s无读写断开 服务器之间已经添加心跳来维持读写
@@ -80,7 +80,7 @@ func (p *Process) CreateWebSocketAcceptor() iface.INetNode {
 	node := socket.NewServerNode(def.SocketTypTcpWSAcceptor, p.P.Node.Name, p.P.Node.WsAddr)
 	node.(iface.INodeProp).SetNodeProp(p.P.Node.Typ, p.P.Node.Index)
 
-	node.(iface.IProcessor).SetMsgFlow(new(socket.WSMsgFlow))
+	node.(iface.IProcessor).SetMsgFlow(&socket.MsgFlow{Packet: &socket.WsDataPacket{}})
 	node.(iface.IProcessor).SetHooker(new(socket.WsHookEvent))
 	msgPrcFunc := pbgo.GetMessageHandler(def.GetServiceNodeStr(p.P.Node.Typ))
 	node.(iface.IProcessor).SetMsgRouter(msgPrcFunc)

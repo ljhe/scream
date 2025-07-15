@@ -63,7 +63,7 @@ func ParseServiceId(sid string) (typ, idx int, err error) {
 		return
 	} else {
 		strProp := strings.Split(str[1], "@")
-		if len(strProp) < 3 {
+		if len(strProp) < 2 {
 			err = errors.New(fmt.Sprintf("ParseServiceId sid invalid. sid:%s", sid))
 			return
 		} else {
