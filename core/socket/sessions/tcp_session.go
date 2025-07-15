@@ -1,9 +1,11 @@
 package sessions
 
 import (
+	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/core/socket"
 	"net"
+	"runtime/debug"
 	"sync/atomic"
 	"time"
 )
@@ -70,6 +72,36 @@ func (ts *TCPSession) HeartBeat(msg interface{}) {
 
 func (ts *TCPSession) CloseEvent(err error) {
 	ts.ProcEvent(&socket.RcvProcEvent{Sess: ts, Message: &socket.SessionClosed{}, Err: err})
+}
+
+func (ts *TCPSession) RunRcv() {
+	defer func() {
+		if err := recover(); err != nil {
+			logrus.Errorf("tcpSession Stack---::%v\n %s\n", err, string(debug.Stack()))
+			debug.PrintStack()
+		}
+	}()
+
+	for {
+		msg, err := ts.ReadMsg(ts)
+		if err != nil {
+			logrus.Errorf("RunRcv ReadMsg err:%v sessionId:%d", err, ts.GetId())
+			// 做关闭处理 发送数据时已经无法发送
+			atomic.StoreInt64(&ts.close, 1)
+			select {
+			case ts.sendQueue <- nil:
+			default:
+				logrus.Errorf("RunRcv sendQueue block len:%d sessionId:%d", len(ts.sendQueue), ts.GetId())
+			}
+
+			// 抛出关闭事件
+			ts.CloseEvent(err)
+			break
+		}
+
+		ts.ProcEvent(&socket.RcvProcEvent{Sess: ts, Message: msg})
+	}
+	ts.exitWg.Done()
 }
 
 func NewTcpSession(c net.Conn, node iface.INetNode) *TCPSession {

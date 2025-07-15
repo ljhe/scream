@@ -80,36 +80,6 @@ func (s *Session) Close() {
 	s.ConnClose()
 }
 
-func (s *Session) RunRcv() {
-	defer func() {
-		if err := recover(); err != nil {
-			logrus.Errorf("tcpSession Stack---::%v\n %s\n", err, string(debug.Stack()))
-			debug.PrintStack()
-		}
-	}()
-
-	for {
-		msg, err := s.ReadMsg(s)
-		if err != nil {
-			logrus.Errorf("RunRcv ReadMsg err:%v sessionId:%d", err, s.GetId())
-			// 做关闭处理 发送数据时已经无法发送
-			atomic.StoreInt64(&s.close, 1)
-			select {
-			case s.sendQueue <- nil:
-			default:
-				logrus.Errorf("RunRcv sendQueue block len:%d sessionId:%d", len(s.sendQueue), s.GetId())
-			}
-
-			// 抛出关闭事件
-			s.CloseEvent(err)
-			break
-		}
-
-		s.ProcEvent(&socket.RcvProcEvent{Sess: s, Message: msg})
-	}
-	s.exitWg.Done()
-}
-
 func (s *Session) Send(msg interface{}) {
 	if atomic.LoadInt64(&s.close) != 0 {
 		return

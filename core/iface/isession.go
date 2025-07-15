@@ -18,7 +18,6 @@ type ISession interface {
 	IncRcvPingNum(inc int)
 	RcvPingNum() int
 	Start()
-	RunRcv()
 	RunSend()
 	ConnClose()
 }
@@ -27,6 +26,7 @@ type ISessionExtension interface {
 	ISessionCommon
 	SetConn(c interface{})
 	CloseEvent(err error)
+	RunRcv()
 }
 
 type ISessionChild interface {
