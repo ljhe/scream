@@ -132,6 +132,7 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		})
 
 		// 关闭客户端到ws的发送端
+		iv.Session().Close()
 		return nil
 	case *pbgo.CSPingReq:
 		iv.Session().Send(&pbgo.SCPingAck{})
