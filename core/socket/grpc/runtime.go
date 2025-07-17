@@ -6,7 +6,7 @@ import (
 	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/lib/mpsc"
-	"github.com/ljhe/scream/pbgo"
+	"github.com/ljhe/scream/message"
 )
 
 type Runtime struct {
@@ -38,7 +38,7 @@ func (r *Runtime) update() {
 		select {
 		case <-r.q.C:
 			msgInterface := r.q.Pop()
-			msg, ok := msgInterface.(*pbgo.RouteReqs)
+			msg, ok := msgInterface.(*message.RouteReq)
 			if !ok {
 				continue
 			}

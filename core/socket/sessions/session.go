@@ -13,21 +13,20 @@ import (
 	"sync/atomic"
 )
 
-const SessionMainSendQueueLen = 2000
+const SessionMainSendQueueLen = 32
 
 type Session struct {
+	id                uint64
 	*socket.Processor // 事件处理相关
 	socket.ContextSet // 记录session绑定信息
 	iface.ISessionExtension
-	node            iface.INetNode
-	close           int64
-	sendQueue       chan interface{}
-	sendQueueMaxLen int
-	exitWg          sync.WaitGroup
-	id              uint64
-	rcvPingNum      int
-	children        sync.Map
-	mu              sync.Mutex
+	node       iface.INetNode
+	close      int64 // 0 not close, 1 close
+	sendQueue  chan interface{}
+	wg         sync.WaitGroup
+	rcvPingNum int
+	children   sync.Map
+	mu         sync.RWMutex
 }
 
 func (s *Session) SetId(id uint64) {
@@ -60,11 +59,11 @@ func (s *Session) RcvPingNum() int {
 
 func (s *Session) Start() {
 	atomic.StoreInt64(&s.close, 0)
-	s.exitWg.Add(2)
+	s.wg.Add(2)
 	// 添加到session管理器中
 	s.node.(iface.ISessionManager).Add(s)
 	go func() {
-		s.exitWg.Wait()
+		s.wg.Wait()
 		close(s.sendQueue)
 		s.node.(iface.ISessionManager).Remove(s)
 	}()
@@ -77,6 +76,7 @@ func (s *Session) Close() {
 	if ok := atomic.SwapInt64(&s.close, 1); ok != 0 {
 		return
 	}
+	atomic.StoreInt64(&s.close, 1)
 	s.ConnClose()
 }
 
@@ -111,8 +111,7 @@ func (s *Session) RunSend() {
 		}
 	}
 
-	s.ConnClose()
-	s.exitWg.Done()
+	s.wg.Done()
 }
 
 func (s *Session) ConnClose() {

@@ -21,8 +21,8 @@ type TCPSession struct {
 }
 
 func (ts *TCPSession) SetConn(c interface{}) {
-	ts.mu.Lock()
-	defer ts.mu.Unlock()
+	//ts.mu.RLock()
+	//defer ts.mu.RUnlock()
 	ts.conn = c.(net.Conn)
 }
 
@@ -101,7 +101,7 @@ func (ts *TCPSession) RunRcv() {
 
 		ts.ProcEvent(&socket.RcvProcEvent{Sess: ts, Message: msg})
 	}
-	ts.exitWg.Done()
+	ts.wg.Done()
 }
 
 func NewTcpSession(c net.Conn, node iface.INetNode) *TCPSession {

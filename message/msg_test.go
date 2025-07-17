@@ -31,3 +31,6 @@ func Benchmark_WithOutPool(b *testing.B) {
 // 方法名-并发线程数				   循环次数				 每次操作平均耗时    每次操作平均分配内存字节数  每次操作平均内存分配次数
 // Benchmark_WithPool-20           30182679                33.71 ns/op           25 B/op          1 allocs/op
 // Benchmark_WithOutPool-20        10550127               104.0 ns/op           540 B/op          0 allocs/op
+
+// gen router.proto
+// .\pbgo\protoc --proto_path=./message --go_out=./message --go-grpc_out=./message router.proto

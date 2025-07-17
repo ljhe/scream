@@ -62,7 +62,7 @@ func (ws *webSocketAcceptor) Start() iface.INetNode {
 	ws.SetRunState(true)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", ws.handleConn)
+	mux.HandleFunc("/ws", ws.handleConn)
 
 	ws.server = &http.Server{Addr: ws.GetAddr(), Handler: mux}
 	go func() {
@@ -110,7 +110,7 @@ func (ws *webSocketAcceptor) handleConnTest(w http.ResponseWriter, r *http.Reque
 		// 打印客户端发送的数据
 		logrus.Infof("ws acceptor receive message:%v", string(msg))
 		// 回复客户端
-		if err := conn.WriteMessage(typ, msg); err != nil {
+		if err = conn.WriteMessage(typ, msg); err != nil {
 			return
 		}
 	}
@@ -125,8 +125,7 @@ func (ws *webSocketAcceptor) handleConn(w http.ResponseWriter, r *http.Request) 
 
 	sess := sessions.NewWSSession(conn, ws)
 	sess.Start()
-	// 通知上层事件(这边的回调要放到队列中，否则会有多线程冲突)
-	ws.ProcEvent(&socket.RcvProcEvent{Sess: sess, Message: &socket.SessionAccepted{}})
+	ws.Hooker.InEvent(&socket.RcvProcEvent{Sess: sess, Message: &socket.SessionAccepted{}})
 }
 
 func init() {

@@ -16,8 +16,8 @@ type WSSession struct {
 }
 
 func (ws *WSSession) SetConn(c interface{}) {
-	ws.mu.Lock()
-	defer ws.mu.Unlock()
+	//ws.mu.RLock()
+	//defer ws.mu.RUnlock()
 	ws.conn = c.(*websocket.Conn)
 }
 
@@ -40,7 +40,11 @@ func (ws *WSSession) RunRcv() {
 	for {
 		msg, err := ws.ReadMsg(ws)
 		if err != nil {
-			logrus.Errorf("RunRcv ReadMsg err:%v sessionId:%d", err, ws.GetId())
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+				logrus.Infof("websocket closed. sessionId:%d", ws.GetId())
+			} else {
+				logrus.Errorf("RunRcv ReadMsg err:%v sessionId:%d", err, ws.GetId())
+			}
 			// 做关闭处理 发送数据时已经无法发送
 			atomic.StoreInt64(&ws.close, 1)
 			select {
@@ -57,7 +61,7 @@ func (ws *WSSession) RunRcv() {
 		// 不同玩家之间并行处理
 		ws.Hooker.InEvent(&socket.RcvProcEvent{Sess: ws, Message: msg})
 	}
-	ws.exitWg.Done()
+	ws.wg.Done()
 }
 
 func NewWSSession(conn *websocket.Conn, node iface.INetNode) *WSSession {

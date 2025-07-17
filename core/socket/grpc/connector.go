@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 	"github.com/ljhe/scream/core/iface"
-	"github.com/ljhe/scream/pbgo"
+	"github.com/ljhe/scream/message"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
@@ -27,9 +27,9 @@ func (g grpcConnector) Start() iface.INetNode {
 	}
 	defer conn.Close()
 
-	client := pbgo.NewAcceptorClient(conn)
-	resp, err := client.Routing(context.Background(), &pbgo.RouteReqs{Msg: &pbgo.Message{
-		Header: &pbgo.Header{
+	client := message.NewAcceptorClient(conn)
+	resp, err := client.Routing(context.Background(), &message.RouteReq{Msg: &message.Message{
+		Header: &message.Header{
 			Event:     "ping",
 			Timestamp: time.Now().Unix(),
 		},

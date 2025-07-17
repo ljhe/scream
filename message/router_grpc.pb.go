@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.31.1
-// source: grpc_test.proto
+// source: router.proto
 
-package pbgo
+package message
 
 import (
 	context "context"
@@ -19,14 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Acceptor_Routing_FullMethodName = "/pbgo.Acceptor/routing"
+	Acceptor_Routing_FullMethodName = "/router.Acceptor/routing"
 )
 
 // AcceptorClient is the client API for Acceptor service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AcceptorClient interface {
-	Routing(ctx context.Context, in *RouteReqs, opts ...grpc.CallOption) (*RouteRes, error)
+	Routing(ctx context.Context, in *RouteReq, opts ...grpc.CallOption) (*RouteRes, error)
 }
 
 type acceptorClient struct {
@@ -37,7 +37,7 @@ func NewAcceptorClient(cc grpc.ClientConnInterface) AcceptorClient {
 	return &acceptorClient{cc}
 }
 
-func (c *acceptorClient) Routing(ctx context.Context, in *RouteReqs, opts ...grpc.CallOption) (*RouteRes, error) {
+func (c *acceptorClient) Routing(ctx context.Context, in *RouteReq, opts ...grpc.CallOption) (*RouteRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RouteRes)
 	err := c.cc.Invoke(ctx, Acceptor_Routing_FullMethodName, in, out, cOpts...)
@@ -51,7 +51,7 @@ func (c *acceptorClient) Routing(ctx context.Context, in *RouteReqs, opts ...grp
 // All implementations must embed UnimplementedAcceptorServer
 // for forward compatibility.
 type AcceptorServer interface {
-	Routing(context.Context, *RouteReqs) (*RouteRes, error)
+	Routing(context.Context, *RouteReq) (*RouteRes, error)
 	mustEmbedUnimplementedAcceptorServer()
 }
 
@@ -62,7 +62,7 @@ type AcceptorServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAcceptorServer struct{}
 
-func (UnimplementedAcceptorServer) Routing(context.Context, *RouteReqs) (*RouteRes, error) {
+func (UnimplementedAcceptorServer) Routing(context.Context, *RouteReq) (*RouteRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Routing not implemented")
 }
 func (UnimplementedAcceptorServer) mustEmbedUnimplementedAcceptorServer() {}
@@ -87,7 +87,7 @@ func RegisterAcceptorServer(s grpc.ServiceRegistrar, srv AcceptorServer) {
 }
 
 func _Acceptor_Routing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RouteReqs)
+	in := new(RouteReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func _Acceptor_Routing_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: Acceptor_Routing_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AcceptorServer).Routing(ctx, req.(*RouteReqs))
+		return srv.(AcceptorServer).Routing(ctx, req.(*RouteReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -108,7 +108,7 @@ func _Acceptor_Routing_Handler(srv interface{}, ctx context.Context, dec func(in
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Acceptor_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "pbgo.Acceptor",
+	ServiceName: "router.Acceptor",
 	HandlerType: (*AcceptorServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -117,5 +117,5 @@ var Acceptor_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "grpc_test.proto",
+	Metadata: "router.proto",
 }

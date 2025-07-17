@@ -1,11 +1,12 @@
 package socket
 
 import (
+	"github.com/gorilla/websocket"
 	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/baseserver"
 	"github.com/ljhe/scream/core/iface"
-	"github.com/ljhe/scream/core/message"
 	"github.com/ljhe/scream/def"
+	"github.com/ljhe/scream/message"
 	"github.com/ljhe/scream/pbgo"
 	"github.com/ljhe/scream/utils"
 	"reflect"
@@ -112,7 +113,7 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 		logrus.Infof("WS-SessionConnected cliId=%v", iv.Session().GetId())
 		return nil
 	case *pbgo.WSSessionClosedNtf:
-		logrus.Infof("ws session closed. sessionId:%d", iv.Session().GetId())
+		logrus.Infof("InEvent WSSessionClosedNtf sessionId:%d", iv.Session().GetId())
 
 		// 测试消息转发关闭
 		node, _ := baseserver.GetServiceNodeAndSession("", def.ServiceNodeTypeGameStr, 0)
@@ -131,8 +132,9 @@ func (wh *WsHookEvent) InEvent(iv iface.IProcEvent) iface.IProcEvent {
 			Data:      bytes,
 		})
 
-		// 关闭客户端到ws的发送端
 		iv.Session().Close()
+		// 关闭客户端到ws的发送端
+		iv.Session().Send(websocket.CloseMessage)
 		return nil
 	case *pbgo.CSPingReq:
 		iv.Session().Send(&pbgo.SCPingAck{})

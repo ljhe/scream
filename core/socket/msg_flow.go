@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/ljhe/scream/core/iface"
-	"github.com/ljhe/scream/core/message"
 	"github.com/ljhe/scream/def"
+	"github.com/ljhe/scream/message"
 	"io"
 )
 
@@ -90,7 +90,7 @@ func (w *WsDataPacket) ReadMessage(s iface.ISession) (interface{}, error) {
 	}
 	typ, bt, err := conn.ReadMessage()
 	if err != nil {
-		return nil, fmt.Errorf("WsDataPacket ReadMessage ReadMessage err:%v", err)
+		return nil, err
 	}
 
 	switch typ {

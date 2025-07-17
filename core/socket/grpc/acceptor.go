@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/iface"
-	"github.com/ljhe/scream/pbgo"
+	"github.com/ljhe/scream/message"
 	"google.golang.org/grpc"
 	"log"
 	"net"
@@ -15,7 +15,7 @@ type grpcAcceptor struct {
 }
 
 type listen struct {
-	pbgo.AcceptorServer
+	message.AcceptorServer
 	g *grpcAcceptor
 }
 
@@ -42,7 +42,7 @@ func (g *grpcAcceptor) Start() iface.INetNode {
 	}
 
 	gs := grpc.NewServer()
-	pbgo.RegisterAcceptorServer(gs, &listen{g: g})
+	message.RegisterAcceptorServer(gs, &listen{g: g})
 	if err := gs.Serve(ln); err != nil {
 		panic(err)
 	}
@@ -50,9 +50,9 @@ func (g *grpcAcceptor) Start() iface.INetNode {
 	return g
 }
 
-func (l *listen) Routing(ctx context.Context, req *pbgo.RouteReqs) (*pbgo.RouteRes, error) {
-	res := &pbgo.RouteRes{
-		Msg: &pbgo.Message{},
+func (l *listen) Routing(ctx context.Context, req *message.RouteReq) (*message.RouteRes, error) {
+	res := &message.RouteRes{
+		Msg: &message.Message{},
 	}
 
 	err := l.g.Received(req)
