@@ -53,13 +53,15 @@ func (sd *ServiceDiscovery) RegisterService(key, val string) error {
 	if err != nil {
 		return err
 	}
+
 	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
 	defer cancel()
 	rsp, err := sd.KV.Put(ctx, key, val, clientv3.WithLease(leaseResp.ID))
 	if err != nil {
 		return err
 	}
-	ch, err := sd.Cli.KeepAlive(context.TODO(), leaseResp.ID)
+
+	ch, err := sd.Cli.KeepAlive(context.Background(), leaseResp.ID)
 	if err != nil {
 		return err
 	}
@@ -73,6 +75,7 @@ func (sd *ServiceDiscovery) RegisterService(key, val string) error {
 			// 记录日志或处理响应
 		}
 	}()
+
 	log.Printf("etcd register ok. key=%v clusterid=%v leaseid=%v etcdaddr=%v \n", key, rsp.Header.ClusterId, leaseResp.ID, sd.config)
 	return nil
 }
@@ -122,7 +125,10 @@ func (sd *ServiceDiscovery) WatchServices(key string, value utils.ServerInfo) {
 	}()
 }
 
-func (sd *ServiceDiscovery) DelServices(key string) error {
-	_, err := sd.Cli.Delete(context.TODO(), key)
+func (sd *ServiceDiscovery) DelServices(ctx context.Context, key string) error {
+	resp, err := sd.Cli.Delete(ctx, key)
+	if resp.Deleted == 0 {
+		return fmt.Errorf("etcd del service key=%v deleted=0", key)
+	}
 	return err
 }

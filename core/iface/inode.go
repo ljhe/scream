@@ -1,58 +1,66 @@
 package iface
 
-import (
-	"github.com/ljhe/scream/utils"
-)
+import "context"
 
-type INetNode interface {
-	Start() INetNode
-	Stop()
-	GetTyp() string
+type CreateFunc func(INodeBuilder) INode
+
+type INode interface {
+	Init(ctx context.Context)
+
+	ID() string
+	Type() string
+
+	Exit()
 }
 
-type IRuntimeTag interface {
-	SetCloseFlag(b bool)
-	GetCloseFlag() bool
-	SetRunState(b bool)
-	GetRunState() bool
+type INodeLoader interface {
+	// Builder selects a node from the factory and provides a builder
+	Builder(string, ISystem) INodeBuilder
 }
 
-type IOption interface {
-	GetMaxMsgLen() int
-	SocketReadTimeout(s ISession, callback func())
-	SocketWriteTimeout(s ISession, callback func())
-	SetOption(opt interface{})
+type INodeBuilder interface {
+	GetID() string
+	GetType() string
+	GetGlobalQuantityLimit() int
+	GetNodeUnique() bool
+	GetWeight() int
+
+	GetConstructor() CreateFunc
+
+	WithID(string) INodeBuilder
+	WithType(string) INodeBuilder
+	WithOpt(string, string) INodeBuilder
+
+	Register(context.Context) (INode, error)
 }
 
-type IProcessor interface {
-	SetMsgFlow(v IMsgFlow)
-	SetHooker(v IHookEvent)
-	SetMsgHandle(v IMsgHandle)
-	SetMsgRouter(v EventCallBack)
-	GetMsgRouter() EventCallBack
+type INodeContext interface {
+	// Unregister unregisters an node
+	Unregister(id, ty string) error
 }
 
-type INodeProp interface {
-	SetAddr(a string)
-	GetAddr() string
-	SetName(s string)
-	GetName() string
-	SetServerTyp(t int)
-	GetServerTyp() int
-	SetIndex(i int)
-	GetIndex() int
-	SetNodeProp(typ, index int)
+type NodeConstructor struct {
+	ID   string
+	Name string
+
+	// Weight occupied by the actor, weight algorithm reference: 2c4g (pod = 2 * 4 * 1000)
+	Weight int
+
+	Dynamic bool
+
+	// Constructor function
+	Constructor CreateFunc
+
+	// NodeUnique indicates whether this actor is unique within the current node
+	NodeUnique bool
+
+	// Global quantity limit for the current actor type that can be registered
+	GlobalQuantityLimit int
+
+	Options map[string]string
 }
 
-type IContextSet interface {
-	SetContextData(key, val interface{})
-	GetContextData(key interface{}) (interface{}, bool)
-	RawContextData(key interface{}, ptr interface{}) bool
-}
-
-type IDiscover interface {
-	// Loader load all node info by ETCD after the node started
-	Loader()
-	Close()
-	GetNodeByKey(key string) *utils.ServerInfo
+type INodeFactory interface {
+	Get(ty string) *NodeConstructor
+	GetActors() []*NodeConstructor
 }

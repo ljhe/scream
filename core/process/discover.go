@@ -32,7 +32,7 @@ func (d *Discover) Loader() {
 
 	ctx, cancel := context.WithTimeout(d.ctx, 10*time.Second)
 	defer cancel()
-	resp, err := etcd.GetEtcdDiscovery().Cli.Get(ctx, utils.ServerPreKey, clientv3.WithPrefix())
+	resp, err := etcd.GetEtcdDiscovery().Cli.Get(ctx, "server/", clientv3.WithPrefix())
 	if err != nil {
 		panic(err)
 	}
@@ -49,7 +49,7 @@ func (d *Discover) Close() {
 }
 
 func (d *Discover) watch() {
-	watchChan := etcd.GetEtcdDiscovery().Cli.Watch(context.TODO(), utils.ServerPreKey, clientv3.WithPrefix())
+	watchChan := etcd.GetEtcdDiscovery().Cli.Watch(context.TODO(), "server/", clientv3.WithPrefix())
 	for {
 		select {
 		case wr := <-watchChan:

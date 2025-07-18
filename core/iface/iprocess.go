@@ -5,4 +5,5 @@ type IProcess interface {
 	Start() error
 	WaitClose() error
 	Stop() error
+	System() ISystem
 }

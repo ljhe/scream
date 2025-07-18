@@ -1,7 +1,6 @@
 package logrus
 
 import (
-	"fmt"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"log"
@@ -22,7 +21,7 @@ func Init(filepath string) {
 	loadConfig(filepath)
 	lJson = NewLogger(&SelfJsonFormatter{})
 	lText = NewLogger(&SelfTextFormatter{})
-	Infof("logrus init success. filepath:%v", filepath)
+	Infof("logrus init success")
 }
 
 func LogJson(tag string, param ...interface{}) *logrus.Entry {
@@ -56,5 +55,4 @@ func loadConfig(filepath string) {
 		}
 	}
 	opt = NewOptions(conf)
-	fmt.Printf("logrus load config success. opt:%v \n", opt)
 }

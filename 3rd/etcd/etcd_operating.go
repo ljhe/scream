@@ -10,54 +10,32 @@ import (
 	"go.etcd.io/etcd/client/v3"
 )
 
-func Register(node iface.INetNode) *utils.ServerInfo {
-	property := node.(iface.INodeProp)
-	ed := &utils.ServerInfo{
-		Id:    utils.GenSelfServiceId(property.GetName(), property.GetServerTyp(), property.GetIndex()),
-		Name:  property.GetName(),
-		Host:  property.GetAddr(),
-		Typ:   property.GetServerTyp(),
-		Index: property.GetIndex(),
-	}
-	ed.RegTime = utils.GetTimeSeconds()
-
-	// 先查询是否存在该节点 如果存在不做处理(或者通过del操作关闭其他客户端)
-	etcdKey := utils.GenServicePrefix(ed.Id)
-	resp, err := etcdDiscovery.KV.Get(context.TODO(), etcdKey)
+func Register(ctx context.Context, key string, val []byte) error {
+	// 先查询是否存在该节点 如果存在不做处理
+	resp, err := etcdDiscovery.KV.Get(ctx, key)
 	if err != nil {
-		logrus.Infof("etcd register error:%v", err)
-		return nil
+		return fmt.Errorf("etcd register error:%v key:%s", err, key)
 	}
 	if resp.Count > 0 {
-		fmt.Println("etcd register error: service already exist. etcdKey:", etcdKey)
-		return nil
+		return fmt.Errorf("etcd register error: service already exist. key:%s", key)
 	}
 
 	// 注册
-	err = etcdDiscovery.RegisterService(etcdKey, ed.String())
+	err = etcdDiscovery.RegisterService(key, string(val))
 	if err != nil {
-		logrus.Errorf("etcd register error:%v", err)
-		return nil
+		return fmt.Errorf("etcd register service error:%v key:%s", err, key)
 	}
-	etcdDiscovery.WatchServices(etcdKey, *ed)
-	logrus.Infof("etcd register success:%s", ed.Id)
-	return ed
+	logrus.Infof("etcd register success. key:%s", key)
+	return nil
 }
 
-func UnRegister(node iface.INetNode) error {
-	property := node.(iface.INodeProp)
-	ed := &utils.ServerInfo{
-		Id: utils.GenSelfServiceId(property.GetName(), property.GetServerTyp(), property.GetIndex()),
-	}
-
-	etcdKey := utils.GenServicePrefix(ed.Id)
-	return etcdDiscovery.DelServices(etcdKey)
+func UnRegister(ctx context.Context, key string) error {
+	return etcdDiscovery.DelServices(ctx, key)
 }
 
-func DiscoveryService(serviceName string, nodeCreator func(*utils.ServerInfo)) iface.INetNode {
+func DiscoveryService(etcdKey string, nodeCreator func(*utils.ServerInfo)) iface.INetNode {
 	// 如果已经存在 就停止之前正在运行的节点(注意不要配置成一样的节点信息 否则会关闭之前的连接)
 	// 连接同一个zone里的服务器节点
-	etcdKey := utils.GenDiscoveryServicePrefix(serviceName)
 
 	// 监测目标节点的变化
 	var ch clientv3.WatchChan

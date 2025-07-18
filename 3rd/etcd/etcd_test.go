@@ -21,7 +21,7 @@ func TestRegisterService1(t *testing.T) {
 		Typ:   2,
 		Index: 1,
 	}
-	err = etcd.RegisterService(fmt.Sprintf("%stest1", utils.ServerPreKey), info.String())
+	err = etcd.RegisterService("server/test1", info.String())
 	if err != nil {
 		t.Error(err)
 	}
@@ -45,7 +45,7 @@ func TestRegisterService2(t *testing.T) {
 		Typ:   2,
 		Index: 2,
 	}
-	err = etcd.RegisterService(fmt.Sprintf("%stest2", utils.ServerPreKey), info.String())
+	err = etcd.RegisterService("server/test1", info.String())
 	if err != nil {
 		t.Error(err)
 	}
@@ -62,7 +62,7 @@ func TestDiscoverServices(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = etcd.DiscoverService(utils.ServerPreKey)
+	err = etcd.DiscoverService("server/")
 	if err != nil {
 		t.Error(err)
 	}

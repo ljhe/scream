@@ -10,8 +10,6 @@ import (
 	"syscall"
 )
 
-var ServerPreKey = "server/"
-
 type ServerInfo struct {
 	Id      string
 	Name    string
@@ -36,24 +34,6 @@ func GenSelfServiceId(name string, typ, index int) string {
 		typ,
 		index,
 	)
-}
-
-// GenTargetServiceId 根据对方的服务器名称 和自己的zone type index 来获取对方的服务器key
-// 例如某一组服务器中 两个相对应的节点
-func GenTargetServiceId(target string, typ, index int) string {
-	return fmt.Sprintf("%s#%d@%d",
-		target,
-		typ,
-		index,
-	)
-}
-
-func GenServicePrefix(name string) string {
-	return ServerPreKey + name
-}
-
-func GenDiscoveryServicePrefix(name string) string {
-	return ServerPreKey + name + "#"
 }
 
 func ParseServiceId(sid string) (typ, idx int, err error) {
