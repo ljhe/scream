@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package router;
+option go_package = ".;router";
+
+service Acceptor {
+    rpc routing(routeReq) returns (routeRes) {}
+}
+
+message Header {
+    string ID = 1;
+    string OrgActorID = 2;
+    string OrgActorType = 3;
+    string PrevActorType = 4;
+
+    int32 MsgId = 5;
+
+    string TargetActorID = 7;
+    string TargetActorType = 8;
+
+    string Event = 9;
+    string Token = 10;
+    int64 Timestamp = 11;
+
+    bytes Custom = 12;
+
+}
+
+message Message {
+    Header header = 1;
+    bytes body = 2;
+}
+
+message routeReq {
+    Message msg = 1;
+}
+
+message routeRes {
+    Message msg = 2;
+}

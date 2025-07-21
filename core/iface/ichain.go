@@ -1,5 +1,7 @@
 package iface
 
+import "github.com/ljhe/scream/router"
+
 type IChain interface {
-	Execute() error
+	Execute(*router.Wrapper) error
 }

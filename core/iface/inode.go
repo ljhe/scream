@@ -1,6 +1,10 @@
 package iface
 
-import "context"
+import (
+	"context"
+	"github.com/ljhe/scream/lib/pubsub"
+	"github.com/ljhe/scream/router"
+)
 
 type CreateFunc func(INodeBuilder) INode
 
@@ -10,12 +14,44 @@ type INode interface {
 	ID() string
 	Type() string
 
+	// Received pushes a router into the actor's mailbox
+	Received(mw *router.Wrapper) error
+
+	// OnEvent registers an event handling chain for the actor
+	OnEvent(ev string, createChainF func(INodeContext) IChain) error
+
+	// OnTimer registers a timer function for the actor (Note: all times used here are in milliseconds)
+	//  dueTime: delay before execution, 0 for immediate execution
+	//  interval: time between each tick
+	//  f: callback function
+	//  args: can be used to pass the actor entity to the timer callback
+	OnTimer(dueTime int64, interval int64, f func(interface{}) error, args interface{}) ITimer
+
+	// CancelTimer cancels a timer
+	CancelTimer(t ITimer)
+
+	// Sub subscribes to a message
+	//  If this is the first subscription to this topic, opts will take effect (you can set some options for the topic, such as ttl)
+	//  topic: A subject that contains a group of channels (e.g., if topic = offline messages, channel = actorId, then each actor can get its own offline messages in this topic)
+	//  channel: Represents different categories within a topic
+	//  createChainF: Callback function for successful subscription
+	Sub(topic string, channel string, createChainF func(node INodeContext) IChain, opts ...pubsub.TopicOption) error
+
+	// Call sends an event to another actor
+	Call(idOrSymbol, actorType, event string, mw *router.Wrapper) error
+
+	ReenterCall(idOrSymbol, actorType, event string, mw *router.Wrapper) IFuture
+
+	Context() INodeContext
+
 	Exit()
 }
 
 type INodeLoader interface {
 	// Builder selects a node from the factory and provides a builder
 	Builder(string, ISystem) INodeBuilder
+
+	AssignToNode(IProcess)
 }
 
 type INodeBuilder interface {
@@ -25,6 +61,8 @@ type INodeBuilder interface {
 	GetNodeUnique() bool
 	GetWeight() int
 
+	GetSystem() ISystem
+	GetLoader() INodeLoader
 	GetConstructor() CreateFunc
 
 	WithID(string) INodeBuilder
@@ -35,6 +73,15 @@ type INodeBuilder interface {
 }
 
 type INodeContext interface {
+	// Call performs a blocking call to target actor
+	//
+	// Parameters:
+	//   - idOrSymbol: target actorID, or routing rule symbol to target actor
+	//   - actorType: type of actor, obtained from actor template
+	//   - event: event name to be handled
+	//   - mw: message wrapper for routing
+	Call(idOrSymbol, actorType, event string, mw *router.Wrapper) error
+
 	// Unregister unregisters an node
 	Unregister(id, ty string) error
 }
@@ -62,5 +109,5 @@ type NodeConstructor struct {
 
 type INodeFactory interface {
 	Get(ty string) *NodeConstructor
-	GetActors() []*NodeConstructor
+	GetNodes() []*NodeConstructor
 }

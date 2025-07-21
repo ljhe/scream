@@ -3,17 +3,75 @@ package tests
 import (
 	"context"
 	"github.com/ljhe/scream/core/process"
+	"github.com/ljhe/scream/router"
 	"github.com/stretchr/testify/assert"
+	"math/rand/v2"
+	"sync"
 	"testing"
 )
 
-func TestNewProcess(t *testing.T) {
+func TestCall(t *testing.T) {
 	p := process.BuildProcessWithOption(
 		process.WithLoader(loader),
 	)
 
-	builder := p.System().Loader("mocka").WithID("mocka").WithType("mocka")
-
-	_, err := builder.Register(context.Background())
+	_, err := p.System().Loader("mocka").WithID("mocka").WithType("mocka").Register(context.TODO())
 	assert.Equal(t, err, nil)
+	_, err = p.System().Loader("mockb").WithID("mockb").WithType("mockb").Register(context.TODO())
+	assert.Equal(t, err, nil)
+	_, err = p.System().Loader("mockc").WithID("mockc").WithType("mockc").Register(context.TODO())
+	assert.Equal(t, err, nil)
+
+	p.Init()
+	defer func() {
+		wg := sync.WaitGroup{}
+		p.System().Exit(&wg)
+		wg.Wait()
+	}()
+
+	t.Run("normal", func(t *testing.T) {
+		m := router.NewBuilder(context.TODO()).Build()
+		err := p.System().Call("mockc", "mockc", "ping", m)
+		assert.Equal(t, err, nil)
+
+		resval := router.GetResCustomField[string](m, "pong")
+		assert.Equal(t, resval, "pong")
+	})
+}
+
+func TestCallBlock(t *testing.T) {
+	p := process.BuildProcessWithOption(
+		process.WithID("test-call-block"),
+		process.WithLoader(loader),
+		process.WithFactory(factory),
+	)
+
+	// build
+	var err error
+	_, err = p.System().Loader("mocka").WithID("mocka").Register(context.TODO())
+	assert.Equal(t, err, nil)
+	_, err = p.System().Loader("mockb").WithID("mockb").Register(context.TODO())
+	assert.Equal(t, err, nil)
+	_, err = p.System().Loader("mockc").WithID("mockc").Register(context.TODO())
+	assert.Equal(t, err, nil)
+
+	p.Init()
+	defer func() {
+		wg := sync.WaitGroup{}
+		p.System().Exit(&wg)
+		wg.Wait()
+	}()
+
+	// a (+1 -> b (+1 -> c (+1
+	t.Run("normal", func(t *testing.T) {
+		m := router.NewBuilder(context.TODO())
+
+		r := rand.IntN(10)
+		m.WithReqCustomFields(router.Attr{Key: "randvalue", Value: r})
+		err := p.System().Call("mocka", "mocka", "test_block", m.Build())
+		assert.Equal(t, err, nil)
+
+		resval := router.GetResCustomField[int](m.Build(), "randvalue")
+		assert.Equal(t, resval, r+3)
+	})
 }

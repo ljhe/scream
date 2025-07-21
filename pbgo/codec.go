@@ -169,23 +169,23 @@ func RegisterMessageInfo(info *MessageInfo) {
 	}
 
 	if info.ID == 0 {
-		panic(fmt.Sprintf("message ID invalid:%v", info.Type.Name()))
+		panic(fmt.Sprintf("router ID invalid:%v", info.Type.Name()))
 	}
 
 	if _, ok := messageByID[info.ID]; ok {
-		panic(fmt.Sprintf("message ID:%v already registered", info.ID))
+		panic(fmt.Sprintf("router ID:%v already registered", info.ID))
 	} else {
 		messageByID[info.ID] = info
 	}
 
 	if _, ok := messageByType[info.Type]; ok {
-		panic(fmt.Sprintf("message Type:%v already registered", info.Type))
+		panic(fmt.Sprintf("router Type:%v already registered", info.Type))
 	} else {
 		messageByType[info.Type] = info
 	}
 
 	if _, ok := messageByName[info.Type.Name()]; ok {
-		panic(fmt.Sprintf("message Name:%v already registered", info.Type))
+		panic(fmt.Sprintf("router Name:%v already registered", info.Type))
 	} else {
 		messageByName[info.Type.Name()] = info
 	}

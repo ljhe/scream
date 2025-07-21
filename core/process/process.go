@@ -20,7 +20,8 @@ type param struct {
 	Ip   string
 	Port int
 
-	Loader iface.INodeLoader
+	Loader  iface.INodeLoader
+	Factory iface.INodeFactory
 }
 
 type Option func(*param)
@@ -50,6 +51,12 @@ func WithLoader(load iface.INodeLoader) Option {
 	}
 }
 
+func WithFactory(factory iface.INodeFactory) Option {
+	return func(p *param) {
+		p.Factory = factory
+	}
+}
+
 func WithIP(ip string) Option {
 	return func(np *param) {
 		np.Ip = ip
@@ -74,7 +81,7 @@ func BuildProcessWithOption(opts ...Option) iface.IProcess {
 	}
 
 	pcs = &Process{
-		sys: system.BuildSystemWithOption(p.ID, p.Ip, p.Port, p.Loader),
+		sys: system.BuildSystemWithOption(p.ID, p.Ip, p.Port, p.Loader, p.Factory),
 		p:   p,
 	}
 	return pcs
@@ -104,6 +111,7 @@ func (p *Process) Init() error {
 	//	logrus.Errorf("init db err:%v", err)
 	//	return err
 	//}
+	p.p.Loader.AssignToNode(p)
 	return nil
 }
 
@@ -125,6 +133,10 @@ func (p *Process) Stop() error {
 
 	logrus.Infof(fmt.Sprintf("[ %s ] close ...", p.p.ID))
 	return nil
+}
+
+func (p *Process) ID() string {
+	return p.p.ID
 }
 
 func (p *Process) System() iface.ISystem {

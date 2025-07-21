@@ -55,6 +55,14 @@ func (nlb *NodeLoaderBuilder) GetNodeUnique() bool {
 	return nlb.NodeUnique
 }
 
+func (nlb *NodeLoaderBuilder) GetSystem() iface.ISystem {
+	return nlb.ISystem
+}
+
+func (nlb *NodeLoaderBuilder) GetLoader() iface.INodeLoader {
+	return nlb.INodeLoader
+}
+
 func (nlb *NodeLoaderBuilder) GetConstructor() iface.CreateFunc {
 	return nlb.Constructor
 }

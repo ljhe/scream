@@ -76,7 +76,7 @@ func (sd *ServiceDiscovery) RegisterService(key, val string) error {
 		}
 	}()
 
-	log.Printf("etcd register ok. key=%v clusterid=%v leaseid=%v etcdaddr=%v \n", key, rsp.Header.ClusterId, leaseResp.ID, sd.config)
+	logrus.Infof("etcd register ok. key=%v clusterid=%v leaseid=%v etcdaddr=%v", key, rsp.Header.ClusterId, leaseResp.ID, sd.config)
 	return nil
 }
 

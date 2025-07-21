@@ -7,17 +7,17 @@ import (
 	"github.com/ljhe/scream/router"
 )
 
-type mockNodeA struct {
+type mockNodeB struct {
 	*node.Node
 }
 
-func NewMockA(p iface.INodeBuilder) iface.INode {
-	return &mockNodeA{
+func NewMockB(p iface.INodeBuilder) iface.INode {
+	return &mockNodeB{
 		Node: &node.Node{Id: p.GetID(), Ty: p.GetType(), Sys: p.GetSystem()},
 	}
 }
 
-func (m *mockNodeA) Init(ctx context.Context) {
+func (m *mockNodeB) Init(ctx context.Context) {
 	m.Node.Init(ctx)
 
 	m.OnEvent("test_block", func(ctx iface.INodeContext) iface.IChain {
@@ -26,7 +26,7 @@ func (m *mockNodeA) Init(ctx context.Context) {
 
 				val := router.GetReqCustomField[int](w, "randvalue")
 				w.ToBuilder().WithReqCustomFields(router.Attr{Key: "randvalue", Value: val + 1})
-				ctx.Call("mockb", "mockb", "test_block", w)
+				ctx.Call("mockc", "mockc", "test_block", w)
 
 				return nil
 			},

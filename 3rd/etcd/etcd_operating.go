@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ljhe/scream/3rd/logrus"
-	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/utils"
 	"go.etcd.io/etcd/client/v3"
 )
@@ -33,7 +32,7 @@ func UnRegister(ctx context.Context, key string) error {
 	return etcdDiscovery.DelServices(ctx, key)
 }
 
-func DiscoveryService(etcdKey string, nodeCreator func(*utils.ServerInfo)) iface.INetNode {
+func DiscoveryService(etcdKey string, nodeCreator func(*utils.ServerInfo)) {
 	// 如果已经存在 就停止之前正在运行的节点(注意不要配置成一样的节点信息 否则会关闭之前的连接)
 	// 连接同一个zone里的服务器节点
 
@@ -81,5 +80,4 @@ func DiscoveryService(etcdKey string, nodeCreator func(*utils.ServerInfo)) iface
 			}
 		}
 	}()
-	return nil
 }

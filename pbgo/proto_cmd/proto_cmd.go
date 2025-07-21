@@ -23,8 +23,8 @@ var (
 	repattern     = regexp.MustCompile(`.*[\.]{1}([^\.]+)`)
 	packagekey    = regexp.MustCompile(`.*package\s+([\S]+)\s*;`)
 	messageidkey  = regexp.MustCompile(`^\s*([\S]+)\s*=\s*([\d]+)\s*;\s*//\s*(.*)$`)
-	messagedefkey = regexp.MustCompile(`^\s*message\s+([\S]+).*//\s*project\s+([\S]+)$`)
-	messagekey    = regexp.MustCompile(`\s*message\s+([\S]+)[^\r\n]*`)
+	messagedefkey = regexp.MustCompile(`^\s*router\s+([\S]+).*//\s*project\s+([\S]+)$`)
+	messagekey    = regexp.MustCompile(`\s*router\s+([\S]+)[^\r\n]*`)
 )
 
 var (
@@ -424,7 +424,7 @@ func registerInfo(id uint16, msgType reflect.Type) {
 		upper := strings.ToUpper(p)
 		lower := strings.ToLower(p)
 		mhanderDef += "\n//" + upper + "\nvar ("
-		mhandler += "\n\tcase \"" + lower + "\":\t//" + upper + " message process part\n\t\treturn "
+		mhandler += "\n\tcase \"" + lower + "\":\t//" + upper + " router process part\n\t\treturn "
 		mhandlerDetail = "func(e iface.IProcEvent) {\n\t\t\tswitch e.Msg().(type) {"
 		for _, id := range sortMsg.handleKeys {
 			data := sortMsg.initMsg[id]
@@ -473,7 +473,7 @@ func increaseMessageId(msgSection map[string]*section, messageIdMax map[string]i
 			section := msgSection[pbName]
 			// pbName当前对应的区域段ID不够使用
 			if index > section.end {
-				log.Fatalf("error increasing message id max index: %d pbName:%v \n", index, pbName)
+				log.Fatalf("error increasing router id max index: %d pbName:%v \n", index, pbName)
 			}
 		}
 	}

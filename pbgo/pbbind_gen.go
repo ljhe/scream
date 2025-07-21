@@ -27,7 +27,7 @@ var (
 
 func GetMessageHandler(sreviceName string) iface.EventCallBack {
 	switch sreviceName { //note.serviceName must be lower words
-	case "gate":	//GATE message process part
+	case "gate":	//GATE router process part
 		return func(e iface.IProcEvent) {
 			switch e.Msg().(type) {
 			case *CSSendMsgReq: Handle_GATE_CSSendMsgReq(e)
@@ -40,7 +40,7 @@ func GetMessageHandler(sreviceName string) iface.EventCallBack {
 			}
 		}
 
-	case "game":	//GAME message process part
+	case "game":	//GAME router process part
 		return func(e iface.IProcEvent) {
 			switch e.Msg().(type) {
 			case *CSSendMsgReq: Handle_GAME_CSSendMsgReq(e)

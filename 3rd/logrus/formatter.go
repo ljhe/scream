@@ -43,7 +43,7 @@ func (j *SelfJsonFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	data := map[string]interface{}{
 		"level":   strings.ToUpper(entry.Level.String()),
 		"time":    entry.Time.Format(utils.DateTimeMS),
-		"message": entry.Message,
+		"router": entry.Message,
 	}
 
 	// 添加自定义字段
