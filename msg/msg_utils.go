@@ -1,4 +1,4 @@
-package router
+package msg
 
 import (
 	"encoding/json"

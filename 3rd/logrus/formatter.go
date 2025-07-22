@@ -41,9 +41,9 @@ type SelfJsonFormatter struct{}
 
 func (j *SelfJsonFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	data := map[string]interface{}{
-		"level":   strings.ToUpper(entry.Level.String()),
-		"time":    entry.Time.Format(utils.DateTimeMS),
-		"router": entry.Message,
+		"level": strings.ToUpper(entry.Level.String()),
+		"time":  entry.Time.Format(utils.DateTimeMS),
+		"msg":   entry.Message,
 	}
 
 	// 添加自定义字段

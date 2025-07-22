@@ -2,15 +2,15 @@ package node
 
 import (
 	"github.com/ljhe/scream/core/iface"
-	"github.com/ljhe/scream/router"
+	"github.com/ljhe/scream/msg"
 	"sync"
 )
 
 // Future represents an asynchronous operation
 type Future struct {
-	result    *router.Wrapper
+	result    *msg.Wrapper
 	done      chan struct{}
-	callbacks []func(mw *router.Wrapper)
+	callbacks []func(mw *msg.Wrapper)
 	mutex     sync.Mutex
 }
 
@@ -20,7 +20,7 @@ func NewFuture() *Future {
 	}
 }
 
-func (f *Future) Then(callback func(mw *router.Wrapper)) iface.IFuture {
+func (f *Future) Then(callback func(mw *msg.Wrapper)) iface.IFuture {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -30,7 +30,7 @@ func (f *Future) Then(callback func(mw *router.Wrapper)) iface.IFuture {
 	}
 
 	newFuture := NewFuture()
-	f.callbacks = append(f.callbacks, func(mw *router.Wrapper) {
+	f.callbacks = append(f.callbacks, func(mw *msg.Wrapper) {
 		callback(mw)
 		newFuture.Complete(mw)
 	})
@@ -38,7 +38,7 @@ func (f *Future) Then(callback func(mw *router.Wrapper)) iface.IFuture {
 	return newFuture
 }
 
-func (f *Future) Complete(result *router.Wrapper) {
+func (f *Future) Complete(result *msg.Wrapper) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 

@@ -1,9 +1,10 @@
-package router
+package msg
 
 import (
 	"context"
 	"github.com/google/uuid"
 	"github.com/ljhe/scream/lib/warpwaitgroup"
+	"github.com/ljhe/scream/msg/router"
 )
 
 // WrapperParm nsq config
@@ -13,8 +14,8 @@ type WrapperParm struct {
 }
 
 type Wrapper struct {
-	Req *Message // The proto-defined Message
-	Res *Message
+	Req *router.Message // The proto-defined Message
+	Res *router.Message
 	Ctx context.Context
 	Err error
 
@@ -39,10 +40,10 @@ func (mw *Wrapper) GetWg() *warpwaitgroup.WrapWaitGroup {
 	return nil
 }
 
-// newMessage create new router
-func newMessage(uid string) *Message {
-	m := &Message{
-		Header: &Header{
+// newMessage create new msg
+func newMessage(uid string) *router.Message {
+	m := &router.Message{
+		Header: &router.Header{
 			ID: uid,
 		},
 	}
@@ -60,8 +61,8 @@ func NewBuilder(ctx context.Context) *MsgBuilder {
 	uid := uuid.NewString()
 
 	parm := WrapperParm{
-		CustomMapSerialize: &CustomJsonSerialize{},
 		CustomObjSerialize: &CustomObjectSerialize{},
+		CustomMapSerialize: &CustomJsonSerialize{},
 	}
 
 	if wc, ok := ctx.Value(WaitGroupKey{}).(*warpwaitgroup.WrapWaitGroup); ok {
@@ -87,13 +88,14 @@ func Swap(mw *Wrapper) *Wrapper {
 	return &Wrapper{
 		Ctx: ctx,
 		// 交换 Req 和 Res
+		parm: mw.parm,
 		Req:  mw.Req,
 		Res:  mw.Res,
 		Done: make(chan struct{}),
 	}
 }
 
-func (b *MsgBuilder) WithReqHeader(h *Header) *MsgBuilder {
+func (b *MsgBuilder) WithReqHeader(h *router.Header) *MsgBuilder {
 	if b.wrapper.Req.Header != nil && h != nil {
 		// Copy fields from the input header to existing header
 		b.wrapper.Req.Header.ID = h.ID
@@ -118,7 +120,7 @@ func (b *MsgBuilder) WithReqBody(byt []byte) *MsgBuilder {
 }
 
 // WithResHeader set res header
-func (b *MsgBuilder) WithResHeader(h *Header) *MsgBuilder {
+func (b *MsgBuilder) WithResHeader(h *router.Header) *MsgBuilder {
 	b.wrapper.Res.Header = h
 	return b
 }

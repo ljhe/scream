@@ -1,16 +1,19 @@
-package message
+package msg
 
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"github.com/ljhe/scream/3rd/logrus"
-	"github.com/ljhe/scream/def"
-	"github.com/ljhe/scream/pbgo"
 	"github.com/ljhe/scream/utils/encryption"
 	"io"
-	"reflect"
 	"sync"
+)
+
+const MsgMaxLen = 1024 * 40 // 40k(发送和接受字节最大数量)
+
+const (
+	MsgEncryptionNone = iota
+	MsgEncryptionRSA
 )
 
 var ErrMsgIdNotFound = errors.New("msgId not found")
@@ -75,35 +78,6 @@ func WriteFull(writer io.Writer, buf []byte) error {
 	return nil
 }
 
-// EncodeMessage 消息序列化
-func EncodeMessage(msg interface{}) ([]byte, *pbgo.MessageInfo, error) {
-	info := pbgo.MessageInfoByMsg(msg)
-	if info == nil {
-		return nil, nil, ErrMsgIdNotFound
-	}
-	bt, err := info.Codec.Marshal(msg)
-	if err != nil {
-		logrus.Errorf("EncodeMessage Marshal err. router:%v err:%v", msg, err)
-		return nil, nil, err
-	}
-	return bt.([]byte), info, nil
-}
-
-// DecodeMessage 消息反序列化
-func DecodeMessage(msgId uint16, msg []byte) (interface{}, error) {
-	sys := pbgo.MessageInfoById(msgId)
-	if sys == nil {
-		return nil, fmt.Errorf("msgId not found. msgId: %d router:%s", msgId, string(msg))
-	}
-	msgObj := reflect.New(sys.Type).Interface()
-	err := sys.Codec.Unmarshal(msg, msgObj)
-	if err != nil {
-		logrus.Errorf("DecodeMessage Unmarshal err. router:%s err:%v", string(msg), err)
-		return nil, err
-	}
-	return msgObj, nil
-}
-
 func readUint16(reader io.Reader, byteLen uint16) (uint16, error) {
 	bt := make([]byte, byteLen)
 	_, err := io.ReadFull(reader, bt)
@@ -116,7 +90,7 @@ func readUint16(reader io.Reader, byteLen uint16) (uint16, error) {
 
 func (mb *MsgBase) Marshal(msgData []byte) []byte {
 	remaining := int(mb.MsgLen) - mb.SendBytes
-	mb.ChunkSize = def.MsgMaxLen
+	mb.ChunkSize = MsgMaxLen
 	if remaining < mb.ChunkSize {
 		mb.ChunkSize = remaining
 	}
@@ -169,7 +143,7 @@ func (mb *MsgBase) Unmarshal(reader io.Reader) ([]byte, error) {
 			bufMsg = make([]byte, mb.MsgLen)
 		}
 		remaining := mb.MsgLen - mb.ReceivedBytes
-		mb.ChunkSize = def.MsgMaxLen
+		mb.ChunkSize = MsgMaxLen
 		if remaining < uint16(mb.ChunkSize) {
 			mb.ChunkSize = int(remaining)
 		}
@@ -245,9 +219,9 @@ func (mb *MsgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
 	msgData = bytes[MsgOptions.FlagIdLen:]
 
 	switch mb.FlagId {
-	case def.MsgEncryptionNone:
+	case MsgEncryptionNone:
 		break
-	case def.MsgEncryptionRSA:
+	case MsgEncryptionRSA:
 		msgData, err = encryption.RSADecrypt(msgData, encryption.RSAWSPrivateKey)
 	default:
 		logrus.Errorf("MsgBase flagId err. flagId: %d", mb.FlagId)

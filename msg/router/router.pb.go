@@ -313,7 +313,8 @@ const file_router_proto_rawDesc = "" +
 	"\brouteRes\x12!\n" +
 	"\x03msg\x18\x02 \x01(\v2\x0f.router.MessageR\x03msg2;\n" +
 	"\bAcceptor\x12/\n" +
-	"\arouting\x12\x10.router.routeReq\x1a\x10.router.routeRes\"\x00B\vZ\t.;messageb\x06proto3"
+	"\arouting\x12\x10.router.routeReq\x1a\x10.router.routeRes\"\x00B\n" +
+	"Z\b.;routerb\x06proto3"
 
 var (
 	file_router_proto_rawDescOnce sync.Once

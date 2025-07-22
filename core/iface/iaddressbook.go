@@ -18,6 +18,7 @@ type IAddressBook interface {
 	GetByID(context.Context, string) (AddressInfo, error)
 	GetByType(context.Context, string) ([]AddressInfo, error)
 
+	GetWildcardNode(ctx context.Context, nodeType string) (AddressInfo, error)
 	GetLowWeightNodeForNode(ctx context.Context, nodeType string) (AddressInfo, error)
 	GetNodeTypeCount(ctx context.Context, nodeType string) (int64, error)
 

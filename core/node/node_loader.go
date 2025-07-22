@@ -4,19 +4,44 @@ import (
 	"context"
 	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/iface"
+	"github.com/ljhe/scream/def"
+	"github.com/ljhe/scream/msg"
 )
 
-type DefaultActorLoader struct {
+type DefaultNodeLoader struct {
 	factory iface.INodeFactory
 }
 
-func BuildDefaultActorLoader(factory iface.INodeFactory) iface.INodeLoader {
-	return &DefaultActorLoader{factory: factory}
+func BuildDefaultNodeLoader(factory iface.INodeFactory) iface.INodeLoader {
+	return &DefaultNodeLoader{factory: factory}
+}
+
+func (nl *DefaultNodeLoader) Pick(ctx context.Context, builder iface.INodeBuilder) error {
+
+	msgbuild := msg.NewBuilder(context.TODO())
+
+	for key, value := range builder.GetOptions() {
+		msgbuild.WithReqCustomFields(msg.Attr{Key: key, Value: value})
+	}
+
+	msgbuild.WithReqCustomFields(def.NodeID(builder.GetID()))
+	msgbuild.WithReqCustomFields(def.NodeTy(builder.GetType()))
+
+	go func() {
+		err := builder.GetSystem().Call(def.SymbolWildcard, "MockDynamicPicker", "MockDynamicPick",
+			msgbuild.Build(),
+		)
+		if err != nil {
+			logrus.Warnf("nodeLoader call dynamic picker err %v", err.Error())
+		}
+	}()
+
+	return nil
 }
 
 // Builder selects an actor from the factory and provides a builder
-func (dl *DefaultActorLoader) Builder(ty string, sys iface.ISystem) iface.INodeBuilder {
-	ac := dl.factory.Get(ty)
+func (nl *DefaultNodeLoader) Builder(ty string, sys iface.ISystem) iface.INodeBuilder {
+	ac := nl.factory.Get(ty)
 	if ac == nil {
 		return nil
 	}
@@ -24,21 +49,21 @@ func (dl *DefaultActorLoader) Builder(ty string, sys iface.ISystem) iface.INodeB
 	builder := &NodeLoaderBuilder{
 		ISystem:         sys,
 		NodeConstructor: *ac,
-		INodeLoader:     dl,
+		INodeLoader:     nl,
 	}
 
 	return builder
 }
 
-func (dl *DefaultActorLoader) AssignToNode(process iface.IProcess) {
-	nodes := dl.factory.GetNodes()
+func (nl *DefaultNodeLoader) AssignToNode(process iface.IProcess) {
+	nodes := nl.factory.GetNodes()
 
 	for _, node := range nodes {
 		if node.Dynamic {
 			continue
 		}
 
-		builder := dl.Builder(node.Name, process.System())
+		builder := nl.Builder(node.Name, process.System())
 		if node.ID == "" {
 			node.ID = node.Name
 		}

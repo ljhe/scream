@@ -3,7 +3,7 @@ package iface
 import (
 	"context"
 	"github.com/ljhe/scream/lib/pubsub"
-	"github.com/ljhe/scream/router"
+	"github.com/ljhe/scream/msg"
 )
 
 type CreateFunc func(INodeBuilder) INode
@@ -14,8 +14,8 @@ type INode interface {
 	ID() string
 	Type() string
 
-	// Received pushes a router into the actor's mailbox
-	Received(mw *router.Wrapper) error
+	// Received pushes a msg into the actor's mailbox
+	Received(mw *msg.Wrapper) error
 
 	// OnEvent registers an event handling chain for the actor
 	OnEvent(ev string, createChainF func(INodeContext) IChain) error
@@ -38,9 +38,9 @@ type INode interface {
 	Sub(topic string, channel string, createChainF func(node INodeContext) IChain, opts ...pubsub.TopicOption) error
 
 	// Call sends an event to another actor
-	Call(idOrSymbol, actorType, event string, mw *router.Wrapper) error
+	Call(idOrSymbol, actorType, event string, mw *msg.Wrapper) error
 
-	ReenterCall(idOrSymbol, actorType, event string, mw *router.Wrapper) IFuture
+	ReenterCall(idOrSymbol, actorType, event string, mw *msg.Wrapper) IFuture
 
 	Context() INodeContext
 
@@ -51,6 +51,9 @@ type INodeLoader interface {
 	// Builder selects a node from the factory and provides a builder
 	Builder(string, ISystem) INodeBuilder
 
+	// Pick selects an appropriate node for the actor builder to register
+	Pick(context.Context, INodeBuilder) error
+
 	AssignToNode(IProcess)
 }
 
@@ -60,6 +63,8 @@ type INodeBuilder interface {
 	GetGlobalQuantityLimit() int
 	GetNodeUnique() bool
 	GetWeight() int
+	GetOpt(key string) string
+	GetOptions() map[string]string
 
 	GetSystem() ISystem
 	GetLoader() INodeLoader
@@ -70,6 +75,7 @@ type INodeBuilder interface {
 	WithOpt(string, string) INodeBuilder
 
 	Register(context.Context) (INode, error)
+	Picker(context.Context) error
 }
 
 type INodeContext interface {
@@ -80,7 +86,19 @@ type INodeContext interface {
 	//   - actorType: type of actor, obtained from actor template
 	//   - event: event name to be handled
 	//   - mw: message wrapper for routing
-	Call(idOrSymbol, actorType, event string, mw *router.Wrapper) error
+	Call(idOrSymbol, actorType, event string, mw *msg.Wrapper) error
+
+	// ReenterCall performs a reentrant(asynchronous) call
+	//
+	// Parameters:
+	//   - idOrSymbol: target actorID, or routing rule symbol to target actor
+	//   - actorType: type of actor, obtained from actor template
+	//   - event: event name to be handled
+	//   - mw: message wrapper for routing
+	ReenterCall(idOrSymbol, actorType, event string, mw *msg.Wrapper) IFuture
+
+	// AddressBook actor 地址管理对象
+	AddressBook() IAddressBook
 
 	// Unregister unregisters an node
 	Unregister(id, ty string) error

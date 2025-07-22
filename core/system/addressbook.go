@@ -82,9 +82,31 @@ func (ab *AddressBook) Unregister(ctx context.Context, id string, weight int) er
 	return err
 }
 
-func (ab *AddressBook) GetByID(ctx context.Context, s string) (iface.AddressInfo, error) {
-	//TODO implement me
-	panic("implement me")
+func (ab *AddressBook) GetByID(ctx context.Context, id string) (iface.AddressInfo, error) {
+
+	if id == "" {
+		return iface.AddressInfo{}, fmt.Errorf("node id or type is empty")
+	}
+
+	ab.RLock()
+	if _, ok := ab.IDMap[id]; ok {
+		ab.RUnlock()
+		return iface.AddressInfo{Process: ab.Id, Ip: ab.Ip, Port: ab.Port, NodeId: id}, nil // return local node info directly
+	}
+	ab.RUnlock()
+
+	//resp, err := etcd.GetEtcdDiscovery().Cli.Get(ctx, genKey(def.AddressBookIDField, id), clientv3.WithPrefix())
+	//if err != nil || resp.Count == 0 {
+	//	return iface.AddressInfo{}, fmt.Errorf("etcd get node error:%v id:%s", err, id)
+	//}
+
+	var addr iface.AddressInfo
+	//err = json.Unmarshal(resp.Kvs[0].Value, &addr)
+	//if err != nil {
+	//	return iface.AddressInfo{}, fmt.Errorf("failed to unmarshal address: %v", err)
+	//}
+
+	return addr, nil
 }
 
 func (ab *AddressBook) GetByType(ctx context.Context, s string) ([]iface.AddressInfo, error) {
@@ -92,12 +114,16 @@ func (ab *AddressBook) GetByType(ctx context.Context, s string) ([]iface.Address
 	panic("implement me")
 }
 
-func (ab *AddressBook) GetLowWeightNodeForNode(ctx context.Context, actorType string) (iface.AddressInfo, error) {
+func (ab *AddressBook) GetWildcardNode(ctx context.Context, nodeType string) (iface.AddressInfo, error) {
+	panic("implement me")
+}
+
+func (ab *AddressBook) GetLowWeightNodeForNode(ctx context.Context, nodeType string) (iface.AddressInfo, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (ab *AddressBook) GetNodeTypeCount(ctx context.Context, actorType string) (int64, error) {
+func (ab *AddressBook) GetNodeTypeCount(ctx context.Context, nodeType string) (int64, error) {
 	//TODO implement me
 	panic("implement me")
 }

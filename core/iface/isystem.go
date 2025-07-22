@@ -3,7 +3,7 @@ package iface
 import (
 	"context"
 	"github.com/ljhe/scream/lib/pubsub"
-	"github.com/ljhe/scream/router"
+	"github.com/ljhe/scream/msg"
 	"sync"
 )
 
@@ -13,7 +13,11 @@ type ISystem interface {
 
 	// Call sends an event to another actor
 	// Synchronous call semantics (actual implementation is asynchronous, each call is in a separate goroutine)
-	Call(idOrSymbol, actorType, event string, mw *router.Wrapper) error
+	Call(idOrSymbol, actorType, event string, mw *msg.Wrapper) error
+
+	// Send sends an event to another actor
+	// Asynchronous call semantics, does not block the current goroutine, used for long-running RPC calls
+	Send(idOrSymbol, actorType, event string, mw *msg.Wrapper) error
 
 	// Pub semantics for pubsub, used to publish messages to an actor's message cache queue
 	Pub(topic string, event string, body []byte) error

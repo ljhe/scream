@@ -8,7 +8,7 @@ import (
 	"github.com/ljhe/scream/core/system"
 	"github.com/ljhe/scream/lib/mpsc"
 	"github.com/ljhe/scream/lib/pubsub"
-	"github.com/ljhe/scream/router"
+	"github.com/ljhe/scream/msg"
 	"reflect"
 	"runtime/debug"
 	"sync/atomic"
@@ -57,7 +57,7 @@ func (n *Node) Init(ctx context.Context) {
 	}
 
 	n.actorCtx.ctx = context.WithValue(n.actorCtx.ctx, systemKey{}, n.Sys)
-	n.actorCtx.ctx = context.WithValue(n.actorCtx.ctx, actorKey{}, n)
+	n.actorCtx.ctx = context.WithValue(n.actorCtx.ctx, nodeKey{}, n)
 
 	n.timers = make(map[iface.ITimer]struct{})
 	n.timerChan = make(chan iface.ITimer, 1024)
@@ -105,6 +105,11 @@ func (n *Node) OnTimer(dueTime int64, interval int64, f func(interface{}) error,
 			n.timerChan <- info
 		}
 
+		// 如果 interval <= 0 只触发一次
+		if info.interval <= 0 {
+			return
+		}
+
 		info.ticker = time.NewTicker(info.interval)
 
 		for {
@@ -125,7 +130,7 @@ func (n *Node) CancelTimer(t iface.ITimer) {
 		return
 	}
 
-	logrus.Infof("[braid.timer] %v timer cancel", n.Id)
+	logrus.Infof("timer %v timer cancel", n.Id)
 
 	t.Stop()
 	delete(n.timers, t)
@@ -151,7 +156,7 @@ func (n *Node) Sub(topic string, channel string, callback func(ctx iface.INodeCo
 	return nil
 }
 
-func (n *Node) Call(idOrSymbol, actorType, event string, mw *router.Wrapper) error {
+func (n *Node) Call(idOrSymbol, actorType, event string, mw *msg.Wrapper) error {
 
 	if mw.Req.Header.OrgActorID == "" { // Only record the original sender
 		mw.Req.Header.OrgActorID = n.Id
@@ -164,7 +169,7 @@ func (n *Node) Call(idOrSymbol, actorType, event string, mw *router.Wrapper) err
 	return n.Sys.Call(idOrSymbol, actorType, event, mw)
 }
 
-func (n *Node) Received(mw *router.Wrapper) error {
+func (n *Node) Received(mw *msg.Wrapper) error {
 	if mw.Req.Header.OrgActorID != "" {
 		if mw.Req.Header.OrgActorID == n.Id {
 			return system.ErrSelfCall
@@ -173,8 +178,8 @@ func (n *Node) Received(mw *router.Wrapper) error {
 
 	if atomic.LoadInt32(&n.closed) != 0 {
 		// Actor已关闭，不处理消息，也不增加计数器
-		logrus.Warnf("actor %v is closed, message %v will be ignored", n.Id, mw.Req.Header.Event)
-		return fmt.Errorf("actor %v is closed", n.Id)
+		logrus.Warnf("node %v is closed, message %v will be ignored", n.Id, mw.Req.Header.Event)
+		return fmt.Errorf("node %v is closed", n.Id)
 	}
 
 	mw.GetWg().Add(1)
@@ -182,7 +187,7 @@ func (n *Node) Received(mw *router.Wrapper) error {
 	return nil
 }
 
-func (n *Node) ReenterCall(idOrSymbol, actorType, event string, rmw *router.Wrapper) iface.IFuture {
+func (n *Node) ReenterCall(idOrSymbol, actorType, event string, rmw *msg.Wrapper) iface.IFuture {
 	if rmw.Req.Header.OrgActorID == "" {
 		rmw.Req.Header.OrgActorID = n.Id
 		rmw.Req.Header.OrgActorType = n.Ty
@@ -208,7 +213,7 @@ func (n *Node) ReenterCall(idOrSymbol, actorType, event string, rmw *router.Wrap
 			logrus.Infof("ReenterCall Context canceled: %v", rmw.Ctx.Err())
 			cancel()
 
-			errWrapper := &router.Wrapper{
+			errWrapper := &msg.Wrapper{
 				Ctx: rmw.Ctx,
 				Err: rmw.Ctx.Err(),
 			}
@@ -222,12 +227,12 @@ func (n *Node) ReenterCall(idOrSymbol, actorType, event string, rmw *router.Wrap
 		defer cancel()
 		logrus.Infof("ReenterCall Starting call to %s.%s", actorType, event)
 
-		swappedWrapper := router.Swap(rmw)
+		swappedWrapper := msg.Swap(rmw)
 		//swappedWrapper.Ctx = ctx
 
 		err := n.Sys.Call(idOrSymbol, actorType, event, swappedWrapper)
 		if err != nil {
-			callFuture.Complete(&router.Wrapper{
+			callFuture.Complete(&msg.Wrapper{
 				Ctx: ctx,
 				Err: err,
 			})
@@ -238,10 +243,10 @@ func (n *Node) ReenterCall(idOrSymbol, actorType, event string, rmw *router.Wrap
 	}()
 
 	// 设置回调，将处理放入重入队列
-	callFuture.Then(func(ret *router.Wrapper) {
+	callFuture.Then(func(ret *msg.Wrapper) {
 
 		reenterMsg := &reenterMessage{
-			action: func(mw *router.Wrapper) error {
+			action: func(mw *msg.Wrapper) error {
 
 				defer func() {
 					if r := recover(); r != nil {
@@ -279,7 +284,7 @@ func (n *Node) update() {
 		for !n.q.Empty() || !n.reenterQueue.Empty() {
 			select {
 			case <-timeout:
-				logrus.Errorf("actor %s force close due to timeout waiting for queue to empty remaining %v", n.Id, n.q.Count())
+				logrus.Errorf("node %s force close due to timeout waiting for queue to empty remaining %v", n.Id, n.q.Count())
 				goto ForceClose
 			case <-ticker.C:
 				continue
@@ -288,7 +293,7 @@ func (n *Node) update() {
 
 	ForceClose:
 		if atomic.CompareAndSwapInt32(&n.closed, 1, 2) {
-			logrus.Infof("actor %s closing channel", n.Id)
+			logrus.Infof("node %s closing channel", n.Id)
 			close(n.closeCh)
 		}
 	}
@@ -307,15 +312,15 @@ func (n *Node) update() {
 				}()
 
 				if err := timerInfo.Execute(); err != nil {
-					logrus.Errorf("actor %v timer callback error: %v", n.Id, err)
+					logrus.Errorf("node %v timer callback error: %v", n.Id, err)
 				}
 			}()
 		case <-n.q.C:
 			msgInterface := n.q.Pop()
 
-			mw, ok := msgInterface.(*router.Wrapper)
+			mw, ok := msgInterface.(*msg.Wrapper)
 			if !ok {
-				logrus.Errorf("actor %v received non-Message type %v", n.Id, reflect.TypeOf(msgInterface))
+				logrus.Errorf("node %v received non-Message type %v", n.Id, reflect.TypeOf(msgInterface))
 				continue
 			}
 
@@ -331,26 +336,26 @@ func (n *Node) update() {
 				if chain, ok := n.chains[mw.Req.Header.Event]; ok {
 					err := chain.Execute(mw)
 					if err != nil {
-						logrus.Errorf("actor %v event %v execute err %v", n.Id, mw.Req.Header.Event, err)
+						logrus.Errorf("node %v event %v execute err %v", n.Id, mw.Req.Header.Event, err)
 					}
 				} else {
-					logrus.Errorf("actor %v No handlers for message type: %s", n.Id, mw.Req.Header.Event)
+					logrus.Errorf("node %v No handlers for message type: %s", n.Id, mw.Req.Header.Event)
 				}
 			}()
 
 		case <-n.reenterQueue.C:
 			reenterMsgInterface := n.reenterQueue.Pop()
 			if reenterMsg, ok := reenterMsgInterface.(*reenterMessage); ok {
-				reenterMsg.action(reenterMsg.msg.(*router.Wrapper))
+				reenterMsg.action(reenterMsg.msg.(*msg.Wrapper))
 			}
 
 		case <-n.shutdownCh:
 			if atomic.CompareAndSwapInt32(&n.closed, 0, 1) {
-				logrus.Infof("actor %s exiting check close %v", n.Id, atomic.LoadInt32(&n.closed))
+				logrus.Infof("node %s exiting check close %v", n.Id, atomic.LoadInt32(&n.closed))
 				go checkClose()
 			}
 		case <-n.closeCh:
-			logrus.Infof("[braid.actor] %s exiting closed", n.Id)
+			logrus.Infof("node %s exiting closed", n.Id)
 			return
 		}
 	}

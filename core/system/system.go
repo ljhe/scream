@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/core/iface"
+	"github.com/ljhe/scream/def"
 	"github.com/ljhe/scream/lib/pubsub"
-	"github.com/ljhe/scream/router"
+	"github.com/ljhe/scream/msg"
 	"sync"
 	"time"
 )
@@ -36,6 +37,7 @@ type System struct {
 }
 
 func BuildSystemWithOption(id, ip string, port int, loader iface.INodeLoader, factory iface.INodeFactory) iface.ISystem {
+	//var err error
 
 	sys := &System{
 		nodeidmap:   make(map[string]iface.INode),
@@ -45,8 +47,14 @@ func BuildSystemWithOption(id, ip string, port int, loader iface.INodeLoader, fa
 		callTimeout: time.Second * 5,
 	}
 
+	if loader == nil || factory == nil {
+		panic("system loader or factory is nil!")
+	}
+
 	sys.loader = loader
 	sys.factory = factory
+
+	sys.ps = pubsub.BuildWithOption()
 
 	sys.addressbook = New(iface.AddressInfo{
 		Process: sys.processID,
@@ -136,14 +144,14 @@ func (sys *System) Unregister(id, ty string) error {
 	return err
 }
 
-func (sys *System) Call(idOrSymbol, actorType, event string, mw *router.Wrapper) error {
+func (sys *System) Call(idOrSymbol, nodeType, event string, mw *msg.Wrapper) error {
 	// Set message header information
 	mw.Req.Header.Event = event
 	mw.Req.Header.TargetActorID = idOrSymbol
-	mw.Req.Header.TargetActorType = actorType
+	mw.Req.Header.TargetActorType = nodeType
 
 	var info iface.AddressInfo
-	//var actor iface.INode
+	var node iface.INode
 	var err error
 
 	if idOrSymbol == "" {
@@ -151,6 +159,24 @@ func (sys *System) Call(idOrSymbol, actorType, event string, mw *router.Wrapper)
 	}
 
 	switch idOrSymbol {
+	case def.SymbolWildcard:
+		info, err = sys.addressbook.GetWildcardNode(mw.Ctx, nodeType)
+		// Check if the wildcard actor is local
+		sys.RLock()
+		actor, ok := sys.nodeidmap[info.NodeId]
+		sys.RUnlock()
+		if ok {
+			return sys.localCall(actor, mw)
+		}
+	case def.SymbolLocalFirst:
+		node, info, err = sys.findLocalOrWildcardActor(mw.Ctx, nodeType)
+		if err != nil {
+			return err
+		}
+		if node != nil {
+			// Local call
+			return sys.localCall(node, mw)
+		}
 	default:
 		// First, check if it's a local call
 		sys.RLock()
@@ -167,14 +193,14 @@ func (sys *System) Call(idOrSymbol, actorType, event string, mw *router.Wrapper)
 	}
 
 	if err != nil {
-		return fmt.Errorf("system call id %v ty %v err %w", idOrSymbol, actorType, err)
+		return fmt.Errorf("system call id %v ty %v err %w", idOrSymbol, nodeType, err)
 	}
 
 	if info.Ip == sys.processIP && info.Port == sys.processPort {
-		if err := sys.addressbook.Unregister(mw.Ctx, info.NodeId, sys.factory.Get(actorType).Weight); err != nil {
-			logrus.Warnf("system unregister stale actor record err actorTy %v NodeId %v err %v", actorType, info.NodeId, err)
+		if err := sys.addressbook.Unregister(mw.Ctx, info.NodeId, sys.factory.Get(nodeType).Weight); err != nil {
+			logrus.Warnf("system unregister stale actor record err actorTy %v NodeId %v err %v", nodeType, info.NodeId, err)
 		}
-		logrus.Infof("system found inconsistent actor record actorTy %v NodeId %v call ev %v, cleaned up", actorType, info.NodeId, event)
+		logrus.Infof("system found inconsistent actor record actorTy %v NodeId %v call ev %v, cleaned up", nodeType, info.NodeId, event)
 
 		return ErrSelfCall
 	}
@@ -183,7 +209,76 @@ func (sys *System) Call(idOrSymbol, actorType, event string, mw *router.Wrapper)
 	return nil
 }
 
-func (sys *System) localCall(actorp iface.INode, mw *router.Wrapper) error {
+func (sys *System) Send(idOrSymbol, nodeType, event string, mw *msg.Wrapper) error {
+	// Set message header information
+	mw.Req.Header.Event = event
+	mw.Req.Header.TargetActorID = idOrSymbol
+	mw.Req.Header.TargetActorType = nodeType
+
+	var info iface.AddressInfo
+	//var node iface.INode
+	var err error
+
+	if idOrSymbol == "" {
+		return fmt.Errorf("system send unknown target id")
+	}
+
+	switch idOrSymbol {
+	case def.SymbolWildcard:
+		info, err = sys.addressbook.GetWildcardNode(mw.Ctx, nodeType)
+		// Check if the wildcard node is local
+		sys.RLock()
+		node, ok := sys.nodeidmap[info.NodeId]
+		sys.RUnlock()
+		if ok {
+			return node.Received(mw)
+		}
+	default:
+		// First, check if it's a local call
+		sys.RLock()
+		actorp, ok := sys.nodeidmap[idOrSymbol]
+		sys.RUnlock()
+
+		if ok {
+			return actorp.Received(mw)
+		}
+
+		// If not local, get from addressbook
+		info, err = sys.addressbook.GetByID(mw.Ctx, idOrSymbol)
+	}
+
+	if err != nil {
+		return fmt.Errorf("system send id %v ty %v err %w", idOrSymbol, nodeType, err)
+	}
+
+	if info.Ip == sys.processIP && info.Port == sys.processPort {
+		if err := sys.addressbook.Unregister(mw.Ctx, info.NodeId, sys.factory.Get(nodeType).Weight); err != nil {
+			logrus.Errorf("system unregister stale actor record err actorTy %v actorID %v err %v", nodeType, info.NodeId, err)
+		}
+		logrus.Warnf("system found inconsistent actor record actorTy %v actorID %v call ev %v, cleaned up", nodeType, info.NodeId, event)
+		return ErrSelfCall
+	}
+
+	return nil
+}
+
+func (sys *System) findLocalOrWildcardActor(ctx context.Context, ty string) (iface.INode, iface.AddressInfo, error) {
+	sys.RLock()
+
+	for id, node := range sys.nodeidmap {
+		if node.Type() == ty {
+			sys.RUnlock()
+			return node, iface.AddressInfo{NodeId: id, NodeTy: ty}, nil
+		}
+	}
+	sys.RUnlock()
+
+	// If not found locally, use GetWildcardNode to perform a random search across the cluster
+	info, err := sys.addressbook.GetWildcardNode(ctx, ty)
+	return nil, info, err
+}
+
+func (sys *System) localCall(actorp iface.INode, mw *msg.Wrapper) error {
 
 	root := mw.GetWg().Count() == 0
 	if root {
@@ -223,7 +318,7 @@ func (sys *System) localCall(actorp iface.INode, mw *router.Wrapper) error {
 		case <-mw.Done:
 			return nil
 		case <-mw.Ctx.Done():
-			timeoutErr := fmt.Errorf("actor %v message %v processing timed out",
+			timeoutErr := fmt.Errorf("node:%v, message:%v, processing timed out",
 				mw.Req.Header.TargetActorID, mw.Req.Header.Event)
 			if mw.Err != nil {
 				timeoutErr = fmt.Errorf("%w: %v", mw.Err, timeoutErr)

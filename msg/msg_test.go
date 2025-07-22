@@ -1,4 +1,4 @@
-package message
+package msg
 
 import (
 	"testing"
@@ -32,5 +32,5 @@ func Benchmark_WithOutPool(b *testing.B) {
 // Benchmark_WithPool-20           30182679                33.71 ns/op           25 B/op          1 allocs/op
 // Benchmark_WithOutPool-20        10550127               104.0 ns/op           540 B/op          0 allocs/op
 
-// gen router.proto
-// .\pbgo\protoc --proto_path=./router --go_out=./router --go-grpc_out=./router router.proto
+// gen msg.proto
+// .\pbgo\protoc --proto_path=./msg --go_out=./msg --go-grpc_out=./msg msg.proto

@@ -1,4 +1,4 @@
-package router
+package msg
 
 import (
 	"encoding/json"
@@ -89,13 +89,13 @@ func GetReqCustomField[T any](msg *Wrapper, key string) T {
 
 	data, err := msg.GetReqCustomMap()
 	if err != nil {
-		logrus.Errorf("[router] get req body map err %v", err.Error())
+		logrus.Errorf("[msg] get req body map err %v", err.Error())
 		return zero
 	}
 
 	val, ok := data[key]
 	if !ok {
-		logrus.Errorf("[router] key %q not found in request body", key)
+		logrus.Errorf("[msg] key %q not found in request body", key)
 		return zero
 	}
 
@@ -144,7 +144,7 @@ func GetReqCustomField[T any](msg *Wrapper, key string) T {
 		}
 	}
 
-	logrus.Infof("[router] type assertion failed for key %q: expected %T, got %T", key, zero, val)
+	logrus.Infof("[msg] type assertion failed for key %q: expected %T, got %T", key, zero, val)
 	return zero
 }
 
@@ -166,7 +166,7 @@ func GetResCustomField[T any](msg *Wrapper, key string) T {
 
 	data, err := msg.GetResCustomMap()
 	if err != nil {
-		logrus.Errorf("[router] get res body map err %v", err.Error())
+		logrus.Errorf("[msg] get res body map err %v", err.Error())
 		return zero
 	}
 
@@ -220,6 +220,6 @@ func GetResCustomField[T any](msg *Wrapper, key string) T {
 		}
 	}
 
-	logrus.Infof("[router] type assertion failed for key %q: expected %T, got %T", key, zero, val)
+	logrus.Infof("[msg] type assertion failed for key %q: expected %T, got %T", key, zero, val)
 	return zero
 }

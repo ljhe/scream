@@ -5,7 +5,8 @@ import (
 	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/lib/mpsc"
 	"github.com/ljhe/scream/lib/unbounded"
-	"github.com/ljhe/scream/router"
+	"github.com/ljhe/scream/msg"
+	"github.com/ljhe/scream/msg/router"
 	"sync/atomic"
 	"time"
 
@@ -91,11 +92,11 @@ func (c *Channel) addHandlers(queue *mpsc.Queue) {
 			pipe := thdredis.Pipeline()
 			recvmsg, ok := m.(*router.Message)
 			if !ok {
-				logrus.Errorf("topic %v channel %v msg is not of type *router.Message", c.topic, c.channel)
+				logrus.Errorf("topic %v channel %v msg is not of type *msg.Message", c.topic, c.channel)
 				continue
 			}
 
-			mb := router.NewBuilder(context.TODO()).
+			mb := msg.NewBuilder(context.TODO()).
 				WithReqHeader(&router.Header{ID: recvmsg.Header.ID, Event: recvmsg.Header.Event}).
 				WithReqBody(recvmsg.Body).Build()
 			mb.GetWg().Add(1)

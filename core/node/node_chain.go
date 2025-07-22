@@ -1,8 +1,8 @@
 package node
 
-import "github.com/ljhe/scream/router"
+import "github.com/ljhe/scream/msg"
 
-type EventHandler func(*router.Wrapper) error
+type EventHandler func(*msg.Wrapper) error
 
 type DefaultChain struct {
 	Before  []EventHandler
@@ -10,7 +10,7 @@ type DefaultChain struct {
 	Handler EventHandler
 }
 
-func (c *DefaultChain) Execute(mw *router.Wrapper) error {
+func (c *DefaultChain) Execute(mw *msg.Wrapper) error {
 	var err error
 
 	for _, before := range c.Before {

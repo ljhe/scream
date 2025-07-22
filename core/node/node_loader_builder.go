@@ -47,6 +47,18 @@ func (nlb *NodeLoaderBuilder) GetWeight() int {
 	return nlb.Weight
 }
 
+func (nlb *NodeLoaderBuilder) GetOptions() map[string]string {
+	nlb.optionsMutex.RLock()
+	defer nlb.optionsMutex.RUnlock()
+	return nlb.Options
+}
+
+func (nlb *NodeLoaderBuilder) GetOpt(key string) string {
+	nlb.optionsMutex.RLock()
+	defer nlb.optionsMutex.RUnlock()
+	return nlb.Options[key]
+}
+
 func (nlb *NodeLoaderBuilder) GetGlobalQuantityLimit() int {
 	return nlb.GlobalQuantityLimit
 }
@@ -69,4 +81,8 @@ func (nlb *NodeLoaderBuilder) GetConstructor() iface.CreateFunc {
 
 func (nlb *NodeLoaderBuilder) Register(ctx context.Context) (iface.INode, error) {
 	return nlb.ISystem.Register(ctx, nlb)
+}
+
+func (nlb *NodeLoaderBuilder) Picker(ctx context.Context) error {
+	return nlb.INodeLoader.Pick(ctx, nlb) // Note: This method is asynchronous
 }

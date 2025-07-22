@@ -15,6 +15,16 @@ func BuildNodeFactory() *NodeFactory {
 		Constructors: make(map[string]*iface.NodeConstructor),
 	}
 
+	factory.Constructors["MockDynamicPicker"] = &iface.NodeConstructor{
+		ID:                  "MockDynamicPicker",
+		Name:                "MockDynamicPicker",
+		Weight:              100,
+		Constructor:         NewDynamicPickerActor,
+		NodeUnique:          true,
+		GlobalQuantityLimit: 10,
+		Options:             make(map[string]string),
+	}
+
 	factory.Constructors["mocka"] = &iface.NodeConstructor{
 		ID:          "mocka",
 		Name:        "mocka",
