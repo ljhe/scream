@@ -2,7 +2,7 @@ package pubsub
 
 import (
 	"context"
-	"github.com/ljhe/scream/3rd/logrus"
+	"github.com/ljhe/scream/3rd/log"
 	"testing"
 
 	"github.com/alicebob/miniredis/v2"
@@ -15,7 +15,11 @@ import (
 var mockRedis *redis.Client
 
 func setupTest() (*miniredis.Miniredis, error) {
-	logrus.Init("")
+	logger, err := log.NewDefaultLogger()
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
 
 	mr, err := miniredis.Run()
 	if err != nil {

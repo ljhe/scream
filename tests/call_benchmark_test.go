@@ -12,11 +12,13 @@ import (
 	"time"
 )
 
-// go test -benchmem -run=^$ -bench ^BenchmarkCall$ -v -benchtime=10s
-//BenchmarkCall-20           64374            174503 ns/op           15518 B/op        241 allocs/op
+// go test -benchmem -run=^$ -bench ^BenchmarkCall$ github.com/ljhe/scream/tests -v -benchtime=10s
 
-// 屏蔽etcd相关操作后
-//BenchmarkCall-20          165931             67673 ns/op            6569 B/op         82 allocs/op
+// benchmark with pprof
+// go test -benchmem -run=^$ -bench ^BenchmarkCall$ github.com/ljhe/scream/tests -v -benchtime=10s -cpuprofile=cpu.prof
+// go test -benchmem -run=^$ -bench ^BenchmarkCall$ github.com/ljhe/scream/tests -v -benchtime=10s -memprofile=mem.prof
+// 		go tool pprof [xxx]		// enter pprof shell
+// 		web						// must install graphviz before
 
 func BenchmarkCall(b *testing.B) {
 	p1 := process.BuildProcessWithOption(
@@ -49,7 +51,6 @@ func BenchmarkCall(b *testing.B) {
 	}()
 
 	time.Sleep(time.Second)
-	b.ResetTimer()
 
 	atomic.StoreInt64(&mock.BechmarkCallReceivedMessageCount, 0)
 
@@ -60,6 +61,6 @@ func BenchmarkCall(b *testing.B) {
 			msg.NewBuilder(context.TODO()).WithReqBody([]byte{}).Build())
 	}
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 2)
 	b.Logf("Total messages received: %d", atomic.LoadInt64(&mock.BechmarkCallReceivedMessageCount))
 }

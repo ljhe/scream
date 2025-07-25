@@ -2,7 +2,7 @@ package node
 
 import (
 	"context"
-	"github.com/ljhe/scream/3rd/logrus"
+	"github.com/ljhe/scream/3rd/log"
 	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/def"
 	"github.com/ljhe/scream/msg"
@@ -32,7 +32,7 @@ func (nl *DefaultNodeLoader) Pick(ctx context.Context, builder iface.INodeBuilde
 			msgbuild.Build(),
 		)
 		if err != nil {
-			logrus.Warnf("nodeLoader call dynamic picker err %v", err.Error())
+			log.WarnF("nodeLoader call dynamic picker err %v", err.Error())
 		}
 	}()
 
@@ -72,7 +72,7 @@ func (nl *DefaultNodeLoader) AssignToNode(process iface.IProcess) {
 
 		_, err := builder.Register(context.TODO())
 		if err != nil {
-			logrus.Errorf("assign to node build node %s err %v", node.Name, err)
+			log.ErrorF("assign to node build node %s err %v", node.Name, err)
 		}
 	}
 }

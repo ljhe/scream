@@ -2,7 +2,7 @@ package pubsub
 
 import (
 	"context"
-	"github.com/ljhe/scream/3rd/logrus"
+	"github.com/ljhe/scream/3rd/log"
 	"github.com/ljhe/scream/lib/mpsc"
 	"github.com/ljhe/scream/lib/unbounded"
 	"github.com/ljhe/scream/msg"
@@ -60,7 +60,7 @@ func (c *Channel) loop() {
 					val := msg.Values["msg"].(string)
 
 					if atomic.LoadInt32(&c.exitFlag) == 1 {
-						logrus.Errorf("cannot write to the exiting channel %v", c.channel)
+						log.ErrorF("cannot write to the exiting channel %v", c.channel)
 						return
 					}
 
@@ -92,7 +92,7 @@ func (c *Channel) addHandlers(queue *mpsc.Queue) {
 			pipe := thdredis.Pipeline()
 			recvmsg, ok := m.(*router.Message)
 			if !ok {
-				logrus.Errorf("topic %v channel %v msg is not of type *msg.Message", c.topic, c.channel)
+				log.ErrorF("topic %v channel %v msg is not of type *msg.Message", c.topic, c.channel)
 				continue
 			}
 
@@ -107,11 +107,11 @@ func (c *Channel) addHandlers(queue *mpsc.Queue) {
 
 			_, err := pipe.Exec(context.TODO())
 			if err != nil {
-				logrus.Errorf("topic %v channel %v id %v pipeline failed: %v", c.topic, c.channel, recvmsg.Header.ID, err)
+				log.ErrorF("topic %v channel %v id %v pipeline failed: %v", c.topic, c.channel, recvmsg.Header.ID, err)
 			}
 		}
 	EXT:
-		logrus.Infof("channel %v stopping handler", c.channel)
+		log.InfoF("channel %v stopping handler", c.channel)
 	}()
 }
 
@@ -123,20 +123,20 @@ func (c *Channel) Close() error {
 
 	_, err := thdredis.XGroupDelConsumer(context.TODO(), c.topic, c.channel, c.consumer).Result()
 	if err != nil {
-		logrus.Errorf("pubsub topic %v channel %v redis channel del consumer err %v", c.topic, c.channel, err.Error())
+		log.ErrorF("pubsub topic %v channel %v redis channel del consumer err %v", c.topic, c.channel, err.Error())
 		return err
 	}
 
 	consumers, err := thdredis.XInfoConsumers(context.TODO(), c.topic, c.channel).Result()
 	if err != nil {
-		logrus.Errorf("pubsub topic %v channel %v redis channel info consumers err %v", c.topic, c.channel, err.Error())
+		log.ErrorF("pubsub topic %v channel %v redis channel info consumers err %v", c.topic, c.channel, err.Error())
 		return err
 	}
 
 	if len(consumers) == 0 {
 		_, err := thdredis.XGroupDestroy(context.TODO(), c.topic, c.channel).Result()
 		if err != nil {
-			logrus.Errorf("pubsub topic %v channel %v redis channel destory err %v", c.topic, c.channel, err.Error())
+			log.ErrorF("pubsub topic %v channel %v redis channel destory err %v", c.topic, c.channel, err.Error())
 		}
 	}
 

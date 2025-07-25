@@ -3,7 +3,7 @@ package msg
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/ljhe/scream/3rd/logrus"
+	"github.com/ljhe/scream/3rd/log"
 	"github.com/ljhe/scream/utils/encryption"
 	"io"
 	"sync"
@@ -197,7 +197,7 @@ func (mb *MsgBase) MarshalBytes(msgData []byte) []byte {
 func (mb *MsgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
 	var msgBodyLen uint16 // 请求长度
 	if len(bytes) < int(MsgOptions.MsgBodyLen) {
-		logrus.Errorf("MsgBase UnmarshalBytes MsgBodyLen err. bytes'len: %d", len(bytes))
+		log.ErrorF("MsgBase UnmarshalBytes MsgBodyLen err. bytes'len: %d", len(bytes))
 		return
 	}
 	msgBodyLen = binary.BigEndian.Uint16(bytes)
@@ -205,14 +205,14 @@ func (mb *MsgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
 	bytes = bytes[MsgOptions.MsgBodyLen:]
 
 	if len(bytes) < int(MsgOptions.MsgIdLen) {
-		logrus.Errorf("MsgBase UnmarshalBytes MsgIdLen err. bytes'len: %d", len(bytes))
+		log.ErrorF("MsgBase UnmarshalBytes MsgIdLen err. bytes'len: %d", len(bytes))
 		return
 	}
 	mb.MsgId = binary.BigEndian.Uint16(bytes)
 	bytes = bytes[MsgOptions.MsgIdLen:]
 
 	if len(bytes) < int(MsgOptions.FlagIdLen) {
-		logrus.Errorf("MsgBase UnmarshalBytes FlagIdLen err. bytes'len: %d", len(bytes))
+		log.ErrorF("MsgBase UnmarshalBytes FlagIdLen err. bytes'len: %d", len(bytes))
 		return
 	}
 	mb.FlagId = binary.BigEndian.Uint16(bytes)
@@ -224,7 +224,7 @@ func (mb *MsgBase) UnmarshalBytes(bytes []byte) (msgData []byte, err error) {
 	case MsgEncryptionRSA:
 		msgData, err = encryption.RSADecrypt(msgData, encryption.RSAWSPrivateKey)
 	default:
-		logrus.Errorf("MsgBase flagId err. flagId: %d", mb.FlagId)
+		log.ErrorF("MsgBase flagId err. flagId: %d", mb.FlagId)
 		return
 	}
 

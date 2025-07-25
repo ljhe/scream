@@ -14,6 +14,8 @@ import (
 func TestCall(t *testing.T) {
 	p := process.BuildProcessWithOption(
 		process.WithLoader(loader),
+		process.WithLoader(loader),
+		process.WithFactory(factory),
 	)
 
 	_, err := p.System().Loader("mocka").WithID("mocka").WithType("mocka").Register(context.TODO())

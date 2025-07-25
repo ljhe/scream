@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ljhe/scream/3rd/logrus"
+	"github.com/ljhe/scream/3rd/log"
 	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/def"
+	"github.com/ljhe/scream/lib/grpc"
 	"github.com/ljhe/scream/lib/pubsub"
 	"github.com/ljhe/scream/msg"
+	"github.com/ljhe/scream/msg/router"
+	realgrpc "google.golang.org/grpc"
 	"sync"
 	"time"
 )
@@ -23,7 +26,9 @@ var (
 type System struct {
 	addressbook *AddressBook
 	nodeidmap   map[string]iface.INode
+	client      *grpc.Client
 	ps          *pubsub.Pubsub
+	acceptor    *Acceptor
 	loader      iface.INodeLoader
 	factory     iface.INodeFactory
 
@@ -37,7 +42,7 @@ type System struct {
 }
 
 func BuildSystemWithOption(id, ip string, port int, loader iface.INodeLoader, factory iface.INodeFactory) iface.ISystem {
-	//var err error
+	var err error
 
 	sys := &System{
 		nodeidmap:   make(map[string]iface.INode),
@@ -51,6 +56,8 @@ func BuildSystemWithOption(id, ip string, port int, loader iface.INodeLoader, fa
 		panic("system loader or factory is nil!")
 	}
 
+	var unaryInterceptors []realgrpc.UnaryClientInterceptor
+	sys.client = grpc.BuildClientWithOption(grpc.ClientAppendUnaryInterceptors(unaryInterceptors...))
 	sys.loader = loader
 	sys.factory = factory
 
@@ -63,7 +70,13 @@ func BuildSystemWithOption(id, ip string, port int, loader iface.INodeLoader, fa
 	})
 
 	if sys.processPort != 0 {
+		sys.acceptor, err = NewAcceptor(sys, sys.processPort)
+		if err != nil {
+			panic(fmt.Errorf("system new acceptor err %v", err.Error()))
+		}
 
+		// run grpc acceptor
+		sys.acceptor.server.Run()
 	}
 
 	return sys
@@ -111,13 +124,13 @@ func (sys *System) Register(ctx context.Context, builder iface.INodeBuilder) (if
 	sys.nodeidmap[builder.GetID()] = node
 	sys.Unlock()
 
-	logrus.Infof("system register success node:%v typ:%v id:%v", sys.addressbook.Id, builder.GetType(), builder.GetID())
+	log.InfoF("system register success node:%v typ:%v id:%v", sys.addressbook.Id, builder.GetType(), builder.GetID())
 	return node, nil
 }
 
 func (sys *System) Unregister(id, ty string) error {
 	// First, check if the node exists and get it
-	logrus.Infof("system unregister node id:%v, node:%v, ty:%v", id, sys.addressbook.Id, ty)
+	log.InfoF("system unregister node id:%v, node:%v, ty:%v", id, sys.addressbook.Id, ty)
 
 	sys.RLock()
 	node, exists := sys.nodeidmap[id]
@@ -136,10 +149,10 @@ func (sys *System) Unregister(id, ty string) error {
 	err := sys.addressbook.Unregister(context.TODO(), id, 0)
 	if err != nil {
 		// Log the error, but don't return it as the actor has already been removed locally
-		logrus.Errorf("system unregister node id %s failed from address book err: %v", id, err)
+		log.ErrorF("system unregister node id %s failed from address book err: %v", id, err)
 	}
 
-	logrus.Infof("system unregister node id:%s successfully", id)
+	log.InfoF("system unregister node id:%s successfully", id)
 
 	return err
 }
@@ -189,7 +202,7 @@ func (sys *System) Call(idOrSymbol, nodeType, event string, mw *msg.Wrapper) err
 
 		// If not local, get from addressbook
 		info, err = sys.addressbook.GetByID(mw.Ctx, idOrSymbol)
-		logrus.Infof("system id call %v is not local, get from addressbook ip %v port %v err %v", idOrSymbol, info.Ip, info.Port, err)
+		log.InfoF("system id call %v is not local, get from addressbook ip %v port %v err %v", idOrSymbol, info.Ip, info.Port, err)
 	}
 
 	if err != nil {
@@ -198,15 +211,15 @@ func (sys *System) Call(idOrSymbol, nodeType, event string, mw *msg.Wrapper) err
 
 	if info.Ip == sys.processIP && info.Port == sys.processPort {
 		if err := sys.addressbook.Unregister(mw.Ctx, info.NodeId, sys.factory.Get(nodeType).Weight); err != nil {
-			logrus.Warnf("system unregister stale actor record err actorTy %v NodeId %v err %v", nodeType, info.NodeId, err)
+			log.WarnF("system unregister stale actor record err actorTy %v NodeId %v err %v", nodeType, info.NodeId, err)
 		}
-		logrus.Infof("system found inconsistent actor record actorTy %v NodeId %v call ev %v, cleaned up", nodeType, info.NodeId, event)
+		log.InfoF("system found inconsistent actor record actorTy %v NodeId %v call ev %v, cleaned up", nodeType, info.NodeId, event)
 
 		return ErrSelfCall
 	}
 
 	// At this point, we know it's a remote call
-	return nil
+	return sys.handleRemoteCall(mw.Ctx, info, mw)
 }
 
 func (sys *System) Send(idOrSymbol, nodeType, event string, mw *msg.Wrapper) error {
@@ -253,13 +266,21 @@ func (sys *System) Send(idOrSymbol, nodeType, event string, mw *msg.Wrapper) err
 
 	if info.Ip == sys.processIP && info.Port == sys.processPort {
 		if err := sys.addressbook.Unregister(mw.Ctx, info.NodeId, sys.factory.Get(nodeType).Weight); err != nil {
-			logrus.Errorf("system unregister stale actor record err actorTy %v actorID %v err %v", nodeType, info.NodeId, err)
+			log.ErrorF("system unregister stale actor record err actorTy %v actorID %v err %v", nodeType, info.NodeId, err)
 		}
-		logrus.Warnf("system found inconsistent actor record actorTy %v actorID %v call ev %v, cleaned up", nodeType, info.NodeId, event)
+		log.WarnF("system found inconsistent actor record actorTy %v actorID %v call ev %v, cleaned up", nodeType, info.NodeId, event)
 		return ErrSelfCall
 	}
 
-	return nil
+	return sys.handleRemoteSend(info, mw)
+}
+
+func (sys *System) handleRemoteSend(info iface.AddressInfo, mw *msg.Wrapper) error {
+	return sys.client.Call(mw.Ctx,
+		fmt.Sprintf("%s:%d", info.Ip, info.Port),
+		"/router.Acceptor/routing",
+		&router.RouteReq{Msg: mw.Req},
+		nil) // We don't need the response for Send
 }
 
 func (sys *System) findLocalOrWildcardActor(ctx context.Context, ty string) (iface.INode, iface.AddressInfo, error) {
@@ -282,7 +303,7 @@ func (sys *System) localCall(actorp iface.INode, mw *msg.Wrapper) error {
 
 	root := mw.GetWg().Count() == 0
 	if root {
-		logrus.Infof("system local call root event %v id %v", mw.Req.Header.Event, mw.Req.Header.TargetActorID)
+		log.InfoF("system local call root event %v id %v", mw.Req.Header.Event, mw.Req.Header.TargetActorID)
 		mw.Done = make(chan struct{})
 		ready := make(chan struct{})
 		go func() {
@@ -298,7 +319,7 @@ func (sys *System) localCall(actorp iface.INode, mw *msg.Wrapper) error {
 			case <-waitCh:
 				// 正常完成
 			case <-time.After(sys.callTimeout):
-				logrus.Warnf("system wait timeout for event %v id %v, remaining tasks: %d",
+				log.WarnF("system wait timeout for event %v id %v, remaining tasks: %d",
 					mw.Req.Header.Event, mw.Req.Header.TargetActorID, mw.GetWg().Count())
 				if mw.Err == nil {
 					mw.Err = fmt.Errorf("system wait timeout, some tasks did not complete")
@@ -327,9 +348,25 @@ func (sys *System) localCall(actorp iface.INode, mw *msg.Wrapper) error {
 			return timeoutErr
 		}
 	} else {
-		logrus.Infof("system local call received event %v id %v", mw.Req.Header.Event, mw.Req.Header.TargetActorID)
+		log.InfoF("system local call received event %v id %v", mw.Req.Header.Event, mw.Req.Header.TargetActorID)
 		return actorp.Received(mw)
 	}
+}
+
+func (sys *System) handleRemoteCall(ctx context.Context, addrinfo iface.AddressInfo, mw *msg.Wrapper) error {
+	res := &router.RouteRes{}
+	err := sys.client.CallWait(ctx,
+		fmt.Sprintf("%s:%d", addrinfo.Ip, addrinfo.Port),
+		"/router.Acceptor/routing",
+		&router.RouteReq{Msg: mw.Req},
+		res)
+
+	if err != nil {
+		return err
+	}
+
+	mw.Res = res.Msg
+	return nil
 }
 
 func (sys *System) Loader(ty string) iface.INodeBuilder {
@@ -349,5 +386,26 @@ func (sys *System) Sub(topic string, channel string, opts ...pubsub.TopicOption)
 }
 
 func (sys *System) Exit(wait *sync.WaitGroup) {
+	if sys.processPort != 0 {
+		wait.Add(1)
+		if sys.acceptor != nil {
+			sys.acceptor.Exit()
+			log.InfoF("system acceptor exit")
+		}
+		wait.Done()
+	}
 
+	for _, node := range sys.nodeidmap {
+		wait.Add(1)
+
+		go func(n iface.INode) {
+			defer wait.Done()
+			err := sys.addressbook.Unregister(context.TODO(), n.ID(), 0)
+			if err != nil {
+				log.ErrorF("system unregister err nodeID %v nodeTy %v err %v", node.Type(), n.ID(), err)
+			}
+			n.Exit()
+			log.InfoF("system node exit %v", n.ID())
+		}(node)
+	}
 }

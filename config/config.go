@@ -2,17 +2,15 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"github.com/ljhe/scream/3rd/db/gorm"
-	"github.com/ljhe/scream/3rd/logrus"
 	"github.com/ljhe/scream/utils"
 	"gopkg.in/yaml.v2"
-	"log"
 	"os"
 )
 
 type ScreamConfig struct {
 	Node Node `yaml:"node"`
-	Log  logrus.LogConfig
 }
 
 type Node struct {
@@ -38,16 +36,13 @@ func Init() *ScreamConfig {
 	}
 	yamlFile, err := os.ReadFile(*ServerConfigPath)
 	if err != nil {
-		log.Fatalf("global config readFile err: %v ", err)
-		return nil
+		panic(fmt.Sprintf("read config file err:%v", err))
 	}
 	var conf ScreamConfig
 	err = yaml.Unmarshal(yamlFile, &conf)
 	if err != nil {
-		log.Fatalf("global config Unmarshal err: %v", err)
-		return nil
+		panic(fmt.Sprintf("global config Unmarshal err: %v", err))
 	}
-	log.Println("global config load success")
 	return &conf
 }
 

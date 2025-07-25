@@ -3,7 +3,7 @@ package pubsub
 import (
 	"context"
 	"fmt"
-	"github.com/ljhe/scream/3rd/logrus"
+	"github.com/ljhe/scream/3rd/log"
 	thdredis "github.com/ljhe/scream/3rd/redis"
 	"github.com/redis/go-redis/v9"
 	"strings"
@@ -43,20 +43,20 @@ func newTopic(name string, mgr *Pubsub, opts ...TopicOption) *Topic {
 		}).Result()
 
 		if err != nil {
-			logrus.Errorf("pubsub Topic %v init failed %v", rt.topic, err)
+			log.ErrorF("pubsub Topic %v init failed %v", rt.topic, err)
 		} else {
 
 			thdredis.XDel(ctx, rt.topic, id)
 			if options.ttl > 0 {
 				err = thdredis.Expire(ctx, rt.topic, options.ttl).Err()
 				if err != nil {
-					logrus.Errorf("pubsub Failed to set TTL for topic %v: %v", rt.topic, err)
+					log.ErrorF("pubsub Failed to set TTL for topic %v: %v", rt.topic, err)
 				}
 			}
 
 			err = thdredis.SAdd(ctx, PubsubTopic, rt.topic).Err()
 			if err != nil {
-				logrus.Errorf("pubsub Failed to add topic %v to BraidPubsubTopic set: %v", rt.topic, err)
+				log.ErrorF("pubsub Failed to add topic %v to BraidPubsubTopic set: %v", rt.topic, err)
 			}
 
 		}
@@ -128,9 +128,9 @@ func (rt *Topic) Close() error {
 			if err != nil {
 				return fmt.Errorf("failed to clean topic %s: %w", rt.topic, err)
 			}
-			logrus.Infof("pubsub Topic %v cleaned successfully", rt.topic)
+			log.InfoF("pubsub Topic %v cleaned successfully", rt.topic)
 		} else {
-			logrus.Infof("pubsub Topic %v not cleaned: non-empty stream", rt.topic)
+			log.InfoF("pubsub Topic %v not cleaned: non-empty stream", rt.topic)
 		}
 	}
 
@@ -148,7 +148,7 @@ func (rt *Topic) getOrCreateChannel(ctx context.Context, name string, p ChannelP
 	}
 	rt.channelMap[name] = channel
 
-	logrus.Infof("pubsub Topic %v new channel %v", rt.topic, name)
+	log.InfoF("pubsub Topic %v new channel %v", rt.topic, name)
 	return channel, nil
 	//}
 

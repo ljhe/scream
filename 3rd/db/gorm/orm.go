@@ -2,7 +2,7 @@ package gorm
 
 import (
 	"database/sql"
-	"github.com/ljhe/scream/3rd/logrus"
+	"github.com/ljhe/scream/3rd/log"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"sync"
@@ -29,14 +29,14 @@ func (o *Orm) connect(dsn string) error {
 		SkipDefaultTransaction: config.SkipDefaultTransaction,
 	})
 	if err != nil {
-		logrus.Errorf("db connect err:%v dsn:%v \n", err, dsn)
+		log.ErrorF("db connect err:%v dsn:%v \n", err, dsn)
 		return err
 	}
 	o.ormDB = ormDB
 
 	db, err := o.ormDB.DB()
 	if err != nil {
-		logrus.Errorf("db get db err:%v dsn:%v \n", err, dsn)
+		log.ErrorF("db get db err:%v dsn:%v \n", err, dsn)
 		return err
 	}
 

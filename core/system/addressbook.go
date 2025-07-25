@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ljhe/scream/3rd/etcd"
-	"github.com/ljhe/scream/3rd/logrus"
+	"github.com/ljhe/scream/3rd/log"
 	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/def"
+	"strings"
 	"sync"
 )
 
@@ -16,22 +17,37 @@ type AddressBook struct {
 	Ip   string
 	Port int
 
-	IDMap map[string]bool
+	IDMap map[string]iface.AddressInfo
 
+	ctx    context.Context
+	cancel context.CancelFunc
 	sync.RWMutex
 }
 
 func New(info iface.AddressInfo) *AddressBook {
-	return &AddressBook{
-		IDMap: make(map[string]bool),
+	ab := &AddressBook{
+		IDMap: make(map[string]iface.AddressInfo),
 		Id:    info.Process,
 		Ip:    info.Ip,
 		Port:  info.Port,
 	}
+
+	ab.ctx, ab.cancel = context.WithCancel(context.Background())
+
+	go ab.Watch(ab.ctx)
+	return ab
 }
 
 func genKey(key, id string) string {
 	return fmt.Sprintf(key + "/" + id)
+}
+
+func splitKey(key string) string {
+	str := strings.Split(key, "/")
+	if len(str) < 2 {
+		panic("split key error")
+	}
+	return str[1]
 }
 
 func (ab *AddressBook) Register(ctx context.Context, ty, id string, weight int) error {
@@ -57,15 +73,11 @@ func (ab *AddressBook) Register(ctx context.Context, ty, id string, weight int) 
 
 	etcd.Register(ctx, genKey(def.AddressBookIDField, id), addrJSON)
 
-	ab.Lock()
-	ab.IDMap[id] = true
-	ab.Unlock()
-
 	return nil
 }
 
 func (ab *AddressBook) Unregister(ctx context.Context, id string, weight int) error {
-	logrus.Infof("addressBook unregister id:%s weight:%d", id, weight)
+	log.InfoF("addressBook unregister id:%s weight:%d", id, weight)
 
 	if id == "" {
 		return fmt.Errorf("node id or type is empty")
@@ -74,39 +86,36 @@ func (ab *AddressBook) Unregister(ctx context.Context, id string, weight int) er
 	err := etcd.UnRegister(ctx, genKey(def.AddressBookIDField, id))
 
 	if err == nil {
-		ab.Lock()
-		delete(ab.IDMap, id) // try delete
-		ab.Unlock()
+		ab.delIDMap(id)
 	}
 
 	return err
 }
 
+func (ab *AddressBook) Watch(ctx context.Context) {
+	etcd.Discovery(ctx, def.AddressBookIDField, func(key string, val []byte) {
+		// if val's len=0 EventTypeDelete, else EventTypePut
+		if len(val) == 0 {
+			ab.delIDMap(splitKey(key))
+			return
+		}
+		ab.setIDMap(splitKey(key), val)
+	})
+}
+
 func (ab *AddressBook) GetByID(ctx context.Context, id string) (iface.AddressInfo, error) {
 
 	if id == "" {
-		return iface.AddressInfo{}, fmt.Errorf("node id or type is empty")
+		return iface.AddressInfo{}, fmt.Errorf("addressbook node not found id is empty")
 	}
 
 	ab.RLock()
-	if _, ok := ab.IDMap[id]; ok {
-		ab.RUnlock()
-		return iface.AddressInfo{Process: ab.Id, Ip: ab.Ip, Port: ab.Port, NodeId: id}, nil // return local node info directly
+	defer ab.RUnlock()
+	if val, ok := ab.IDMap[id]; ok {
+		return iface.AddressInfo{Process: val.Process, Ip: val.Ip, Port: val.Port, NodeId: val.NodeId}, nil
 	}
-	ab.RUnlock()
 
-	//resp, err := etcd.GetEtcdDiscovery().Cli.Get(ctx, genKey(def.AddressBookIDField, id), clientv3.WithPrefix())
-	//if err != nil || resp.Count == 0 {
-	//	return iface.AddressInfo{}, fmt.Errorf("etcd get node error:%v id:%s", err, id)
-	//}
-
-	var addr iface.AddressInfo
-	//err = json.Unmarshal(resp.Kvs[0].Value, &addr)
-	//if err != nil {
-	//	return iface.AddressInfo{}, fmt.Errorf("failed to unmarshal address: %v", err)
-	//}
-
-	return addr, nil
+	return iface.AddressInfo{}, fmt.Errorf("addressbook node not found by id:%s", id)
 }
 
 func (ab *AddressBook) GetByType(ctx context.Context, s string) ([]iface.AddressInfo, error) {
@@ -129,6 +138,22 @@ func (ab *AddressBook) GetNodeTypeCount(ctx context.Context, nodeType string) (i
 }
 
 func (ab *AddressBook) Clear(ctx context.Context) error {
-	//TODO implement me
-	panic("implement me")
+	return nil
+}
+
+func (ab *AddressBook) setIDMap(key string, val []byte) {
+	ab.Lock()
+	defer ab.Unlock()
+	var addr iface.AddressInfo
+	err := json.Unmarshal(val, &addr)
+	if err != nil {
+		panic("failed to unmarshal address")
+	}
+	ab.IDMap[key] = addr
+}
+
+func (ab *AddressBook) delIDMap(key string) {
+	ab.Lock()
+	defer ab.Unlock()
+	delete(ab.IDMap, key) // try delete
 }

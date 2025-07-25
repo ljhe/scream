@@ -15,6 +15,8 @@ type IAddressBook interface {
 	Register(context.Context, string, string, int) error
 	Unregister(context.Context, string, int) error
 
+	Watch(context.Context)
+
 	GetByID(context.Context, string) (AddressInfo, error)
 	GetByType(context.Context, string) ([]AddressInfo, error)
 
