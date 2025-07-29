@@ -95,7 +95,6 @@ func (n *Node) OnTimer(dueTime int64, interval int64, f func(interface{}) error,
 
 	n.timers[info] = struct{}{}
 	//a.timerWg.Add(1)
-
 	go func() {
 		//defer a.timerWg.Done()
 

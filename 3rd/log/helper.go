@@ -14,42 +14,45 @@ const (
 )
 
 func DebugF(format string, v ...interface{}) {
-	log(logTypText, zapcore.DebugLevel, format, v...)
+	str := fmt.Sprintf(format, v...)
+	log(logTypText, zapcore.DebugLevel, str)
 }
 
-func DebugJ(format string, v ...interface{}) {
+func DebugKV(format string, v ...zap.Field) {
 	log(logTypJson, zapcore.DebugLevel, format, v...)
 }
 
-func InfoF(format string, args ...interface{}) {
-	log(logTypText, zapcore.InfoLevel, format, args...)
+func InfoF(format string, v ...interface{}) {
+	str := fmt.Sprintf(format, v...)
+	log(logTypText, zapcore.InfoLevel, str)
 }
 
-func InfoJ(format string, args ...interface{}) {
-	log(logTypJson, zapcore.InfoLevel, format, args...)
+func InfoKV(format string, v ...zap.Field) {
+	log(logTypJson, zapcore.InfoLevel, format, v...)
 }
 
 func ErrorF(format string, v ...interface{}) {
-	log(logTypText, zapcore.ErrorLevel, format, v...)
+	str := fmt.Sprintf(format, v...)
+	log(logTypText, zapcore.ErrorLevel, str)
 }
 
 func WarnF(format string, v ...interface{}) {
-	log(logTypText, zapcore.WarnLevel, format, v...)
+	str := fmt.Sprintf(format, v...)
+	log(logTypText, zapcore.WarnLevel, str)
 }
 
 func PanicF(format string, v ...interface{}) {
-	log(logTypText, zapcore.PanicLevel, format, v...)
+	str := fmt.Sprintf(format, v...)
+	log(logTypText, zapcore.PanicLevel, str)
 }
 
-func log(typ int, level zapcore.Level, format string, v ...interface{}) {
+func log(typ int, level zapcore.Level, msg string, v ...zap.Field) {
 	logger := getLogger(typ)
 	if !logger.Core().Enabled(level) {
 		return
 	}
 
 	var stackTrace zapcore.Field
-	msg := fmt.Sprintf(format, v...)
-
 	if level == zapcore.ErrorLevel || level == zapcore.WarnLevel {
 		stackInfo := getStackTrace()
 		stackTrace = zap.String("stack_trace", stackInfo)
@@ -64,19 +67,19 @@ func log(typ int, level zapcore.Level, format string, v ...interface{}) {
 
 	switch level {
 	case zapcore.DebugLevel:
-		logger.Debug(msg)
+		logger.Debug(msg, v...)
 	case zapcore.InfoLevel:
-		logger.Info(msg)
+		logger.Info(msg, v...)
 	case zapcore.WarnLevel:
-		logger.Warn(msg, stackTrace)
+		logger.Warn(msg, append(v, stackTrace)...)
 	case zapcore.ErrorLevel:
-		logger.Error(msg, stackTrace)
+		logger.Error(msg, append(v, stackTrace)...)
 	case zapcore.DPanicLevel:
-		logger.DPanic(msg)
+		logger.DPanic(msg, v...)
 	case zapcore.PanicLevel:
-		logger.Panic(msg)
+		logger.Panic(msg, v...)
 	case zapcore.FatalLevel:
-		logger.Fatal(msg)
+		logger.Fatal(msg, v...)
 	}
 }
 

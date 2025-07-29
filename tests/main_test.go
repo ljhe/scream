@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"fmt"
 	"github.com/alicebob/miniredis/v2"
 	"github.com/ljhe/scream/3rd/etcd"
@@ -8,9 +9,11 @@ import (
 	"github.com/ljhe/scream/3rd/redis"
 	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/core/node"
+	"github.com/ljhe/scream/core/process"
 	"github.com/ljhe/scream/tests/mock"
 	"os"
 	"testing"
+	"time"
 )
 
 var factory *mock.NodeFactory
@@ -35,5 +38,26 @@ func TestMain(m *testing.M) {
 	defer mr.Close()
 	redis.BuildClientWithOption(redis.WithAddr(fmt.Sprintf("redis://%s", mr.Addr())))
 
+	registerMockA()
+
 	os.Exit(m.Run())
+}
+
+var p1 iface.IProcess
+
+func registerMockA() {
+	p1 = process.BuildProcessWithOption(
+		process.WithID("bench-call-1"),
+		process.WithPort(8888),
+		process.WithLoader(loader),
+		process.WithFactory(factory),
+	)
+
+	// build
+	p1.System().Loader("mocka").WithID("mocka").Register(context.TODO())
+
+	p1.Init()
+
+	fmt.Println("register test process ok")
+	time.Sleep(time.Second)
 }

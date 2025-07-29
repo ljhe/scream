@@ -64,3 +64,16 @@ func BenchmarkCall(b *testing.B) {
 	time.Sleep(time.Second * 2)
 	b.Logf("Total messages received: %d", atomic.LoadInt64(&mock.BechmarkCallReceivedMessageCount))
 }
+
+func BenchmarkCallLocal(b *testing.B) {
+	atomic.StoreInt64(&mock.ReceivedMessageCount, 0)
+
+	for i := 0; i < b.N; i++ {
+		p1.System().Call(def.SymbolLocalFirst,
+			"mocka",
+			"offline_msg",
+			msg.NewBuilder(context.TODO()).WithReqBody([]byte{}).Build())
+	}
+
+	b.Logf("Total messages received: %d", atomic.LoadInt64(&mock.ReceivedMessageCount))
+}

@@ -75,7 +75,7 @@ func (sd *ServiceDiscovery) RegisterService(key, val string) error {
 		}
 	}()
 
-	log.InfoF("etcd register ok. key=%v clusterid=%v leaseid=%v", key, rsp.Header.ClusterId, leaseResp.ID)
+	log.InfoF("etcd register ok. key=%v clusterid=%d leaseid=%d", key, rsp.Header.ClusterId, rsp.Header.ClusterId)
 	return nil
 }
 

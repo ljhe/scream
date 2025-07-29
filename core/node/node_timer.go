@@ -81,6 +81,5 @@ func NewTimerInfo(dueTime, interval time.Duration, callback func(interface{}) er
 	} else {
 		t.nextTick.Store(time.Now().Add(interval))
 	}
-
 	return t
 }
