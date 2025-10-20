@@ -2,9 +2,13 @@ package utils
 
 import "time"
 
-const DateTimeMS = "2006-01-02 15:04:05.000"
+const DateOnly = "20060102"
 
-func GetNowDate() string {
+func GetDateOnly() string {
+	return time.Now().Format(DateOnly)
+}
+
+func GetDateTime() string {
 	return time.Now().Format(time.DateTime)
 }
 

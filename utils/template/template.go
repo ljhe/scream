@@ -39,6 +39,4 @@ func printTemplate(AppName, ConfigPath string) {
 	fmt.Printf("Start Time: %s\n", time.Now().Format("2006-01-02 15:04:05"))
 	fmt.Println()
 	fmt.Println("Hello Scream!")
-	fmt.Println(TemplateDividingLine)
-	fmt.Println()
 }

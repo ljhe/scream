@@ -5,15 +5,15 @@ template: [ {options: "请输入一个数字:"},
           ]
 
 options1:
-  online_url: "http://drg-prerelease.tianshugame.com:9631/api/emos/download_joint"
-  local_url: "http://192.168.12.203:6543/api/emos/import_joint"
+  online_url: "xxx1"
+  local_url: "xxx2"
   sign: "ysmxemos"
   #将外网玩家账号导入到内网 需要修改以下参数
   #外网服务器id
   remote_realm: 2208
-  #账号ID
+  #账号ID(同一个外网openid只能导入内网一次)
   guid: "539da255-7b00-4416-8de4-6df87365cc59"
   #内网服务器id
   local_realm: 184
   #导入内网后的openid(openid需要是内网不存在的openid)
-  target_openid: "ljh3"
+  target_openid: "ljh5"

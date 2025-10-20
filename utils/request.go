@@ -18,10 +18,6 @@ func Post(url string, data map[string]interface{}) (error, []byte) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return err, nil
-	}
-
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err, nil

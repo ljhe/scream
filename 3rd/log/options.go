@@ -63,7 +63,7 @@ type Option func(*Options) error
 
 func NewOptions(opts ...Option) (*Options, error) {
 	opt := &Options{
-		Suffix:     "", // 默认为空，不输出到文件
+		Suffix:     "", // 日志格式 json | text; 默认是text
 		MaxSize:    DefaultMaxSize,
 		MaxAge:     DefaultMaxAge,
 		MaxBackups: DefaultMaxBackups,

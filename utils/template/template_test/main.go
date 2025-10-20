@@ -8,6 +8,7 @@ import (
 	"github.com/ljhe/scream/utils"
 	"github.com/ljhe/scream/utils/template"
 	"gopkg.in/yaml.v2"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -17,7 +18,11 @@ func main() {
 	confPath := "./config.yaml"
 	template.TemplateInit("UTILS", confPath)
 
-	logger, err := log.NewDefaultLogger()
+	logger, err := log.NewDefaultLogger(func(options *log.Options) error {
+		options.GlobPattern = fmt.Sprintf("utils_%s", utils.GetDateOnly())
+		options.OutStd = true
+		return nil
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -26,8 +31,12 @@ func main() {
 	var conf Config
 	err = conf.Load(confPath)
 	if err != nil {
-		panic(fmt.Sprintf("global config Load err: %v", err))
+		log.ErrorF("global config Load err: %v", err)
+		return
 	}
+
+	fmt.Println(template.TemplateDividingLine)
+	fmt.Println()
 
 	reader := bufio.NewReader(os.Stdin)
 
@@ -36,18 +45,15 @@ func main() {
 			fmt.Println(opt.Options)
 		}
 
-		// 读取用户输入（去掉换行符）
 		input, _ := reader.ReadString('\n')
 		input = strings.TrimSpace(input)
 
-		// 转换为整数
 		num, err := strconv.Atoi(input)
 		if err != nil {
 			fmt.Println("输入无效，请输入数字！")
 			continue
 		}
 
-		// 根据输入执行不同函数
 		switch num {
 		case 1:
 			option1(conf)
@@ -57,6 +63,8 @@ func main() {
 		default:
 			fmt.Println("无效选项，请重新输入。")
 		}
+		fmt.Println(template.TemplateDividingLine)
+		fmt.Println()
 	}
 }
 
@@ -83,6 +91,12 @@ func option1(conf Config) {
 		log.ErrorF("Unmarshal online_url err: %v", err)
 		return
 	}
+
+	if res1.Code != http.StatusOK {
+		log.ErrorF("post online_url err:%v", res1.Msg)
+		return
+	}
+
 	param["data"] = res1.Data
 
 	err, bt = utils.Post(conf.Options1.LocalUrl, param)
@@ -94,6 +108,11 @@ func option1(conf Config) {
 	err = json.Unmarshal(bt, &res2)
 	if err != nil {
 		log.ErrorF("Unmarshal local_url err: %v", err)
+		return
+	}
+
+	if res2.Code != http.StatusOK {
+		log.ErrorF("post online_url err:%v", res1.Msg)
 		return
 	}
 	fmt.Println("执行完成")
@@ -125,8 +144,8 @@ type Config struct {
 }
 
 func (c *Config) Load(filepath string) error {
-	//file, err := os.ReadFile(filepath)
-	file, err := os.ReadFile("E:\\workspace\\go\\scream\\utils\\template\\template_test" + filepath)
+	file, err := os.ReadFile(filepath)
+	//file, err := os.ReadFile("E:\\workspace\\go\\scream\\utils\\template\\template_test" + filepath)
 	if err != nil {
 		panic(fmt.Sprintf("config filepath err. filepath:%v err:%v", filepath, err))
 	}

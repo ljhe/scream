@@ -1,11 +1,8 @@
 package process
 
 import (
-	"fmt"
-	"github.com/ljhe/scream/3rd/log"
 	"github.com/ljhe/scream/core/iface"
 	"github.com/ljhe/scream/core/system"
-	"github.com/ljhe/scream/utils"
 )
 
 type Process struct {
@@ -116,22 +113,15 @@ func (p *Process) Init() error {
 }
 
 func (p *Process) Start() error {
-	log.InfoF(fmt.Sprintf("[ %s ] starting ...", p.p.ID))
-
-	log.InfoF(fmt.Sprintf("[ %s ] started SUCCESS. ip:%s port:%d", p.p.ID, p.p.Ip, p.p.Port))
 	return nil
 }
 
 func (p *Process) WaitClose() error {
-	utils.WaitExitSignal()
-
-	log.InfoF(fmt.Sprintf("[ %s ] stoping ...", p.p.ID))
 	return p.Stop()
 }
 
 func (p *Process) Stop() error {
 
-	log.InfoF(fmt.Sprintf("[ %s ] close ...", p.p.ID))
 	return nil
 }
 
