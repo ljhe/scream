@@ -10,7 +10,7 @@ options1:
   sign: "ysmxemos"
   #将外网玩家账号导入到内网 需要修改以下参数
   #外网服务器id
-  remote_realm: 2208
+  remote_realm: 2028
   #账号ID(同一个外网openid只能导入内网一次)
   guid: "539da255-7b00-4416-8de4-6df87365cc59"
   #内网服务器id

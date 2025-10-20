@@ -112,7 +112,7 @@ func option1(conf Config) {
 	}
 
 	if res2.Code != http.StatusOK {
-		log.ErrorF("post online_url err:%v", res1.Msg)
+		log.ErrorF("post online_url err:%v", res2.Msg)
 		return
 	}
 	fmt.Println("执行完成")
