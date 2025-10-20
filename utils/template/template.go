@@ -9,7 +9,7 @@ import (
 // http://patorjk.com/software/taag/#p=testall&f=Alpha&t=scream
 // Isometric3 | Star Wars
 
-const TemplateScream = `      ___           ___           ___           ___           ___           ___     
+const ScreamWordArt = `      ___           ___           ___           ___           ___           ___     
      /  /\         /  /\         /  /\         /  /\         /  /\         /__/\    
     /  /:/_       /  /:/        /  /::\       /  /:/_       /  /::\       |  |::\   
    /  /:/ /\     /  /:/        /  /:/\:\     /  /:/ /\     /  /:/\:\      |  |:|:\  
@@ -21,14 +21,14 @@ const TemplateScream = `      ___           ___           ___           ___     
      /__/:/       \  \::/       \  \:\        \  \::/       \  \:\        \  \:\    
      \__\/         \__\/         \__\/         \__\/         \__\/         \__\/    `
 
-const TemplateDividingLine = `====================================================================================`
+const DividingLine = `====================================================================================`
 
-func TemplateInit(AppName, ConfigPath string) {
+func Init(AppName, ConfigPath string) {
 	printTemplate(AppName, ConfigPath)
 }
 
 func printTemplate(AppName, ConfigPath string) {
-	fmt.Println(TemplateScream)
+	fmt.Println(ScreamWordArt)
 	fmt.Println()
 	fmt.Printf("App Name:   %s\n", AppName)
 	fmt.Printf("Go Version: %s\n", runtime.Version())

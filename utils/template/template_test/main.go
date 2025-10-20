@@ -16,7 +16,7 @@ import (
 
 func main() {
 	confPath := "./config.yaml"
-	template.TemplateInit("UTILS", confPath)
+	template.Init("UTILS", confPath)
 
 	logger, err := log.NewDefaultLogger(func(options *log.Options) error {
 		options.GlobPattern = fmt.Sprintf("utils_%s", utils.GetDateOnly())
@@ -35,7 +35,7 @@ func main() {
 		return
 	}
 
-	fmt.Println(template.TemplateDividingLine)
+	fmt.Println(template.DividingLine)
 	fmt.Println()
 
 	reader := bufio.NewReader(os.Stdin)
@@ -63,7 +63,7 @@ func main() {
 		default:
 			fmt.Println("无效选项，请重新输入。")
 		}
-		fmt.Println(template.TemplateDividingLine)
+		fmt.Println(template.DividingLine)
 		fmt.Println()
 	}
 }
