@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/ljhe/scream/3rd/log"
 	"github.com/ljhe/scream/utils"
+	"github.com/ljhe/scream/utils/request"
 	"github.com/ljhe/scream/utils/template"
 	"gopkg.in/yaml.v2"
 	"net/http"
@@ -80,7 +81,7 @@ func option1(conf Config) {
 		"data":          "",
 	}
 
-	err, bt := utils.Post(conf.Options1.OnlineUrl, param)
+	err, bt := request.Post(conf.Options1.OnlineUrl, param)
 	if err != nil {
 		log.ErrorF("post online_url err: %v", err)
 		return
@@ -99,7 +100,7 @@ func option1(conf Config) {
 
 	param["data"] = res1.Data
 
-	err, bt = utils.Post(conf.Options1.LocalUrl, param)
+	err, bt = request.Post(conf.Options1.LocalUrl, param)
 	if err != nil {
 		log.ErrorF("post local_url err: %v", err)
 		return

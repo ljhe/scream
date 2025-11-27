@@ -1,4 +1,4 @@
-package utils
+package request
 
 import (
 	"bytes"
@@ -26,6 +26,17 @@ func Post(url string, data map[string]interface{}) (error, []byte) {
 	return nil, body
 }
 
-func Get() {
+func Get(url string) (error, []byte) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return err, nil
+	}
+	defer resp.Body.Close()
 
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err, nil
+	}
+
+	return nil, body
 }
