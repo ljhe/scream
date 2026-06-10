@@ -77,7 +77,7 @@ func NewOptions(opts ...Option) (*Options, error) {
 			StacktraceKey: "StackTrace",
 			LineEnding:    zapcore.DefaultLineEnding,
 			EncodeLevel:   zapcore.CapitalLevelEncoder,
-			EncodeTime:    zapcore.ISO8601TimeEncoder, // ISO8601 UTC 时间格式，filebeat格式要求
+			EncodeTime:    zapcore.ISO8601TimeEncoder, // ISO8601格式 便于Filebeat解析
 			//EncodeTime:    zapcore.TimeEncoderOfLayout(DefaultTimestampFormat),
 			EncodeCaller: zapcore.ShortCallerEncoder,
 		},
@@ -85,7 +85,7 @@ func NewOptions(opts ...Option) (*Options, error) {
 		Caller:        false,
 		CallerFunc:    false,
 		CallerSkip:    0,
-		GlobPattern:   "", // 默认为空，不输出到文件
+		GlobPattern:   "./default.log",
 		LinkName:      "",
 		RotationSize:  RotateDefaultRotationSize,
 		RotationTime:  RotateDefaultRotationTime,
@@ -221,34 +221,28 @@ func NewLogger(opts ...Option) (*zap.Logger, error) {
 		return nil, err
 	}
 
-	// 文件路径为空，只输出到控制台
-	ws := zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout))
-
-	// rotatelogs
-	if options.GlobPattern != "" {
-		hook, err := NewRotation(options)
-		if err != nil {
-			return nil, err
-		}
-		if options.OutStd {
-			ws = zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(hook))
-		} else {
-			ws = zapcore.NewMultiWriteSyncer(zapcore.AddSync(hook))
-		}
+	hook, err := NewRotation(options)
+	if err != nil {
+		return nil, err
+	}
+	// 默认只输出到文件
+	ws := zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(hook))
+	if !options.OutStd {
+		ws = zapcore.NewMultiWriteSyncer(zapcore.AddSync(hook))
 	}
 
 	var core zapcore.Core
 	if options.Suffix == SuffixText {
 		core = zapcore.NewCore(
 			zapcore.NewConsoleEncoder(*options.EncoderConf), // 编码器配置
-			ws,                                  // 输出方式
-			zap.NewAtomicLevelAt(options.Level), // 日志级别
+			ws,                                              // 输出方式
+			zap.NewAtomicLevelAt(options.Level),             // 日志级别
 		)
 	} else {
 		core = zapcore.NewCore(
 			zapcore.NewJSONEncoder(*options.EncoderConf), // 编码器配置
-			ws,                                  // 输出方式
-			zap.NewAtomicLevelAt(options.Level), // 日志级别
+			ws,                                           // 输出方式
+			zap.NewAtomicLevelAt(options.Level),          // 日志级别
 		)
 	}
 

@@ -2,10 +2,11 @@ package log
 
 import (
 	"fmt"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"runtime"
 	"strings"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -23,6 +24,12 @@ func DebugKV(format string, v ...zap.Field) {
 }
 
 func InfoF(format string, v ...interface{}) {
+	str := fmt.Sprintf(format, v...)
+	log(logTypText, zapcore.InfoLevel, str)
+}
+
+// Deprecated: use InfoF instead.
+func InfoSprintf(format string, v ...interface{}) {
 	str := fmt.Sprintf(format, v...)
 	log(logTypText, zapcore.InfoLevel, str)
 }
@@ -53,26 +60,18 @@ func log(typ int, level zapcore.Level, msg string, v ...zap.Field) {
 	}
 
 	var stackTrace zapcore.Field
-	if level == zapcore.ErrorLevel || level == zapcore.WarnLevel {
-		stackInfo := getStackTrace()
-		stackTrace = zap.String("stack_trace", stackInfo)
-
-		// 控制台输出，使用不同颜色区分
-		if level == zapcore.ErrorLevel {
-			fmt.Printf("\033[31m[ERROR] %s\n%s\033[0m\n", msg, stackInfo) // 红色
-		} else {
-			fmt.Printf("\033[33m[WARN] %s\n%s\033[0m\n", msg, stackInfo) // 黄色
-		}
-	}
-
 	switch level {
 	case zapcore.DebugLevel:
 		logger.Debug(msg, v...)
 	case zapcore.InfoLevel:
 		logger.Info(msg, v...)
 	case zapcore.WarnLevel:
-		logger.Warn(msg, append(v, stackTrace)...)
+		fmt.Printf("\033[33m[WARN] %s\n", msg)
+		logger.Warn(msg, v...)
 	case zapcore.ErrorLevel:
+		stackInfo := getStackTrace()
+		stackTrace = zap.String("stack_trace", stackInfo)
+		fmt.Printf("\033[31m[ERROR] %s\n%s\033[0m\n", msg, stackInfo)
 		logger.Error(msg, append(v, stackTrace)...)
 	case zapcore.DPanicLevel:
 		logger.DPanic(msg, v...)
