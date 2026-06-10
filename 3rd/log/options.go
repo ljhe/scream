@@ -225,10 +225,10 @@ func NewLogger(opts ...Option) (*zap.Logger, error) {
 	if err != nil {
 		return nil, err
 	}
-	// 默认只输出到文件
-	ws := zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(hook))
+	// 默认输出到文件和控制台
+	ws := zapcore.NewMultiWriteSyncer(zapcore.AddSync(hook))
 	if !options.OutStd {
-		ws = zapcore.NewMultiWriteSyncer(zapcore.AddSync(hook))
+		ws = zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(hook))
 	}
 
 	var core zapcore.Core

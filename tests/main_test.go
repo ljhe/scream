@@ -3,6 +3,10 @@ package tests
 import (
 	"context"
 	"fmt"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/alicebob/miniredis/v2"
 	"github.com/ljhe/scream/3rd/etcd"
 	log "github.com/ljhe/scream/3rd/log"
@@ -11,9 +15,6 @@ import (
 	"github.com/ljhe/scream/core/node"
 	"github.com/ljhe/scream/core/process"
 	"github.com/ljhe/scream/tests/mock"
-	"os"
-	"testing"
-	"time"
 )
 
 var factory *mock.NodeFactory

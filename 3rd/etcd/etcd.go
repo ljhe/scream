@@ -3,11 +3,11 @@ package etcd
 import (
 	"context"
 	"fmt"
-	"github.com/ljhe/scream/3rd/log"
-	"github.com/ljhe/scream/utils"
-	"go.etcd.io/etcd/client/v3"
 	"sync"
 	"time"
+
+	"github.com/ljhe/scream/3rd/log"
+	"go.etcd.io/etcd/client/v3"
 )
 
 var etcdDiscovery *ServiceDiscovery
@@ -99,7 +99,8 @@ func (sd *ServiceDiscovery) DiscoverService(key string) error {
 	return nil
 }
 
-func (sd *ServiceDiscovery) WatchServices(key string, value utils.ServerInfo) {
+// func (sd *ServiceDiscovery) WatchServices(key string, value utils.ServerInfo) {
+func (sd *ServiceDiscovery) WatchServices(key string) {
 	watchChan := sd.Cli.Watch(context.TODO(), key, clientv3.WithPrefix())
 	go func() {
 		for {
@@ -111,11 +112,11 @@ func (sd *ServiceDiscovery) WatchServices(key string, value utils.ServerInfo) {
 						fmt.Printf("etcd watch event put key=%v value=%v \n", string(event.Kv.Key), string(event.Kv.Value))
 					case clientv3.EventTypeDelete:
 						// 网络恢复后得到自己被删除的通知 重新设置key租约
-						value.RegTime = utils.GetTimeSeconds()
-						err := sd.RegisterService(key, value.String())
-						if err != nil {
-							fmt.Printf("etcd watch event del key=%v err=%v \n", string(event.Kv.Key), err)
-						}
+						//value.RegTime = utils.GetTimeSeconds()
+						//err := sd.RegisterService(key, value.String())
+						//if err != nil {
+						//	fmt.Printf("etcd watch event del key=%v err=%v \n", string(event.Kv.Key), err)
+						//}
 						log.InfoF("reset keep alive")
 					}
 				}
