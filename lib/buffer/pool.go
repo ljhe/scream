@@ -31,7 +31,7 @@ func (p Pool) Get() *Buffer {
 }
 
 // GetWithSize retrieves a Buffer with the provided size from the pool, creating one if necessary.
-func (p Pool) GetWithSize(size int) *Buffer{
+func (p Pool) GetWithSize(size int) *Buffer {
 	buf := p.p.Get().(*Buffer)
 	buf.Reset(size)
 	buf.pool = p
