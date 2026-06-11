@@ -3,24 +3,24 @@ package tests
 import (
 	"context"
 	"fmt"
-	"github.com/ljhe/scream/core/iface"
-	"github.com/ljhe/scream/core/node"
-	"github.com/ljhe/scream/core/process"
-	"github.com/ljhe/scream/tests/mock"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/ljhe/scream/core"
+	"github.com/ljhe/scream/core/actor"
+	"github.com/ljhe/scream/core/node"
+	"github.com/ljhe/scream/tests/mock"
 	"github.com/stretchr/testify/assert"
 )
 
 type mockTimerActor struct {
-	*node.Node
+	*actor.Runtime
 }
 
-func newMockTimerActor(p iface.INodeBuilder) iface.INode {
+func newMockTimerActor(p core.IActorBuilder) core.IActor {
 	return &mockTimerActor{
-		Node: &node.Node{Id: p.GetID(), Ty: p.GetType(), Sys: p.GetSystem()},
+		Runtime: &actor.Runtime{Id: p.GetID(), Ty: p.GetType(), Sys: p.GetSystem()},
 	}
 }
 
@@ -31,7 +31,7 @@ var tick4 int32
 var tick5 int32
 
 func (ta *mockTimerActor) Init(ctx context.Context) {
-	ta.Node.Init(ctx)
+	ta.Runtime.Init(ctx)
 
 	ta.OnTimer(0, 1000, func(i interface{}) error {
 		atomic.AddInt32(&tick1, 1)
@@ -53,7 +53,7 @@ func (ta *mockTimerActor) Init(ctx context.Context) {
 		return nil
 	}, nil)
 
-	var t iface.ITimer
+	var t core.ITimer
 	t = ta.OnTimer(0, 200, func(i interface{}) error {
 		atomic.AddInt32(&tick5, 1)
 
@@ -67,8 +67,8 @@ func (ta *mockTimerActor) Init(ctx context.Context) {
 
 func TestActorTimer1(t *testing.T) {
 
-	factory := mock.BuildNodeFactory()
-	factory.Constructors["MockTimerActor"] = &iface.NodeConstructor{
+	factory := mock.BuildActorFactory()
+	factory.Constructors["MockTimerActor"] = &core.ActorConstructor{
 		ID:                  "MockTimerActor",
 		Name:                "MockTimerActor",
 		Weight:              20,
@@ -78,15 +78,15 @@ func TestActorTimer1(t *testing.T) {
 		Dynamic:             false,
 		Options:             make(map[string]string),
 	}
-	loader := node.BuildDefaultNodeLoader(factory)
+	loader := mock.BuildDefaultActorLoader(factory)
 
-	p := process.BuildProcessWithOption(
-		process.WithID("test-timer-1"),
-		process.WithLoader(loader),
-		process.WithFactory(factory),
+	nod := node.BuildProcessWithOption(
+		core.NodeWithID("test-timer-1"),
+		core.NodeWithLoader(loader),
+		core.NodeWithFactory(factory),
 	)
 
-	p.Init()
+	nod.Init()
 
 	t.Run("tick1", func(t *testing.T) {
 		time.Sleep(time.Second * 5)
@@ -97,8 +97,8 @@ func TestActorTimer1(t *testing.T) {
 
 func TestActorTimer2(t *testing.T) {
 
-	factory := mock.BuildNodeFactory()
-	factory.Constructors["MockTimerActor"] = &iface.NodeConstructor{
+	factory := mock.BuildActorFactory()
+	factory.Constructors["MockTimerActor"] = &core.ActorConstructor{
 		ID:                  "MockTimerActor",
 		Name:                "MockTimerActor",
 		Weight:              20,
@@ -108,15 +108,15 @@ func TestActorTimer2(t *testing.T) {
 		Dynamic:             false,
 		Options:             make(map[string]string),
 	}
-	loader := node.BuildDefaultNodeLoader(factory)
+	loader := mock.BuildDefaultActorLoader(factory)
 
-	p := process.BuildProcessWithOption(
-		process.WithID("test-timer-2"),
-		process.WithLoader(loader),
-		process.WithFactory(factory),
+	nod := node.BuildProcessWithOption(
+		core.NodeWithID("test-timer-2"),
+		core.NodeWithLoader(loader),
+		core.NodeWithFactory(factory),
 	)
 
-	p.Init()
+	nod.Init()
 
 	t.Run("tick2", func(t *testing.T) {
 		time.Sleep(time.Second * 5)
@@ -128,8 +128,8 @@ func TestActorTimer2(t *testing.T) {
 
 func TestActorTimer3(t *testing.T) {
 
-	factory := mock.BuildNodeFactory()
-	factory.Constructors["MockTimerActor"] = &iface.NodeConstructor{
+	factory := mock.BuildActorFactory()
+	factory.Constructors["MockTimerActor"] = &core.ActorConstructor{
 		ID:                  "MockTimerActor",
 		Name:                "MockTimerActor",
 		Weight:              20,
@@ -139,15 +139,15 @@ func TestActorTimer3(t *testing.T) {
 		Dynamic:             false,
 		Options:             make(map[string]string),
 	}
-	loader := node.BuildDefaultNodeLoader(factory)
+	loader := mock.BuildDefaultActorLoader(factory)
 
-	p := process.BuildProcessWithOption(
-		process.WithID("test-timer-3"),
-		process.WithLoader(loader),
-		process.WithFactory(factory),
+	nod := node.BuildProcessWithOption(
+		core.NodeWithID("test-timer-3"),
+		core.NodeWithLoader(loader),
+		core.NodeWithFactory(factory),
 	)
 
-	p.Init()
+	nod.Init()
 
 	t.Run("tick3", func(t *testing.T) {
 		time.Sleep(time.Second * 5)
@@ -160,8 +160,8 @@ func TestActorTimer3(t *testing.T) {
 
 func TestActorTimer4(t *testing.T) {
 
-	factory := mock.BuildNodeFactory()
-	factory.Constructors["MockTimerActor"] = &iface.NodeConstructor{
+	factory := mock.BuildActorFactory()
+	factory.Constructors["MockTimerActor"] = &core.ActorConstructor{
 		ID:                  "MockTimerActor",
 		Name:                "MockTimerActor",
 		Weight:              20,
@@ -171,15 +171,15 @@ func TestActorTimer4(t *testing.T) {
 		Dynamic:             false,
 		Options:             make(map[string]string),
 	}
-	loader := node.BuildDefaultNodeLoader(factory)
+	loader := mock.BuildDefaultActorLoader(factory)
 
-	p := process.BuildProcessWithOption(
-		process.WithID("test-timer-4"),
-		process.WithLoader(loader),
-		process.WithFactory(factory),
+	nod := node.BuildProcessWithOption(
+		core.NodeWithID("test-timer-4"),
+		core.NodeWithLoader(loader),
+		core.NodeWithFactory(factory),
 	)
 
-	p.Init()
+	nod.Init()
 
 	t.Run("tick4", func(t *testing.T) {
 		time.Sleep(time.Second * 3)
@@ -189,8 +189,8 @@ func TestActorTimer4(t *testing.T) {
 
 func TestActorTimer5(t *testing.T) {
 
-	factory := mock.BuildNodeFactory()
-	factory.Constructors["MockTimerActor"] = &iface.NodeConstructor{
+	factory := mock.BuildActorFactory()
+	factory.Constructors["MockTimerActor"] = &core.ActorConstructor{
 		ID:                  "MockTimerActor",
 		Name:                "MockTimerActor",
 		Weight:              20,
@@ -200,15 +200,15 @@ func TestActorTimer5(t *testing.T) {
 		Dynamic:             false,
 		Options:             make(map[string]string),
 	}
-	loader := node.BuildDefaultNodeLoader(factory)
+	loader := mock.BuildDefaultActorLoader(factory)
 
-	p := process.BuildProcessWithOption(
-		process.WithID("test-timer-5"),
-		process.WithLoader(loader),
-		process.WithFactory(factory),
+	nod := node.BuildProcessWithOption(
+		core.NodeWithID("test-timer-5"),
+		core.NodeWithLoader(loader),
+		core.NodeWithFactory(factory),
 	)
 
-	p.Init()
+	nod.Init()
 
 	t.Run("tick5", func(t *testing.T) {
 		time.Sleep(time.Second * 3)

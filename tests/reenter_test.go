@@ -2,35 +2,36 @@ package tests
 
 import (
 	"context"
-	"github.com/ljhe/scream/core/process"
-	"github.com/ljhe/scream/msg"
-	"github.com/ljhe/scream/tests/mock"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/ljhe/scream/core"
+	"github.com/ljhe/scream/core/node"
+	"github.com/ljhe/scream/router/msg"
+	"github.com/ljhe/scream/tests/mock"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestReenter(t *testing.T) {
 
-	p := process.BuildProcessWithOption(
-		process.WithID("test-reenter-1"),
-		process.WithLoader(loader),
-		process.WithFactory(factory),
+	nod := node.BuildProcessWithOption(
+		core.NodeWithID("test-reenter-1"),
+		core.NodeWithLoader(loader),
+		core.NodeWithFactory(factory),
 	)
 
 	// build
 	var err error
-	_, err = p.System().Loader("mocka").WithID("mocka").Register(context.TODO())
+	_, err = nod.System().Loader("mocka").WithID("mocka").Register(context.TODO())
 	assert.Equal(t, err, nil)
-	_, err = p.System().Loader("mockb").WithID("mockb").Register(context.TODO())
+	_, err = nod.System().Loader("mockb").WithID("mockb").Register(context.TODO())
 	assert.Equal(t, err, nil)
 
-	p.Init()
+	nod.Init()
 	defer func() {
 		wg := sync.WaitGroup{}
-		p.System().Exit(&wg)
+		nod.System().Exit(&wg)
 		wg.Wait()
 	}()
 
@@ -38,7 +39,7 @@ func TestReenter(t *testing.T) {
 
 	t.Run("Normal Case", func(t *testing.T) {
 		mock.RecenterCalcValue = 0
-		err := p.System().Call("mocka", "mocka", "reenter",
+		err := nod.System().Call("mocka", "mocka", "reenter",
 			msg.NewBuilder(context.TODO()).Build())
 		assert.Nil(t, err)
 		time.Sleep(time.Second)
@@ -52,15 +53,15 @@ func TestReenter(t *testing.T) {
 
 		m := msg.NewBuilder(ctx).Build()
 
-		p.System().Call("mocka", "mocka", "timeout", m)
+		nod.System().Call("mocka", "mocka", "timeout", m)
 		time.Sleep(time.Second * 4)
-		assert.NotNil(t, m.Err)
+		assert.NotNil(t, m.Err) // 应该返回actor不存在错误
 	})
 
 	t.Run("Timeout chain", func(t *testing.T) {
 		mock.RecenterCalcValue = 0
 
-		err := p.System().Call("mocka", "mocka", "chain", msg.NewBuilder(context.TODO()).Build())
+		err := nod.System().Call("mocka", "mocka", "chain", msg.NewBuilder(context.TODO()).Build())
 		assert.Nil(t, err)
 
 		assert.Nil(t, err)

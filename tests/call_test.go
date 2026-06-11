@@ -2,39 +2,43 @@ package tests
 
 import (
 	"context"
-	"github.com/ljhe/scream/core/process"
-	"github.com/ljhe/scream/msg"
-	"github.com/ljhe/scream/tests/mock"
-	"github.com/stretchr/testify/assert"
 	"math/rand/v2"
 	"sync"
 	"testing"
+
+	"github.com/ljhe/scream/core"
+	"github.com/ljhe/scream/core/node"
+	"github.com/ljhe/scream/router/msg"
+	"github.com/ljhe/scream/tests/mock"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCall(t *testing.T) {
-	p := process.BuildProcessWithOption(
-		process.WithLoader(loader),
-		process.WithLoader(loader),
-		process.WithFactory(factory),
+	nod := node.BuildProcessWithOption(
+		core.NodeWithID("test-call-1"),
+		core.NodeWithLoader(loader),
+		core.NodeWithFactory(factory),
 	)
 
-	_, err := p.System().Loader("mocka").WithID("mocka").WithType("mocka").Register(context.TODO())
+	// build
+	var err error
+	_, err = nod.System().Loader("mocka").WithID("mocka").Register(context.TODO())
 	assert.Equal(t, err, nil)
-	_, err = p.System().Loader("mockb").WithID("mockb").WithType("mockb").Register(context.TODO())
+	_, err = nod.System().Loader("mockb").WithID("mockb").Register(context.TODO())
 	assert.Equal(t, err, nil)
-	_, err = p.System().Loader("mockc").WithID("mockc").WithType("mockc").Register(context.TODO())
+	_, err = nod.System().Loader("mockc").WithID("mockc").Register(context.TODO())
 	assert.Equal(t, err, nil)
 
-	p.Init()
+	nod.Init()
 	defer func() {
 		wg := sync.WaitGroup{}
-		p.System().Exit(&wg)
+		nod.System().Exit(&wg)
 		wg.Wait()
 	}()
 
 	t.Run("normal", func(t *testing.T) {
 		m := msg.NewBuilder(context.TODO()).Build()
-		err := p.System().Call("mockc", "mockc", "ping", m)
+		err := nod.System().Call("mockc", "mockc", "ping", m)
 		assert.Equal(t, err, nil)
 
 		resval := msg.GetResCustomField[string](m, "pong")
@@ -43,25 +47,25 @@ func TestCall(t *testing.T) {
 }
 
 func TestCallBlock(t *testing.T) {
-	p := process.BuildProcessWithOption(
-		process.WithID("test-call-block"),
-		process.WithLoader(loader),
-		process.WithFactory(factory),
+	nod := node.BuildProcessWithOption(
+		core.NodeWithID("test-call-block"),
+		core.NodeWithLoader(loader),
+		core.NodeWithFactory(factory),
 	)
 
 	// build
 	var err error
-	_, err = p.System().Loader("mocka").WithID("mocka").Register(context.TODO())
+	_, err = nod.System().Loader("mocka").WithID("mocka").Register(context.TODO())
 	assert.Equal(t, err, nil)
-	_, err = p.System().Loader("mockb").WithID("mockb").Register(context.TODO())
+	_, err = nod.System().Loader("mockb").WithID("mockb").Register(context.TODO())
 	assert.Equal(t, err, nil)
-	_, err = p.System().Loader("mockc").WithID("mockc").Register(context.TODO())
+	_, err = nod.System().Loader("mockc").WithID("mockc").Register(context.TODO())
 	assert.Equal(t, err, nil)
 
-	p.Init()
+	nod.Init()
 	defer func() {
 		wg := sync.WaitGroup{}
-		p.System().Exit(&wg)
+		nod.System().Exit(&wg)
 		wg.Wait()
 	}()
 
@@ -71,7 +75,7 @@ func TestCallBlock(t *testing.T) {
 
 		r := rand.IntN(10)
 		m.WithReqCustomFields(msg.Attr{Key: "randvalue", Value: r})
-		err := p.System().Call("mocka", "mocka", "test_block", m.Build())
+		err := nod.System().Call("mocka", "mocka", "test_block", m.Build())
 		assert.Equal(t, err, nil)
 
 		resval := msg.GetResCustomField[int](m.Build(), "randvalue")
@@ -80,29 +84,29 @@ func TestCallBlock(t *testing.T) {
 }
 
 func TestTCCSucc(t *testing.T) {
-	p := process.BuildProcessWithOption(
-		process.WithID("test-tcc-1"),
-		process.WithLoader(loader),
-		process.WithFactory(factory),
+	nod := node.BuildProcessWithOption(
+		core.NodeWithID("test-tcc-1"),
+		core.NodeWithLoader(loader),
+		core.NodeWithFactory(factory),
 	)
 
 	// build
 	var err error
-	_, err = p.System().Loader("mocka").WithID("mocka").Register(context.TODO())
+	_, err = nod.System().Loader("mocka").WithID("mocka").Register(context.TODO())
 	assert.Equal(t, err, nil)
-	_, err = p.System().Loader("mockb").WithID("mockb").Register(context.TODO())
+	_, err = nod.System().Loader("mockb").WithID("mockb").Register(context.TODO())
 	assert.Equal(t, err, nil)
-	_, err = p.System().Loader("mockc").WithID("mockc").Register(context.TODO())
+	_, err = nod.System().Loader("mockc").WithID("mockc").Register(context.TODO())
 	assert.Equal(t, err, nil)
 
-	p.Init()
+	nod.Init()
 	defer func() {
 		wg := sync.WaitGroup{}
-		p.System().Exit(&wg)
+		nod.System().Exit(&wg)
 		wg.Wait()
 	}()
 
-	err = p.System().Call("mocka", "mocka", "tcc_succ", msg.NewBuilder(context.TODO()).Build())
+	err = nod.System().Call("mocka", "mocka", "tcc_succ", msg.NewBuilder(context.TODO()).Build())
 	assert.Nil(t, err)
 
 	assert.Equal(t, mock.MockBTccValue, 111)

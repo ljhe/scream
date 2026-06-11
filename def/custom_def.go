@@ -1,13 +1,13 @@
 package def
 
-import "github.com/ljhe/scream/msg"
+import "github.com/ljhe/scream/router/msg"
 
 const (
-	KeyNodeID        = "NodeID"
-	KeyNodeTy        = "NodeTy"
+	KeyActorID       = "ActorID"
+	KeyActorTy       = "ActorTy"
 	KeyTranscationID = "TransactionID"
 )
 
-func NodeID(id string) msg.Attr        { return msg.Attr{Key: KeyNodeID, Value: id} }
-func NodeTy(ty string) msg.Attr        { return msg.Attr{Key: KeyNodeTy, Value: ty} }
+func ActorID(id string) msg.Attr       { return msg.Attr{Key: KeyActorID, Value: id} }
+func ActorTy(ty string) msg.Attr       { return msg.Attr{Key: KeyActorTy, Value: ty} }
 func TransactionID(id string) msg.Attr { return msg.Attr{Key: KeyTranscationID, Value: id} }

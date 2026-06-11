@@ -235,14 +235,14 @@ func NewLogger(opts ...Option) (*zap.Logger, error) {
 	if options.Suffix == SuffixText {
 		core = zapcore.NewCore(
 			zapcore.NewConsoleEncoder(*options.EncoderConf), // 编码器配置
-			ws,                                              // 输出方式
-			zap.NewAtomicLevelAt(options.Level),             // 日志级别
+			ws,                                  // 输出方式
+			zap.NewAtomicLevelAt(options.Level), // 日志级别
 		)
 	} else {
 		core = zapcore.NewCore(
 			zapcore.NewJSONEncoder(*options.EncoderConf), // 编码器配置
-			ws,                                           // 输出方式
-			zap.NewAtomicLevelAt(options.Level),          // 日志级别
+			ws,                                  // 输出方式
+			zap.NewAtomicLevelAt(options.Level), // 日志级别
 		)
 	}
 

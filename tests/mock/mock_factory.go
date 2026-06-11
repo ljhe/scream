@@ -1,21 +1,21 @@
 package mock
 
 import (
-	"github.com/ljhe/scream/core/iface"
+	"github.com/ljhe/scream/core"
 )
 
-// NodeFactory is a factory for creating nodes
-type NodeFactory struct {
-	Constructors map[string]*iface.NodeConstructor
+// MockActorFactory is a factory for creating actors
+type MockActorFactory struct {
+	Constructors map[string]*core.ActorConstructor
 }
 
-// BuildNodeFactory create new node factory
-func BuildNodeFactory() *NodeFactory {
-	factory := &NodeFactory{
-		Constructors: make(map[string]*iface.NodeConstructor),
+// NewActorFactory create new actor factory
+func BuildActorFactory() *MockActorFactory {
+	factory := &MockActorFactory{
+		Constructors: make(map[string]*core.ActorConstructor),
 	}
 
-	factory.Constructors["MockDynamicPicker"] = &iface.NodeConstructor{
+	factory.Constructors["MockDynamicPicker"] = &core.ActorConstructor{
 		ID:                  "MockDynamicPicker",
 		Name:                "MockDynamicPicker",
 		Weight:              100,
@@ -25,31 +25,51 @@ func BuildNodeFactory() *NodeFactory {
 		Options:             make(map[string]string),
 	}
 
-	factory.Constructors["mocka"] = &iface.NodeConstructor{
+	factory.Constructors["MockDynamicRegister"] = &core.ActorConstructor{
+		ID:                  "MockDynamicRegister",
+		Name:                "MockDynamicRegister",
+		Weight:              100,
+		Constructor:         NewDynamicRegisterActor,
+		NodeUnique:          true,
+		GlobalQuantityLimit: 0,
+		Options:             make(map[string]string),
+	}
+
+	factory.Constructors["MockActorControl"] = &core.ActorConstructor{
+		ID:                  "MockActorControl",
+		Name:                "MockActorControl",
+		Weight:              100,
+		Constructor:         NewControlActor,
+		NodeUnique:          true,
+		GlobalQuantityLimit: 0,
+		Options:             make(map[string]string),
+	}
+
+	factory.Constructors["mocka"] = &core.ActorConstructor{
 		ID:          "mocka",
 		Name:        "mocka",
 		Weight:      100,
-		Constructor: NewMockA,
+		Constructor: newMockA,
 		NodeUnique:  false,
 		Dynamic:     true,
 		Options:     make(map[string]string),
 	}
 
-	factory.Constructors["mockb"] = &iface.NodeConstructor{
+	factory.Constructors["mockb"] = &core.ActorConstructor{
 		ID:          "mockb",
 		Name:        "mockb",
 		Weight:      100,
-		Constructor: NewMockB,
+		Constructor: newMockB,
 		NodeUnique:  false,
 		Dynamic:     true,
 		Options:     make(map[string]string),
 	}
 
-	factory.Constructors["mockc"] = &iface.NodeConstructor{
+	factory.Constructors["mockc"] = &core.ActorConstructor{
 		ID:          "mockc",
 		Name:        "mockc",
 		Weight:      100,
-		Constructor: NewMockC,
+		Constructor: newMockC,
 		NodeUnique:  false,
 		Dynamic:     true,
 		Options:     make(map[string]string),
@@ -58,7 +78,7 @@ func BuildNodeFactory() *NodeFactory {
 	return factory
 }
 
-func (factory *NodeFactory) Get(actorType string) *iface.NodeConstructor {
+func (factory *MockActorFactory) Get(actorType string) *core.ActorConstructor {
 	if _, ok := factory.Constructors[actorType]; ok {
 		return factory.Constructors[actorType]
 	}
@@ -66,8 +86,8 @@ func (factory *NodeFactory) Get(actorType string) *iface.NodeConstructor {
 	return nil
 }
 
-func (factory *NodeFactory) GetNodes() []*iface.NodeConstructor {
-	var actors []*iface.NodeConstructor
+func (factory *MockActorFactory) GetActors() []*core.ActorConstructor {
+	actors := []*core.ActorConstructor{}
 	for _, v := range factory.Constructors {
 		actors = append(actors, v)
 	}
