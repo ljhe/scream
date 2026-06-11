@@ -110,6 +110,11 @@ func (a *Runtime) OnTimer(dueTime int64, interval int64, f func(interface{}) err
 			a.timerChan <- info
 		}
 
+		if info.interval <= 0 {
+			log.ErrorF("OnTimer interval <=0: %v", info.interval)
+			return
+		}
+
 		info.ticker = time.NewTicker(info.interval)
 
 		for {

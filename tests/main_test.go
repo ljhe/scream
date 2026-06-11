@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/alicebob/miniredis/v2"
+	"github.com/ljhe/scream/3rd/log"
 	"github.com/ljhe/scream/3rd/redis"
 	"github.com/ljhe/scream/core"
 	"github.com/ljhe/scream/tests/mock"
@@ -15,7 +16,12 @@ var factory *mock.MockActorFactory
 var loader core.IActorLoader
 
 func TestMain(m *testing.M) {
-
+	logger, err := log.NewDefaultLogger()
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
+	
 	factory = mock.BuildActorFactory()
 	loader = mock.BuildDefaultActorLoader(factory)
 

@@ -2,7 +2,6 @@ package pubsub
 
 import (
 	"context"
-	"github.com/ljhe/scream/3rd/log"
 	"testing"
 
 	"github.com/alicebob/miniredis/v2"
@@ -15,12 +14,6 @@ import (
 var mockRedis *redis.Client
 
 func setupTest() (*miniredis.Miniredis, error) {
-	logger, err := log.NewDefaultLogger()
-	if err != nil {
-		panic(err)
-	}
-	defer logger.Sync()
-
 	mr, err := miniredis.Run()
 	if err != nil {
 		return nil, err
@@ -149,10 +142,10 @@ func TestTopicClose(t *testing.T) {
 	assert.Equal(t, int64(1), exists, "Non-empty stream with consumer groups should not be deleted")
 
 	// 额外检查：确保 BraidPubsubTopic 集合中的条目被正确处理
-	err = mockRedis.SAdd(context.Background(), PubsubTopic, "test_topic").Err()
+	err = mockRedis.SAdd(context.Background(), BraidPubsubTopic, "test_topic").Err()
 	assert.NoError(t, err)
 
-	isMember, err := mockRedis.SIsMember(context.Background(), PubsubTopic, "test_topic").Result()
+	isMember, err := mockRedis.SIsMember(context.Background(), BraidPubsubTopic, "test_topic").Result()
 	assert.NoError(t, err)
 	assert.True(t, isMember, "Topic should still be a member of BraidPubsubTopic set")
 
@@ -161,7 +154,7 @@ func TestTopicClose(t *testing.T) {
 	err = topic.Close()
 	assert.NoError(t, err)
 
-	isMember, err = mockRedis.SIsMember(context.Background(), PubsubTopic, "test_topic").Result()
+	isMember, err = mockRedis.SIsMember(context.Background(), BraidPubsubTopic, "test_topic").Result()
 	assert.NoError(t, err)
 	assert.False(t, isMember, "Topic should be removed from BraidPubsubTopic set when deleted")
 }
