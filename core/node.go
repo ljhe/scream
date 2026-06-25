@@ -11,27 +11,22 @@ import "github.com/ljhe/scream/lib/tracer"
 type INode interface {
 	Init(...NodeOption) error
 	WaitClose()
-
 	ID() string
 	System() ISystem
 }
 
 type NodeParm struct {
-	ID     string // node's globally unique ID
-	Weight int
-
-	Ip   string
-	Port int
-
-	Tracer tracer.ITracer
-
+	ID      string // node's globally unique ID
+	Weight  int
+	Ip      string
+	Port    int
+	Tracer  tracer.ITracer
 	Loader  IActorLoader
 	Factory IActorFactory
 }
 
 type NodeOption func(*NodeParm)
 
-// tmp
 func NodeWithServiceInfo(ip string, port int) NodeOption {
 	return func(p *NodeParm) {
 		p.Ip = ip
