@@ -34,7 +34,7 @@ func (al *DefaultActorLoader) Pick(ctx context.Context, builder core.IActorBuild
 			msgbuild.Build(),
 		)
 		if err != nil {
-			log.WarnF("[braid.actorLoader] call dynamic picker err %v", err.Error())
+			log.WarnF("[actorLoader] call dynamic picker err %v", err.Error())
 		}
 	}()
 
@@ -60,22 +60,22 @@ func (al *DefaultActorLoader) Builder(ty string, sys core.ISystem) core.IActorBu
 func (al *DefaultActorLoader) AssignToNode(node core.INode) {
 	actors := al.factory.GetActors()
 
-	for _, actor := range actors {
+	for _, act := range actors {
 
-		if actor.Dynamic {
+		if act.Dynamic {
 			continue
 		}
 
-		builder := al.Builder(actor.Name, node.System())
-		if actor.ID == "" {
-			actor.ID = actor.Name
+		builder := al.Builder(act.Name, node.System())
+		if act.ID == "" {
+			act.ID = act.Name
 		}
 
-		builder.WithID(node.ID() + "_" + actor.ID)
+		builder.WithID(node.ID() + "_" + act.ID)
 
 		_, err := builder.Register(context.TODO())
 		if err != nil {
-			log.InfoF("assign to node build actor %s err %v", actor.Name, err)
+			log.InfoF("assign to node build actor %s err %v", act.Name, err)
 		}
 	}
 }

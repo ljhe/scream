@@ -44,20 +44,20 @@ func newTopic(name string, mgr *Pubsub, opts ...TopicOption) *Topic {
 		}).Result()
 
 		if err != nil {
-			log.WarnF("[braid.pubsub ]Topic %v init failed %v", rt.topic, err)
+			log.WarnF("[PubSub] Topic %v init failed %v", rt.topic, err)
 		} else {
 
 			thdredis.XDel(ctx, rt.topic, id)
 			if options.ttl > 0 {
 				err = thdredis.Expire(ctx, rt.topic, options.ttl).Err()
 				if err != nil {
-					log.WarnF("[braid.pubsub ]Failed to set TTL for topic %v: %v", rt.topic, err)
+					log.WarnF("[PubSub] Failed to set TTL for topic %v: %v", rt.topic, err)
 				}
 			}
 
 			err = thdredis.SAdd(ctx, BraidPubsubTopic, rt.topic).Err()
 			if err != nil {
-				log.WarnF("[braid.pubsub] Failed to add topic %v to BraidPubsubTopic set: %v", rt.topic, err)
+				log.WarnF("[PubSub]  Failed to add topic %v to BraidPubsubTopic set: %v", rt.topic, err)
 			}
 
 		}
@@ -129,9 +129,9 @@ func (rt *Topic) Close() error {
 			if err != nil {
 				return fmt.Errorf("failed to clean topic %s: %w", rt.topic, err)
 			}
-			log.InfoF("[braid.pubsub] Topic %v cleaned successfully", rt.topic)
+			log.InfoF("[PubSub]  Topic %v cleaned successfully", rt.topic)
 		} else {
-			log.InfoF("[braid.pubsub] Topic %v not cleaned: non-empty stream", rt.topic)
+			log.InfoF("[PubSub]  Topic %v not cleaned: non-empty stream", rt.topic)
 		}
 	}
 
@@ -149,7 +149,7 @@ func (rt *Topic) getOrCreateChannel(ctx context.Context, name string, p ChannelP
 	}
 	rt.channelMap[name] = channel
 
-	log.InfoF("[braid.pubsub ]Topic %v new channel %v", rt.topic, name)
+	log.InfoF("[PubSub] Topic %v new channel %v", rt.topic, name)
 	return channel, nil
 	//}
 

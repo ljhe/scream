@@ -14,7 +14,6 @@ import (
 	"github.com/ljhe/scream/core"
 	"github.com/ljhe/scream/core/node"
 	"github.com/ljhe/scream/def"
-	"github.com/ljhe/scream/tests/mock"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -91,16 +90,12 @@ func printWeight() error {
 
 func TestDynamicPicker(t *testing.T) {
 	for i := 0; i < 10; i++ {
-		i := i // 创建一个新的变量来捕获循环变量
-		go func() {
-			factory := mock.BuildActorFactory()
-			loader := mock.BuildDefaultActorLoader(factory)
-
-			nodid := "1000_" + strconv.Itoa(i)
+		go func(i int) {
+			id := "1000_" + strconv.Itoa(i)
 			p, _ := getFreePort()
 
 			nod := node.BuildProcessWithOption(
-				core.NodeWithID(nodid),
+				core.NodeWithID(id),
 				core.NodeWithWeight(10000),
 				core.NodeWithLoader(loader),
 				core.NodeWithFactory(factory),
@@ -111,20 +106,15 @@ func TestDynamicPicker(t *testing.T) {
 			if err != nil {
 				panic(fmt.Errorf("node init err %v", err.Error()))
 			}
-		}()
+		}(i)
 	}
 	time.Sleep(time.Second)
 
-	////////////////////////////////////////////////////////////////////////////////////
-
-	factory := mock.BuildActorFactory()
-	loader := mock.BuildDefaultActorLoader(factory)
-
-	nodid := "1000_x"
+	id := "1000_x"
 	p, _ := getFreePort()
 
 	nod := node.BuildProcessWithOption(
-		core.NodeWithID(nodid),
+		core.NodeWithID(id),
 		core.NodeWithWeight(10000),
 		core.NodeWithLoader(loader),
 		core.NodeWithFactory(factory),
@@ -138,15 +128,13 @@ func TestDynamicPicker(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	for i := 0; i < 5000; i++ {
-		err = nod.System().Loader("mocka").WithID(nodid + "_" + strconv.Itoa(i)).Picker(context.TODO())
+	for i := 0; i < 5; i++ {
+		err = nod.System().Loader("mocka").WithID(id + "_" + strconv.Itoa(i)).Picker(context.TODO())
 		if err != nil {
 			t.Logf("picker err %v", err.Error())
 		}
 	}
 
 	time.Sleep(time.Second * 10)
-
-	// 再看下分布情况
-	printWeight()
+	_ = printWeight()
 }

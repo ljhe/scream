@@ -11,7 +11,7 @@ import (
 
 const (
 	// EchoSpan echo span
-	SystemCall = "braid.system.call.span"
+	SystemCall = "system.call.span"
 )
 
 // EchoTracer http request tracer

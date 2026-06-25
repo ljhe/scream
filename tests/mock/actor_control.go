@@ -31,7 +31,7 @@ func (a *controlActor) Init(ctx context.Context) {
 
 				err := ctx.Unregister(actor_id, actor_ty)
 				if err != nil {
-					log.WarnF("[braid.actor_control] unregister actor %v err %v", actor_id, err)
+					log.WarnF("[actor_control] unregister actor %v err %v", actor_id, err)
 				}
 
 				return nil

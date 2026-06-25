@@ -19,12 +19,11 @@ func TestSend(t *testing.T) {
 		core.NodeWithFactory(factory),
 	)
 
-	// build
 	var err error
 	_, err = nod.System().Loader("mockb").WithID("mockb").Register(context.TODO())
 	assert.Equal(t, err, nil)
 
-	nod.Init()
+	_ = nod.Init()
 	defer func() {
 		wg := sync.WaitGroup{}
 		nod.System().Exit(&wg)

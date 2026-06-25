@@ -11,7 +11,7 @@ type DefaultLogger struct {
 
 func NewDefaultLogger(opts ...Option) (*DefaultLogger, error) {
 	var err error
-	t, err := NewLogger(append(opts, WithSuffix(SuffixText))...)
+	t, err := NewLogger(append(opts, WithSuffix(SuffixText), WithCaller(true), WithCallerSkip(2))...)
 	j, err := NewLogger(append(opts, WithSuffix(SuffixJson))...)
 	dl = &DefaultLogger{
 		Text: t,

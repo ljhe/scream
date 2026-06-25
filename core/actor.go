@@ -171,17 +171,12 @@ type IActorBuilder interface {
 	GetWeight() int
 	GetOpt(key string) string
 	GetOptions() map[string]string
-
 	GetSystem() ISystem
 	GetLoader() IActorLoader
 	GetConstructor() CreateFunc
-
-	// ---
 	WithID(string) IActorBuilder
 	WithType(string) IActorBuilder
 	WithOpt(string, string) IActorBuilder
-
-	// ---
 	Register(context.Context) (IActor, error)
 	Picker(context.Context) error
 }

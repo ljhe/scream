@@ -11,7 +11,7 @@ import (
 
 type CreateFunc func(IActorBuilder) IActor
 
-var ErrActorRegisterRepeat = errors.New("[braid.system] register actor repeat")
+var ErrActorRegisterRepeat = errors.New("[system] register actor repeat")
 
 type ISystem interface {
 	Register(context.Context, IActorBuilder) (IActor, error)

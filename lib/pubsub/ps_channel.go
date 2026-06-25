@@ -123,20 +123,20 @@ func (c *Channel) Close() error {
 
 	_, err := thdredis.XGroupDelConsumer(context.TODO(), c.topic, c.channel, c.consumer).Result()
 	if err != nil {
-		log.WarnF("braid.pubsub topic %v channel %v redis channel del consumer err %v", c.topic, c.channel, err.Error())
+		log.WarnF("pubsub topic %v channel %v redis channel del consumer err %v", c.topic, c.channel, err.Error())
 		return err
 	}
 
 	consumers, err := thdredis.XInfoConsumers(context.TODO(), c.topic, c.channel).Result()
 	if err != nil {
-		log.WarnF("braid.pubsub topic %v channel %v redis channel info consumers err %v", c.topic, c.channel, err.Error())
+		log.WarnF("pubsub topic %v channel %v redis channel info consumers err %v", c.topic, c.channel, err.Error())
 		return err
 	}
 
 	if len(consumers) == 0 {
 		_, err := thdredis.XGroupDestroy(context.TODO(), c.topic, c.channel).Result()
 		if err != nil {
-			log.WarnF("braid.pubsub topic %v channel %v redis channel destory err %v", c.topic, c.channel, err.Error())
+			log.WarnF("pubsub topic %v channel %v redis channel destory err %v", c.topic, c.channel, err.Error())
 		}
 	}
 

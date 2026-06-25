@@ -71,7 +71,7 @@ func (a *Runtime) Init(ctx context.Context) {
 }
 
 func defaultRecovery(r interface{}) {
-	log.WarnF("[braid.actor] Recovered from panic: %v\nStack trace:\n%s\n", r, debug.Stack())
+	log.WarnF("[actor] Recovered from panic: %v\nStack trace:\n%s\n", r, debug.Stack())
 }
 
 func (a *Runtime) Context() core.ActorContext {
@@ -135,7 +135,7 @@ func (a *Runtime) CancelTimer(t core.ITimer) {
 		return
 	}
 
-	log.InfoF("[braid.timer] %v timer cancel", a.Id)
+	log.InfoF("[timer] %v timer cancel", a.Id)
 
 	t.Stop()
 	delete(a.timers, t)
@@ -291,7 +291,7 @@ func (a *Runtime) update() {
 		for !a.q.Empty() || !a.reenterQueue.Empty() {
 			select {
 			case <-timeout:
-				log.WarnF("[braid.actor] %s force close due to timeout waiting for queue to empty remaining %v", a.Id, a.q.Count())
+				log.WarnF("[actor] %s force close due to timeout waiting for queue to empty remaining %v", a.Id, a.q.Count())
 				goto ForceClose
 			case <-ticker.C:
 				continue
@@ -300,7 +300,7 @@ func (a *Runtime) update() {
 
 	ForceClose:
 		if atomic.CompareAndSwapInt32(&a.closed, 1, 2) {
-			log.InfoF("[braid.actor] %s closing channel", a.Id)
+			log.InfoF("[actor] %s closing channel", a.Id)
 			close(a.closeCh)
 		}
 	}
@@ -358,18 +358,18 @@ func (a *Runtime) update() {
 
 		case <-a.shutdownCh:
 			if atomic.CompareAndSwapInt32(&a.closed, 0, 1) {
-				log.DebugF("[braid.actor] %s exiting check close %v", a.Id, atomic.LoadInt32(&a.closed))
+				log.DebugF("[actor] %s exiting check close %v", a.Id, atomic.LoadInt32(&a.closed))
 				go checkClose()
 			}
 		case <-a.closeCh:
-			log.DebugF("[braid.actor] %s exiting closed", a.Id)
+			log.DebugF("[actor] %s exiting closed", a.Id)
 			return
 		}
 	}
 }
 
 func (a *Runtime) Exit() {
-	log.DebugF("[braid.actor] %s exiting state %v remaining msg %v", a.Id, atomic.LoadInt32(&a.closed), a.q.Count())
+	log.DebugF("[actor] %s exiting state %v remaining msg %v", a.Id, atomic.LoadInt32(&a.closed), a.q.Count())
 	close(a.shutdownCh) // 发送关闭信号
 	<-a.closeCh         // 等待所有消息处理完毕
 
@@ -378,5 +378,5 @@ func (a *Runtime) Exit() {
 	}
 	//a.timerWg.Wait()
 
-	log.InfoF("[braid.actor] %s has exited", a.Id)
+	log.InfoF("[actor] %s has exited", a.Id)
 }

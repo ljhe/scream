@@ -150,7 +150,7 @@ func (ab *AddressBook) GetByID(ctx context.Context, id string) (core.AddressInfo
 		if err == redis.Nil {
 			return core.AddressInfo{}, ErrUnknownActor
 		}
-		return core.AddressInfo{}, fmt.Errorf("[braid.addressbook] get by id %s hget err: %s", id, err.Error())
+		return core.AddressInfo{}, fmt.Errorf("[addressbook] get by id %s hget err: %s", id, err.Error())
 	}
 
 	var addr core.AddressInfo

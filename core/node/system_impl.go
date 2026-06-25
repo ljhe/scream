@@ -56,32 +56,31 @@ func buildSystemWithOption(nodId, nodeIp string, nodePort int, loader core.IActo
 	}
 
 	if loader == nil || factory == nil {
-		panic("braid.system loader or factory is nil!")
+		panic("system loader or factory is nil!")
 	}
 
 	var unaryInterceptors []realgrpc.UnaryClientInterceptor
 	if trac != nil && trac.GetTracing() != nil {
 		unaryInterceptors = append(unaryInterceptors, span.ClientInterceptor(trac.GetTracing().(opentracing.Tracer)))
 	}
+
 	sys.client = grpc.BuildClientWithOption(grpc.ClientAppendUnaryInterceptors(unaryInterceptors...))
 	sys.loader = loader
 	sys.factory = factory
-
 	sys.ps = pubsub.BuildWithOption()
-
 	sys.addressbook = addressbook.New(core.AddressInfo{
 		Node: sys.nodeID,
 		Ip:   sys.nodeIP,
 		Port: sys.nodePort,
 	})
-
 	if sys.nodePort != 0 {
 		sys.acceptor, err = NewAcceptor(sys, sys.nodePort, trac)
 		if err != nil {
-			panic(fmt.Errorf("braid.system new acceptor err %v", err.Error()))
+			panic(fmt.Errorf("system new acceptor err %v", err.Error()))
 		}
 
 		// run grpc acceptor
+		log.InfoF("[GRPC] acceptor nodeId:%v nodeIp:%v listen:%v", sys.nodeID, sys.nodeIP, sys.nodePort)
 		sys.acceptor.server.Run()
 	}
 
@@ -99,7 +98,7 @@ func (sys *NormalSystem) AddressBook() core.IAddressBook {
 func (sys *NormalSystem) Register(ctx context.Context, builder core.IActorBuilder) (core.IActor, error) {
 
 	if builder.GetID() == "" || builder.GetType() == "" {
-		return nil, fmt.Errorf("braid.system register actor id %v type %v parm err", builder.GetID(), builder.GetType())
+		return nil, fmt.Errorf("system register actor id %v type %v parm err", builder.GetID(), builder.GetType())
 	}
 
 	sys.Lock()
@@ -124,7 +123,7 @@ func (sys *NormalSystem) Register(ctx context.Context, builder core.IActorBuilde
 			return nil, fmt.Errorf("[barid.system] get type count err %v", err)
 		}
 		if int(cnt) >= builder.GetGlobalQuantityLimit() {
-			return nil, fmt.Errorf("braid.system actor %v global quantity limit current count %v", builder.GetType(), cnt)
+			return nil, fmt.Errorf("system actor %v global quantity limit current count %v", builder.GetType(), cnt)
 		}
 	}
 
@@ -140,20 +139,20 @@ func (sys *NormalSystem) Register(ctx context.Context, builder core.IActorBuilde
 		actor = builder.GetConstructor()(builder)
 		actor.Init(ctx)
 	} else {
-		panic(fmt.Errorf("braid.system actor %v register err, constructor is nil", builder.GetType()))
+		panic(fmt.Errorf("system actor %v register err, constructor is nil", builder.GetType()))
 	}
 
 	sys.Lock()
 	sys.actoridmap[builder.GetID()] = actor
 	sys.Unlock()
 
-	log.InfoF("braid.system node %v register %v %v succ", sys.addressbook.NodeID, builder.GetType(), builder.GetID())
+	log.InfoF("system node %v register %v %v succ", sys.addressbook.NodeID, builder.GetType(), builder.GetID())
 	return actor, nil
 }
 
 func (sys *NormalSystem) Unregister(id, ty string) error {
 	// First, check if the actor exists and get it
-	log.InfoF("braid.system unregister actor id %v node %v ty %v", id, sys.addressbook.NodeID, ty)
+	log.InfoF("system unregister actor id %v node %v ty %v", id, sys.addressbook.NodeID, ty)
 
 	sys.RLock()
 	actor, exists := sys.actoridmap[id]
@@ -172,16 +171,16 @@ func (sys *NormalSystem) Unregister(id, ty string) error {
 	// Unregister from the address book
 	ac := sys.factory.Get(ty)
 	if ac == nil {
-		return fmt.Errorf("braid.system unregister actor id %v unknown type %v", id, ty)
+		return fmt.Errorf("system unregister actor id %v unknown type %v", id, ty)
 	}
 
 	err := sys.addressbook.Unregister(context.TODO(), id, sys.factory.Get(ty).Weight)
 	if err != nil {
 		// Log the error, but don't return it as the actor has already been removed locally
-		log.WarnF("braid.system unregister actor id %s failed from address book err: %v", id, err)
+		log.WarnF("system unregister actor id %s failed from address book err: %v", id, err)
 	}
 
-	log.InfoF("braid.system unregister actor id %s successfully", id)
+	log.InfoF("system unregister actor id %s successfully", id)
 
 	return nil
 }
@@ -220,7 +219,7 @@ func (sys *NormalSystem) Call(idOrSymbol, actorType, event string, mw *msg.Wrapp
 	}
 
 	if idOrSymbol == "" {
-		return fmt.Errorf("braid.system call unknown target id")
+		return fmt.Errorf("system call unknown target id")
 	}
 
 	switch idOrSymbol {
@@ -254,18 +253,18 @@ func (sys *NormalSystem) Call(idOrSymbol, actorType, event string, mw *msg.Wrapp
 
 		// If not local, get from addressbook
 		info, err = sys.addressbook.GetByID(mw.Ctx, idOrSymbol)
-		log.InfoF("braid.system id call %v is not local, get from addressbook ip %v port %v err %v", idOrSymbol, info.Ip, info.Port, err)
+		log.InfoF("system id call %v is not local, get from addressbook ip %v port %v err %v", idOrSymbol, info.Ip, info.Port, err)
 	}
 
 	if err != nil {
-		return fmt.Errorf("braid.system call id %v ty %v err %w", idOrSymbol, actorType, err)
+		return fmt.Errorf("system call id %v ty %v err %w", idOrSymbol, actorType, err)
 	}
 
 	if info.Ip == sys.nodeIP && info.Port == sys.nodePort {
 		if err := sys.addressbook.Unregister(mw.Ctx, info.ActorId, sys.factory.Get(actorType).Weight); err != nil {
-			log.WarnF("braid.system unregister stale actor record err actorTy %v actorID %v err %v", actorType, info.ActorId, err)
+			log.WarnF("system unregister stale actor record err actorTy %v actorID %v err %v", actorType, info.ActorId, err)
 		}
-		log.WarnF("braid.system found inconsistent actor record actorTy %v actorID %v call ev %v, cleaned up", actorType, info.ActorId, event)
+		log.WarnF("system found inconsistent actor record actorTy %v actorID %v call ev %v, cleaned up", actorType, info.ActorId, event)
 
 		return ErrSelfCall
 	}
@@ -294,7 +293,7 @@ func (sys *NormalSystem) localCall(actorp core.IActor, mw *msg.Wrapper) error {
 
 	root := mw.GetWg().Count() == 0
 	if root {
-		log.DebugF("braid.system local call root event %v id %v", mw.Req.Header.Event, mw.Req.Header.TargetActorID)
+		log.DebugF("system local call root event %v id %v", mw.Req.Header.Event, mw.Req.Header.TargetActorID)
 		mw.Done = make(chan struct{})
 		ready := make(chan struct{})
 		go func() {
@@ -310,10 +309,10 @@ func (sys *NormalSystem) localCall(actorp core.IActor, mw *msg.Wrapper) error {
 			case <-waitCh:
 				// 正常完成
 			case <-time.After(sys.callTimeout):
-				log.WarnF("braid.system wait timeout for event %v id %v, remaining tasks: %d",
+				log.WarnF("system wait timeout for event %v id %v, remaining tasks: %d",
 					mw.Req.Header.Event, mw.Req.Header.TargetActorID, mw.GetWg().Count())
 				if mw.Err == nil {
-					mw.Err = fmt.Errorf("braid.system wait timeout, some tasks did not complete")
+					mw.Err = fmt.Errorf("system wait timeout, some tasks did not complete")
 				}
 			}
 
@@ -339,7 +338,7 @@ func (sys *NormalSystem) localCall(actorp core.IActor, mw *msg.Wrapper) error {
 			return timeoutErr
 		}
 	} else {
-		log.DebugF("braid.system local call received event %v id %v", mw.Req.Header.Event, mw.Req.Header.TargetActorID)
+		log.DebugF("system local call received event %v id %v", mw.Req.Header.Event, mw.Req.Header.TargetActorID)
 		return actorp.Received(mw)
 	}
 }
@@ -386,7 +385,7 @@ func (sys *NormalSystem) Send(idOrSymbol, actorType, event string, mw *msg.Wrapp
 	}
 
 	if idOrSymbol == "" {
-		return fmt.Errorf("braid.system send unknown target id")
+		return fmt.Errorf("system send unknown target id")
 	}
 
 	switch idOrSymbol {
@@ -422,14 +421,14 @@ func (sys *NormalSystem) Send(idOrSymbol, actorType, event string, mw *msg.Wrapp
 	}
 
 	if err != nil {
-		return fmt.Errorf("braid.system send id %v ty %v err %w", idOrSymbol, actorType, err)
+		return fmt.Errorf("system send id %v ty %v err %w", idOrSymbol, actorType, err)
 	}
 
 	if info.Ip == sys.nodeIP && info.Port == sys.nodePort {
 		if err := sys.addressbook.Unregister(mw.Ctx, info.ActorId, sys.factory.Get(actorType).Weight); err != nil {
-			log.WarnF("braid.system unregister stale actor record err actorTy %v actorID %v err %v", actorType, info.ActorId, err)
+			log.WarnF("system unregister stale actor record err actorTy %v actorID %v err %v", actorType, info.ActorId, err)
 		}
-		log.WarnF("braid.system found inconsistent actor record actorTy %v actorID %v call ev %v, cleaned up", actorType, info.ActorId, event)
+		log.WarnF("system found inconsistent actor record actorTy %v actorID %v call ev %v, cleaned up", actorType, info.ActorId, event)
 		return ErrSelfCall
 	}
 
@@ -461,7 +460,7 @@ func (sys *NormalSystem) FindActor(ctx context.Context, id string) (core.IActor,
 		return actorp, nil
 	}
 
-	return nil, fmt.Errorf("braid.system find actor %v err", id)
+	return nil, fmt.Errorf("system find actor %v err", id)
 }
 
 func (sys *NormalSystem) Exit(wait *sync.WaitGroup) {
@@ -469,7 +468,7 @@ func (sys *NormalSystem) Exit(wait *sync.WaitGroup) {
 		wait.Add(1)
 		if sys.acceptor != nil {
 			sys.acceptor.Exit()
-			log.InfoF("braid.system acceptor exit")
+			log.InfoF("system acceptor exit")
 		}
 		wait.Done()
 	}
@@ -480,13 +479,13 @@ func (sys *NormalSystem) Exit(wait *sync.WaitGroup) {
 		go func(a core.IActor) {
 			defer wait.Done()
 			a.Exit()
-			log.InfoF("braid.system actor exit %v", a.ID())
+			log.InfoF("system actor exit %v", a.ID())
 		}(actor)
 	}
 
 	err := sys.addressbook.Clear(context.TODO())
 	if err != nil {
-		log.WarnF("[braid.addressbook] clear err %v", err.Error())
+		log.WarnF("[addressbook] clear err %v", err.Error())
 	}
-	log.InfoF("braid.system addressbook exit")
+	log.InfoF("system addressbook exit")
 }

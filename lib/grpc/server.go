@@ -3,8 +3,9 @@ package grpc
 import (
 	"errors"
 	"fmt"
-	"github.com/ljhe/scream/3rd/log"
 	"net"
+
+	"github.com/ljhe/scream/3rd/log"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"google.golang.org/grpc"
@@ -57,19 +58,16 @@ func BuildServerWithOption(opts ...ServerOption) *Server {
 }
 
 func (s *Server) Init() error {
-
 	rpcListen, err := net.Listen("tcp", s.parm.ListenAddr)
 	if err != nil {
 		return fmt.Errorf("%v [GRPC] server check error %v [%v]", "", "tcp", s.parm.ListenAddr)
 	}
 
-	log.InfoF("grpc server listen: [tcp] %v", s.parm.ListenAddr)
 	s.listen = rpcListen
-
 	return nil
 }
 
-// Get 获取rpc 服务器
+// Server 获取rpc服务器
 func (s *Server) Server() interface{} {
 	return s.rpc
 }

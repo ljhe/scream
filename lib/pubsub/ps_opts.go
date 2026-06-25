@@ -3,7 +3,7 @@ package pubsub
 import "time"
 
 const (
-	BraidPubsubTopic = "braid.pubsub.streams"
+	BraidPubsubTopic = "pubsub.streams"
 )
 
 /*

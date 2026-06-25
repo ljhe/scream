@@ -90,13 +90,13 @@ func GetReqCustomField[T any](msg *Wrapper, key string) T {
 
 	data, err := msg.GetReqCustomMap()
 	if err != nil {
-		log.WarnF("[braid.router] get req body map err %v", err.Error())
+		log.WarnF("[router] get req body map err %v", err.Error())
 		return zero
 	}
 
 	val, ok := data[key]
 	if !ok {
-		log.InfoF("[braid.router] key %q not found in request body", key)
+		log.InfoF("[router] key %q not found in request body", key)
 		return zero
 	}
 
@@ -145,7 +145,7 @@ func GetReqCustomField[T any](msg *Wrapper, key string) T {
 		}
 	}
 
-	log.WarnF("[braid.router] type assertion failed for key %q: expected %T, got %T", key, zero, val)
+	log.WarnF("[router] type assertion failed for key %q: expected %T, got %T", key, zero, val)
 	return zero
 }
 
@@ -167,7 +167,7 @@ func GetResCustomField[T any](msg *Wrapper, key string) T {
 
 	data, err := msg.GetResCustomMap()
 	if err != nil {
-		log.WarnF("[braid.router] get res body map err %v", err.Error())
+		log.WarnF("[router] get res body map err %v", err.Error())
 		return zero
 	}
 
@@ -221,6 +221,6 @@ func GetResCustomField[T any](msg *Wrapper, key string) T {
 		}
 	}
 
-	log.WarnF("[braid.router] type assertion failed for key %q: expected %T, got %T", key, zero, val)
+	log.WarnF("[router] type assertion failed for key %q: expected %T, got %T", key, zero, val)
 	return zero
 }

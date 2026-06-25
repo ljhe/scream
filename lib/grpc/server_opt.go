@@ -19,7 +19,7 @@ type ServerParm struct {
 // Option config wraps
 type ServerOption func(*ServerParm)
 
-// WithListen 服务器侦听地址配置
+// WithServerListen 服务器监听地址配置
 func WithServerListen(address string) ServerOption {
 	return func(c *ServerParm) {
 		c.ListenAddr = address

@@ -15,13 +15,14 @@ import (
 var factory *mock.MockActorFactory
 var loader core.IActorLoader
 
+// TestMain test hook for some setup.
 func TestMain(m *testing.M) {
 	logger, err := log.NewDefaultLogger()
 	if err != nil {
 		panic(err)
 	}
 	defer logger.Sync()
-	
+
 	factory = mock.BuildActorFactory()
 	loader = mock.BuildDefaultActorLoader(factory)
 

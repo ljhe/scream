@@ -15,7 +15,7 @@ const (
 	DefaultMaxAge          = 7
 	DefaultMaxBackups      = 30
 	DefaultCompress        = false
-	DefaultOutStd          = false
+	DefaultOutStd          = true
 	DefaultTimestampFormat = "2006-01-02 15:04:05.000"
 	DefaultLevel           = zapcore.InfoLevel
 
@@ -226,9 +226,9 @@ func NewLogger(opts ...Option) (*zap.Logger, error) {
 		return nil, err
 	}
 	// 默认输出到文件和控制台
-	ws := zapcore.NewMultiWriteSyncer(zapcore.AddSync(hook))
+	ws := zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(hook))
 	if !options.OutStd {
-		ws = zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(hook))
+		ws = zapcore.NewMultiWriteSyncer(zapcore.AddSync(hook))
 	}
 
 	var core zapcore.Core

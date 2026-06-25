@@ -18,7 +18,7 @@ type ActorLoaderBuilder struct {
 
 func (p *ActorLoaderBuilder) WithID(id string) core.IActorBuilder {
 	if id == "" {
-		panic("[braid.actor] id is empty")
+		panic("[actor] id is empty")
 	}
 	p.ID = id
 	return p
