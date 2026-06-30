@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ljhe/scream/3rd/log"
 	"sync"
 	"time"
+
+	"github.com/ljhe/scream/3rd/log"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"golang.org/x/sync/errgroup"
@@ -17,7 +18,7 @@ import (
 )
 
 var (
-	// ErrServiceNotAvailable 服务不可用，通常是因为没有查询到中心节点(coordinate)
+	// ErrServiceNotAvailable 服务不可用 通常是因为没有查询到中心节点(coordinate)
 	ErrServiceNotAvailable = errors.New("caller service not available")
 
 	// ErrConfigConvert 配置转换失败
@@ -127,7 +128,7 @@ func (c *Client) getConn(address string) (*grpc.ClientConn, error) {
 	return conn, nil
 }
 
-func (c *Client) CallWait(ctx context.Context, addr, methon string, args, reply interface{}, opts ...interface{}) error {
+func (c *Client) CallWait(ctx context.Context, addr, method string, args, reply interface{}, opts ...interface{}) error {
 
 	var grpcopts []grpc.CallOption
 
@@ -153,9 +154,9 @@ func (c *Client) CallWait(ctx context.Context, addr, methon string, args, reply 
 		}
 	}
 
-	err = conn.Invoke(ctx, methon, args, reply, grpcopts...)
+	err = conn.Invoke(ctx, method, args, reply, grpcopts...)
 	if err != nil {
-		fmt.Printf("grpc client invoke warning %s, methon = %s, addr = %s\n", err.Error(), methon, addr)
+		fmt.Printf("grpc client invoke warning %s, method = %s, addr = %s\n", err.Error(), method, addr)
 	}
 
 	return err

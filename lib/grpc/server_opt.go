@@ -4,7 +4,6 @@ import "google.golang.org/grpc"
 
 type RegistHandler func(*grpc.Server)
 
-// Parm Service 配置
 type ServerParm struct {
 	ListenAddr string
 
@@ -16,7 +15,6 @@ type ServerParm struct {
 	GracefulStop bool
 }
 
-// Option config wraps
 type ServerOption func(*ServerParm)
 
 // WithServerListen 服务器监听地址配置

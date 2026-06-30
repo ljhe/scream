@@ -6,7 +6,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Parm 调用器配置项
 type ClientParm struct {
 	PoolInitNum  int
 	PoolCapacity int
@@ -33,24 +32,23 @@ var (
 	}
 )
 
-// Option config wraps
 type ClientOption func(*ClientParm)
 
-// WithPoolInitNum 连接池初始化数量
+// WithClientPoolInitNum 连接池初始化数量
 func WithClientPoolInitNum(num int) ClientOption {
 	return func(c *ClientParm) {
 		c.PoolInitNum = num
 	}
 }
 
-// WithPoolCapacity 连接池的容量大小
+// WithClientPoolCapacity 连接池的容量大小
 func WithClientPoolCapacity(num int) ClientOption {
 	return func(c *ClientParm) {
 		c.PoolCapacity = num
 	}
 }
 
-// WithPoolIdle 连接池的最大闲置时间
+// WithClientPoolIdle 连接池的最大闲置时间
 func WithClientPoolIdle(second int) ClientOption {
 	return func(c *ClientParm) {
 		c.PoolIdle = time.Duration(second) * time.Second

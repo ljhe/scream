@@ -18,9 +18,7 @@ message Header {
     string Event = 9;
     string Token = 10;
     int64 Timestamp = 11;
-
     bytes Custom = 12;
-
 }
 
 message Message {

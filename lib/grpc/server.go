@@ -47,7 +47,7 @@ func BuildServerWithOption(opts ...ServerOption) *Server {
 	}
 
 	if rpcserver == nil {
-		panic(fmt.Errorf("grpc server handler not set"))
+		panic(fmt.Errorf("grpc server not set"))
 	}
 
 	return &Server{
@@ -75,7 +75,7 @@ func (s *Server) Server() interface{} {
 // Run 运行
 func (s *Server) Run() {
 
-	// regist rpc handler
+	// register rpc handler
 	s.parm.Handler(s.rpc)
 
 	go func() {

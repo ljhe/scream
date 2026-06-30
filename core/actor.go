@@ -135,7 +135,7 @@ type IActor interface {
 	// CancelTimer cancels a timer
 	CancelTimer(t ITimer)
 
-	// SubscriptionEvent subscribes to a message
+	// Sub subscribes to a message
 	//  If this is the first subscription to this topic, opts will take effect (you can set some options for the topic, such as ttl)
 	//  topic: A subject that contains a group of channels (e.g., if topic = offline messages, channel = actorId, then each actor can get its own offline messages in this topic)
 	//  channel: Represents different categories within a topic
